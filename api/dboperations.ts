@@ -59,7 +59,7 @@ export const categoryDB = {
     const [rows] = await pool.execute(
       'SELECT * FROM categories ORDER BY order_index'
     );
-    return rows;
+    return rows as any[];
   },
 
   // 根据ID查找
@@ -77,7 +77,7 @@ export const categoryDB = {
       'SELECT * FROM categories WHERE parent_id = ? ORDER BY order_index',
       [parentId]
     );
-    return rows;
+    return rows as any[];
   }
 };
 
@@ -89,7 +89,7 @@ export const firmwareDB = {
       'SELECT * FROM firmware WHERE status = ? ORDER BY created_at DESC',
       [status]
     );
-    return rows;
+    return rows as any[];
   },
 
   // 根据ID查找
@@ -107,7 +107,7 @@ export const firmwareDB = {
       'SELECT * FROM firmware WHERE category_id = ? AND status = "approved" ORDER BY created_at DESC',
       [categoryId]
     );
-    return rows;
+    return rows as any[];
   },
 
   // 获取热门固件
@@ -116,7 +116,7 @@ export const firmwareDB = {
       'SELECT * FROM firmware WHERE status = "approved" ORDER BY download_count DESC LIMIT ?',
       [limit]
     );
-    return rows;
+    return rows as any[];
   },
 
   // 获取最新固件
@@ -125,7 +125,7 @@ export const firmwareDB = {
       'SELECT * FROM firmware WHERE status = "approved" ORDER BY created_at DESC LIMIT ?',
       [limit]
     );
-    return rows;
+    return rows as any[];
   },
 
   // 更新下载次数
@@ -190,7 +190,7 @@ export const downloadDB = {
       'SELECT * FROM downloads WHERE user_id = ? ORDER BY created_at DESC',
       [userId]
     );
-    return rows;
+    return rows as any[];
   }
 };
 
@@ -216,7 +216,7 @@ export const donationDB = {
       'SELECT * FROM donations ORDER BY created_at DESC LIMIT ?',
       [limit]
     );
-    return rows;
+    return rows as any[];
   },
 
   // 获取总捐赠金额
