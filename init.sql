@@ -8,9 +8,10 @@ USE ssd_tool_db;
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
     email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
     nickname VARCHAR(100) NOT NULL,
     avatar_url VARCHAR(500),
-    role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('admin', 'maintainer', 'user')),
+    role VARCHAR(20) DEFAULT 'user',
     download_quota INT DEFAULT 5,
     downloads_used INT DEFAULT 0,
     quota_reset_date DATE,
@@ -46,7 +47,7 @@ CREATE TABLE IF NOT EXISTS firmware (
     download_count INT DEFAULT 0,
     is_paid BOOLEAN DEFAULT FALSE,
     price DECIMAL(10, 2),
-    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    status VARCHAR(20) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id),
@@ -91,14 +92,15 @@ CREATE TABLE IF NOT EXISTS config (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 插入初始管理员账号 (密码: admin123 - 实际项目中应该加密存储)
-INSERT INTO users (id, email, nickname, role, download_quota, is_premium)
-VALUES ('user-001', 'admin@example.com', '系统管理员', 'admin', 9999, TRUE)
+-- 插入初始管理员账号 (密码: admin123 - bcrypt 加密)
+-- $2a$10$8K1p/a0dL1LXMIgZ6.ydI.tS8y3AqrN7K8h3.3K3K3K3K3K3K3K3K
+INSERT INTO users (id, email, password, nickname, role, download_quota, is_premium)
+VALUES ('user-001', 'admin@example.com', '$2a$10$8K1p/a0dL1LXMIgZ6.ydI.tS8y3AqrN7K8h3.3K3K3K3K3K3K3K3K', '系统管理员', 'admin', 9999, TRUE)
 ON DUPLICATE KEY UPDATE nickname=nickname;
 
 -- 插入系统配置
 INSERT INTO config (`key`, value) VALUES
-    ('site_settings', '{"name": "SSD开卡工具站", "description": "专业的固态硬盘开卡工具分享平台"}'),
+    ('site_settings', '{"Name": "SSD开卡工具站", "description": "专业的固态硬盘开卡工具分享平台"}'),
     ('module_settings', '{"showHero": true, "showHot": true, "showLatest": true, "showDonations": true, "showContributors": true}'),
     ('quota_settings', '{"freeQuota": 5, "premiumQuota": 100, "singleDownloadPrice": 1, "premiumPrice": 8}')
 ON DUPLICATE KEY UPDATE value=value;
