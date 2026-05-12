@@ -44,6 +44,19 @@ const mockUser: User = {
   createdAt: new Date().toISOString()
 };
 
+const adminUser: User = {
+  id: 'user-001',
+  email: 'admin@example.com',
+  nickname: '系统管理员',
+  avatar: undefined,
+  role: 'admin',
+  downloadQuota: 9999,
+  downloadsUsed: 0,
+  quotaResetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+  isPremium: true,
+  createdAt: new Date().toISOString()
+};
+
 export const useAppStore = create<AppState>((set, get) => ({
   user: null,
   isAuthenticated: false,
@@ -60,6 +73,12 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   login: async (email, password) => {
     await new Promise(resolve => setTimeout(resolve, 800));
+    // 管理员账号验证
+    if (email === 'admin@example.com' && password === 'admin123') {
+      set({ user: adminUser, isAuthenticated: true });
+      return true;
+    }
+    // 普通用户登录
     set({ user: mockUser, isAuthenticated: true });
     return true;
   },

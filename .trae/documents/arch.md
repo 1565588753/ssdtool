@@ -1,6 +1,6 @@
 
 ## 1. Architecture Design
-采用 React + Express + Supabase 的全栈架构，前端负责用户界面和交互，后端处理业务逻辑和支付，Supabase 提供数据库、认证和存储服务。
+采用 React + Express + MySQL 的全栈架构，前端负责用户界面和交互，后端处理业务逻辑和支付，MySQL 提供数据库服务。
 
 ```mermaid
 graph TB
@@ -19,27 +19,23 @@ graph TB
     end
     
     subgraph "Data & Services"
-        I[(Supabase DB)]
-        J[Supabase Auth]
-        K[Supabase Storage]
+        I[(MySQL Database)]
     end
     
-    A --&gt; B
-    A --&gt; C
-    A --&gt; D
-    E --&gt; F
-    E --&gt; G
-    E --&gt; H
-    D --&gt; E
-    F --&gt; I
-    F --&gt; J
-    H --&gt; K
+    A --> B
+    A --> C
+    A --> D
+    E --> F
+    E --> G
+    E --> H
+    D --> E
+    F --> I
 ```
 
 ## 2. Technology Description
 - **Frontend**: React@18 + TypeScript + Vite + TailwindCSS + Framer Motion + Zustand
 - **Backend**: Express@4 + TypeScript
-- **Database & Auth**: Supabase (PostgreSQL)
+- **Database**: MySQL 8.0+
 - **Payment**: 集成第三方支付（模拟实现）
 - **Initialization Tool**: vite-init with react-express-ts template
 
@@ -80,8 +76,9 @@ interface Category {
   id: string;
   name: string;
   parentId?: string;
-  order: number;
+  orderIndex: number;
   children?: Category[];
+  createdAt: Date;
 }
 
 // 固件类型
@@ -92,6 +89,8 @@ interface Firmware {
   version: string;
   categoryId: string;
   uploaderId: string;
+  uploaderName?: string;
+  filePath: string;
   fileSize: number;
   downloadCount: number;
   isPaid: boolean;
@@ -104,7 +103,8 @@ interface Firmware {
 // 捐赠记录
 interface Donation {
   id: string;
-  userId: string;
+  userId?: string;
+  userNickname: string;
   amount: number;
   type: 'single_download' | 'premium_upgrade';
   createdAt: Date;
@@ -139,10 +139,8 @@ graph LR
     B --> C[Auth Middleware]
     C --> D[Route Handler]
     D --> E[Service Layer]
-    E --> F[Supabase Client]
-    F --> G[(Database)]
-    E --> H[Storage Service]
-    E --> I[Payment Service]
+    E --> F[MySQL Connection Pool]
+    F --> G[(MySQL Database)]
 ```
 
 ## 6. Data Model
@@ -184,6 +182,7 @@ erDiagram
         string version
         string category_id FK
         string uploader_id FK
+        string uploader_name
         string file_path
         int file_size
         int download_count
@@ -198,6 +197,7 @@ erDiagram
         string id PK
         string user_id FK
         string firmware_id FK
+        string firmware_title
         datetime created_at
     }
     
@@ -217,113 +217,13 @@ erDiagram
     }
 ```
 
-### 6.2 Data Definition Language
+### 6.2 Data Definition Language (MySQL)
 ```sql
--- 用户表
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR(255) UNIQUE NOT NULL,
-    nickname VARCHAR(100) NOT NULL,
-    avatar_url VARCHAR(500),
-    role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('admin', 'maintainer', 'user')),
-    download_quota INTEGER DEFAULT 5,
-    downloads_used INTEGER DEFAULT 0,
-    quota_reset_date DATE,
-    is_premium BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 分类表
-CREATE TABLE categories (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) NOT NULL,
-    parent_id UUID REFERENCES categories(id) ON DELETE CASCADE,
-    order_index INTEGER DEFAULT 0,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 固件表
-CREATE TABLE firmware (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title VARCHAR(200) NOT NULL,
-    description TEXT,
-    version VARCHAR(50),
-    category_id UUID REFERENCES categories(id),
-    uploader_id UUID REFERENCES users(id),
-    file_path VARCHAR(500) NOT NULL,
-    file_size BIGINT,
-    download_count INTEGER DEFAULT 0,
-    is_paid BOOLEAN DEFAULT FALSE,
-    price DECIMAL(10, 2),
-    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 下载记录表
-CREATE TABLE downloads (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id),
-    firmware_id UUID REFERENCES firmware(id),
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 捐赠记录表
-CREATE TABLE donations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id),
-    user_nickname VARCHAR(100) NOT NULL,
-    amount DECIMAL(10, 2) NOT NULL,
-    type VARCHAR(50) NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 系统配置表
-CREATE TABLE config (
-    key VARCHAR(100) PRIMARY KEY,
-    value JSONB NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 索引
-CREATE INDEX idx_firmware_category ON firmware(category_id);
-CREATE INDEX idx_firmware_uploader ON firmware(uploader_id);
-CREATE INDEX idx_downloads_user ON downloads(user_id);
-CREATE INDEX idx_donations_created ON donations(created_at DESC);
-CREATE INDEX idx_categories_parent ON categories(parent_id);
-
--- RLS 策略
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE firmware ENABLE ROW LEVEL SECURITY;
-ALTER TABLE downloads ENABLE ROW LEVEL SECURITY;
-ALTER TABLE donations ENABLE ROW LEVEL SECURITY;
-
--- 允许游客和用户读取分类
-CREATE POLICY "Categories are viewable by everyone" ON categories
-    FOR SELECT USING (true);
-
--- 允许游客和用户读取已审核的固件
-CREATE POLICY "Approved firmware are viewable by everyone" ON firmware
-    FOR SELECT USING (status = 'approved');
-
--- 初始数据
-INSERT INTO config (key, value) VALUES
-    ('site_settings', '{"name": "SSD开卡工具站", "description": "专业的固态硬盘开卡工具分享平台"}'),
-    ('module_settings', '{"showHero": true, "showHot": true, "showLatest": true, "showDonations": true, "showContributors": true}'),
-    ('quota_settings', '{"freeQuota": 5, "premiumQuota": 100, "singleDownloadPrice": 1, "premiumPrice": 8}');
+-- 完整的 SQL 初始化脚本请查看项目根目录下的 init.sql
 ```
 
-### 6.3 Initial Data
-```sql
--- 初始分类
-INSERT INTO categories (name, parent_id, order_index) VALUES
-    ('慧荣 (SMI)', NULL, 1),
-    ('群联 (Phison)', NULL, 2),
-    ('联芸 (Maxio)', NULL, 3),
-    ('得一微 (YMC)', NULL, 4),
-    ('SM2258XT', (SELECT id FROM categories WHERE name = '慧荣 (SMI)'), 1),
-    ('SM2259XT', (SELECT id FROM categories WHERE name = '慧荣 (SMI)'), 2),
-    ('PS3111', (SELECT id FROM categories WHERE name = '群联 (Phison)'), 1),
-    ('PS5013', (SELECT id FROM categories WHERE name = '群联 (Phison)'), 2);
+### 6.3 管理员账号信息
+```
+管理员邮箱: admin@example.com
+管理员密码: admin123
 ```

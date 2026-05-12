@@ -2,14 +2,22 @@
  * local server entry file, for local development
  */
 import app from './app.js';
+import { testConnection } from './db.js';
+import dotenv from 'dotenv';
+
+// 加载环境变量
+dotenv.config();
 
 /**
  * start server with port
  */
 const PORT = process.env.PORT || 3001;
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`Server ready on port ${PORT}`);
+  
+  // 测试数据库连接
+  await testConnection();
 });
 
 /**
