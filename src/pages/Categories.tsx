@@ -27,7 +27,7 @@ export default function Categories() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(f =>
-        f.name.toLowerCase().includes(query) ||
+        f.title.toLowerCase().includes(query) ||
         f.description.toLowerCase().includes(query)
       );
     }

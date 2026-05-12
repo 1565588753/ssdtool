@@ -44,7 +44,7 @@ export default function UserCenter() {
 
   const remainingQuota = user.isPremium
     ? 100
-    : Math.max(0, user.monthlyQuota - user.monthlyDownloads);
+    : Math.max(0, user.downloadQuota - user.downloadsUsed);
   const totalQuota = user.isPremium ? 100 : 5;
   const usedQuota = totalQuota - remainingQuota;
   const usagePercent = (usedQuota / totalQuota) * 100;

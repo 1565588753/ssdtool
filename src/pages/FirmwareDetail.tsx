@@ -7,10 +7,8 @@ import {
   Download,
   HardDrive,
   Calendar,
-  Eye,
   Heart,
   CheckCircle,
-  Info,
   ShieldAlert,
   Zap
 } from 'lucide-react';
@@ -18,7 +16,7 @@ import {
 export default function FirmwareDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getFirmwareById, user, downloadFirmware, sponsorDownload } = useAppStore();
+  const { getFirmwareById, user, downloadFirmware, singleDownloadPayment, config } = useAppStore();
   const [downloading, setDownloading] = useState(false);
   const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
@@ -63,7 +61,7 @@ export default function FirmwareDetail() {
   const handleSponsorDownload = async () => {
     setDownloading(true);
     try {
-      const success = await sponsorDownload(firmware.id, 1);
+      const success = await singleDownloadPayment(firmware.id);
       if (success) {
         setShowSponsorModal(false);
         setDownloadSuccess(true);
@@ -80,12 +78,18 @@ export default function FirmwareDetail() {
 
   const getQuotaInfo = () => {
     if (!user) return null;
-    const remaining = user.isPremium ? 100 : Math.max(0, user.monthlyQuota - user.monthlyDownloads);
-    const total = user.isPremium ? 100 : 5;
-    return { remaining, total };
+    const maxQuota = user.isPremium ? config.quotaSettings.premiumQuota : config.quotaSettings.freeQuota;
+    const remaining = Math.max(0, maxQuota - user.downloadsUsed);
+    return { remaining, total: maxQuota };
   };
 
   const quotaInfo = getQuotaInfo();
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
 
   return (
     <div className="min-h-screen gradient-bg">
@@ -110,7 +114,7 @@ export default function FirmwareDetail() {
                   <HardDrive className="w-8 h-8 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h1 className="font-display text-2xl font-bold mb-2">{firmware.name}</h1>
+                  <h1 className="font-display text-2xl font-bold mb-2">{firmware.title}</h1>
                   <p className="text-slate-400">{firmware.description}</p>
                 </div>
                 {firmware.isPaid && (
@@ -127,69 +131,46 @@ export default function FirmwareDetail() {
                 </div>
                 <div className="p-4 rounded-xl bg-white/5">
                   <div className="text-xs text-slate-500 mb-1">大小</div>
-                  <div className="font-semibold">{firmware.fileSize}</div>
-                </div>
-                <div className="p-4 rounded-xl bg-white/5">
-                  <div className="text-xs text-slate-500 mb-1 flex items-center gap-1">
-                    <Eye className="w-3 h-3" />
-                    浏览
-                  </div>
-                  <div className="font-semibold">{firmware.views.toLocaleString()}</div>
+                  <div className="font-semibold">{formatFileSize(firmware.fileSize)}</div>
                 </div>
                 <div className="p-4 rounded-xl bg-white/5">
                   <div className="text-xs text-slate-500 mb-1 flex items-center gap-1">
                     <Download className="w-3 h-3" />
                     下载
                   </div>
-                  <div className="font-semibold">{firmware.downloads.toLocaleString()}</div>
+                  <div className="font-semibold">{firmware.downloadCount.toLocaleString()}</div>
+                </div>
+                <div className="p-4 rounded-xl bg-white/5">
+                  <div className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    更新
+                  </div>
+                  <div className="font-semibold">{new Date(firmware.updatedAt).toLocaleDateString('zh-CN')}</div>
                 </div>
               </div>
 
               <div className="border-t border-white/10 pt-6 mb-6">
                 <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Info className="w-5 h-5 text-accent-400" />
+                  <ShieldAlert className="w-5 h-5 text-accent-400" />
                   详细信息
                 </h2>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Calendar className="w-4 h-4 text-slate-500" />
                     <span className="text-sm text-slate-400">
-                      更新时间: {new Date(firmware.uploadDate).toLocaleDateString('zh-CN')}
+                      上传时间: {new Date(firmware.createdAt).toLocaleDateString('zh-CN')}
                     </span>
                   </div>
-                  <div>
-                    <div className="text-sm text-slate-400 mb-2">主控厂商</div>
-                    <div className="inline-flex px-3 py-1 rounded-full bg-primary-500/20 text-primary-400 text-sm">
-                      {firmware.vendor}
+                  {firmware.uploaderName && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-slate-400">上传者:</span>
+                      <span className="inline-flex px-3 py-1 rounded-full bg-primary-500/20 text-primary-400 text-sm">
+                        {firmware.uploaderName}
+                      </span>
                     </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-slate-400 mb-2">适配型号</div>
-                    <div className="flex flex-wrap gap-2">
-                      {firmware.supportedModels.map((model, index) => (
-                        <span
-                          key={index}
-                          className="px-3 py-1 rounded-full bg-white/5 text-slate-300 text-sm"
-                        >
-                          {model}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
-
-              {firmware.notes && (
-                <div className="border-t border-white/10 pt-6">
-                  <h2 className="font-display text-lg font-semibold mb-4 flex items-center gap-2">
-                    <ShieldAlert className="w-5 h-5 text-amber-400" />
-                    注意事项
-                  </h2>
-                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                    <p className="text-slate-300 text-sm leading-relaxed">{firmware.notes}</p>
-                  </div>
-                </div>
-              )}
             </motion.div>
           </div>
 
@@ -311,7 +292,7 @@ export default function FirmwareDetail() {
                   <div className="font-semibold">单次下载</div>
                   <div className="text-sm text-slate-400">可下载当前固件</div>
                 </div>
-                <div className="text-2xl font-bold text-accent-400">¥1</div>
+                <div className="text-2xl font-bold text-accent-400">¥{config.quotaSettings.singleDownloadPrice}</div>
               </div>
             </div>
 

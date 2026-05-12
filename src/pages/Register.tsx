@@ -6,7 +6,6 @@ import {
   Mail,
   Lock,
   User,
-  Send,
   CheckCircle,
   HardDrive,
   Eye,
@@ -15,48 +14,17 @@ import {
 
 export default function Register() {
   const navigate = useNavigate();
-  const { register, sendVerificationCode } = useAppStore();
+  const { register } = useAppStore();
   const [showPassword, setShowPassword] = useState(false);
-  const [step, setStep] = useState<'form' | 'verify' | 'success'>('form');
+  const [step, setStep] = useState<'form' | 'success'>('form');
   const [formData, setFormData] = useState({
     email: '',
     nickname: '',
     password: '',
-    confirmPassword: '',
-    code: ''
+    confirmPassword: ''
   });
   const [loading, setLoading] = useState(false);
-  const [codeSent, setCodeSent] = useState(false);
-  const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState('');
-
-  const handleSendCode = async () => {
-    if (!formData.email) {
-      setError('请先输入邮箱地址');
-      return;
-    }
-    setLoading(true);
-    try {
-      const success = await sendVerificationCode(formData.email);
-      if (success) {
-        setCodeSent(true);
-        setCountdown(60);
-        const timer = setInterval(() => {
-          setCountdown((prev) => {
-            if (prev <= 1) {
-              clearInterval(timer);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      }
-    } catch (err) {
-      setError('发送验证码失败');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,23 +40,17 @@ export default function Register() {
       return;
     }
 
-    if (!formData.code) {
-      setError('请输入验证码');
-      return;
-    }
-
     setLoading(true);
     try {
       const success = await register(
         formData.email,
         formData.password,
-        formData.nickname,
-        formData.code
+        formData.nickname
       );
       if (success) {
         setStep('success');
       } else {
-        setError('注册失败，请检查验证码是否正确');
+        setError('注册失败，请稍后重试');
       }
     } catch (err) {
       setError('注册失败，请稍后重试');
@@ -222,33 +184,6 @@ export default function Register() {
                   className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:border-accent-500/50 transition-all"
                   placeholder="请再次输入密码"
                 />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                邮箱验证码
-              </label>
-              <div className="flex gap-3">
-                <div className="relative flex-1">
-                  <Send className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input
-                    type="text"
-                    required
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:border-accent-500/50 transition-all"
-                    placeholder="输入验证码"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  disabled={loading || countdown > 0}
-                  className="px-4 py-3 rounded-xl bg-white/10 text-white text-sm font-medium hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap transition-colors"
-                >
-                  {countdown > 0 ? `${countdown}s` : '发送验证码'}
-                </button>
               </div>
             </div>
 

@@ -6,7 +6,6 @@ import {
   Download,
   Eye,
   Calendar,
-  Tag,
   Zap
 } from 'lucide-react';
 
@@ -30,7 +29,7 @@ export default function FirmwareCard({ firmware, index }: FirmwareCardProps) {
             <HardDrive className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg mb-1 truncate">{firmware.name}</h3>
+            <h3 className="font-semibold text-lg mb-1 truncate">{firmware.title}</h3>
             <p className="text-slate-400 text-sm line-clamp-2">{firmware.description}</p>
           </div>
           {firmware.isPaid && (
@@ -45,16 +44,12 @@ export default function FirmwareCard({ firmware, index }: FirmwareCardProps) {
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-4 text-slate-400">
             <div className="flex items-center gap-1">
-              <Eye className="w-4 h-4" />
-              <span>{firmware.views}</span>
-            </div>
-            <div className="flex items-center gap-1">
               <Download className="w-4 h-4" />
-              <span>{firmware.downloads}</span>
+              <span>{firmware.downloadCount}</span>
             </div>
             <div className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
-              <span>{new Date(firmware.uploadDate).toLocaleDateString('zh-CN')}</span>
+              <span>{new Date(firmware.createdAt).toLocaleDateString('zh-CN')}</span>
             </div>
           </div>
           <div className="flex items-center gap-1 text-primary-400 font-medium">
@@ -62,19 +57,6 @@ export default function FirmwareCard({ firmware, index }: FirmwareCardProps) {
             <Zap className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
-
-        {firmware.tags && firmware.tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {firmware.tags.slice(0, 3).map((tag) => (
-              <span
-                key={tag}
-                className="px-2 py-1 rounded-lg bg-white/5 text-slate-400 text-xs"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
       </Link>
     </motion.div>
   );
