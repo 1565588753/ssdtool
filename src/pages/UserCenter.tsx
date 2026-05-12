@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAppStore } from '../store';
+import { themes } from '../hooks/useTheme';
 import {
   User,
   Users,
@@ -12,7 +13,6 @@ import {
   Download,
   Shield,
   Crown,
-  LogOut,
   Plus,
   Edit,
   Trash2,
@@ -22,49 +22,15 @@ import {
   Palette,
   Globe,
   Zap,
-  Search,
-  ChevronRight,
   X
 } from 'lucide-react';
 
 type TabType = 'dashboard' | 'profile' | 'downloads' | 'firmware' | 'categories' | 'users' | 'settings';
 
-interface SiteSettings {
-  siteName: string;
-  siteDescription: string;
-  primaryColor: string;
-  secondaryColor: string;
-  showHero: boolean;
-  showHot: boolean;
-  showLatest: boolean;
-  showDonations: boolean;
-  showContributors: boolean;
-  freeQuota: number;
-  premiumQuota: number;
-}
-
 export default function UserCenter() {
   const navigate = useNavigate();
-  const { user, logout, config, loadInitialData } = useAppStore();
+  const { user, logout, config } = useAppStore();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
-  const [loading, setLoading] = useState(false);
-  const [settings, setSettings] = useState<SiteSettings>({
-    siteName: 'SSD开卡工具站',
-    siteDescription: '专业的固态硬盘开卡工具分享平台',
-    primaryColor: '#1e40af',
-    secondaryColor: '#3b82f6',
-    showHero: true,
-    showHot: true,
-    showLatest: true,
-    showDonations: true,
-    showContributors: true,
-    freeQuota: 5,
-    premiumQuota: 100
-  });
-
-  useEffect(() => {
-    loadInitialData();
-  }, []);
 
   if (!user) {
     navigate('/login');
@@ -73,10 +39,6 @@ export default function UserCenter() {
 
   const isAdmin = user.role === 'admin';
   const isMaintainer = user.role === 'maintainer' || isAdmin;
-
-  const handleSaveSettings = () => {
-    alert('设置已保存！（实际项目中会调用 API）');
-  };
 
   const menuItems = [
     { id: 'dashboard', icon: BarChart3, label: '仪表盘', roles: ['all'] },
@@ -94,50 +56,53 @@ export default function UserCenter() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="min-h-screen gradient-bg flex">
       {/* 左侧导航 */}
-      <aside className="w-64 bg-white shadow-lg flex flex-col">
-        {/* Logo 区域 */}
-        <div className="p-6 border-b">
+      <aside className="w-64 glass border-r border-white/10 flex flex-col">
+        <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: 'var(--theme-gradient)' }}
+            >
               <FileText className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-gray-800">SSD管理后台</h1>
-              <p className="text-xs text-gray-500">控制面板</p>
+              <h1 className="font-bold text-white">SSD管理中心</h1>
+              <p className="text-xs text-slate-400">控制面板</p>
             </div>
           </div>
         </div>
 
-        {/* 用户信息 */}
-        <div className="p-4 border-b">
+        <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+            <div 
+              className="w-12 h-12 rounded-full flex items-center justify-center"
+              style={{ background: 'var(--theme-gradient)' }}
+            >
               <User className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-800 truncate">{user.nickname}</p>
-              <p className="text-xs text-gray-500 flex items-center gap-1">
+              <p className="font-semibold text-white truncate">{user.nickname}</p>
+              <p className="text-xs flex items-center gap-1">
                 {isAdmin ? (
                   <>
-                    <Crown className="w-3 h-3 text-yellow-500" />
-                    <span className="text-yellow-600">管理员</span>
+                    <Crown className="w-3 h-3 text-amber-400" />
+                    <span className="text-amber-400">管理员</span>
                   </>
                 ) : isMaintainer ? (
                   <>
-                    <Shield className="w-3 h-3 text-blue-500" />
-                    <span className="text-blue-600">维护者</span>
+                    <Shield className="w-3 h-3 text-blue-400" />
+                    <span className="text-blue-400">维护者</span>
                   </>
                 ) : (
-                  '普通用户'
+                  <span className="text-slate-400">普通用户</span>
                 )}
               </p>
             </div>
           </div>
         </div>
 
-        {/* 导航菜单 */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {menuItems.map(item => {
             const Icon = item.icon;
@@ -146,11 +111,12 @@ export default function UserCenter() {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as TabType)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                   isActive
-                    ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'bg-white/10 text-white border-l-2'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
+                style={{ borderLeftColor: isActive ? 'var(--theme-primary-500)' : 'transparent' }}
               >
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
@@ -159,13 +125,12 @@ export default function UserCenter() {
           })}
         </nav>
 
-        {/* 退出登录 */}
-        <div className="p-4 border-t">
+        <div className="p-4 border-t border-white/10">
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all"
           >
-            <LogOut className="w-5 h-5" />
+            <X className="w-5 h-5" />
             <span className="font-medium">退出登录</span>
           </button>
         </div>
@@ -173,31 +138,16 @@ export default function UserCenter() {
 
       {/* 右侧内容区 */}
       <main className="flex-1 p-8 overflow-y-auto">
-        <div className="max-w-7xl mx-auto">
-          {/* 仪表盘 */}
+        <div className="max-w-6xl mx-auto">
           {activeTab === 'dashboard' && (
             <Dashboard isAdmin={isAdmin} isMaintainer={isMaintainer} user={user} />
           )}
-
-          {/* 账户信息 */}
           {activeTab === 'profile' && <Profile user={user} />}
-
-          {/* 下载记录 */}
           {activeTab === 'downloads' && <Downloads user={user} config={config} />}
-
-          {/* 固件管理 */}
           {activeTab === 'firmware' && isMaintainer && <FirmwareManage isAdmin={isAdmin} />}
-
-          {/* 分类管理 */}
           {activeTab === 'categories' && isAdmin && <CategoryManage />}
-
-          {/* 用户管理 */}
           {activeTab === 'users' && isAdmin && <UserManage />}
-
-          {/* 网站设置 */}
-          {activeTab === 'settings' && isAdmin && (
-            <SiteSettings settings={settings} setSettings={setSettings} onSave={handleSaveSettings} />
-          )}
+          {activeTab === 'settings' && isAdmin && <SiteSettings />}
         </div>
       </main>
     </div>
@@ -207,10 +157,10 @@ export default function UserCenter() {
 // 仪表盘组件
 function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMaintainer: boolean; user: any }) {
   const stats = [
-    { label: '总用户数', value: '156', icon: Users, color: 'blue' },
-    { label: '固件总数', value: '89', icon: FileText, color: 'green' },
-    { label: '下载次数', value: '2,458', icon: Download, color: 'purple' },
-    { label: '捐赠总额', value: '¥1,280', icon: Zap, color: 'yellow' }
+    { label: '总用户数', value: '156', icon: Users },
+    { label: '固件总数', value: '89', icon: FileText },
+    { label: '下载次数', value: '2,458', icon: Download },
+    { label: '捐赠总额', value: '¥1,280', icon: Zap }
   ];
 
   const pendingFirmware = [
@@ -220,62 +170,57 @@ function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMainta
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">仪表盘</h2>
+      <h2 className="text-2xl font-bold text-white">仪表盘</h2>
 
-      {/* 统计卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
-          const colorClasses = {
-            blue: 'bg-blue-100 text-blue-600',
-            green: 'bg-green-100 text-green-600',
-            purple: 'bg-purple-100 text-purple-600',
-            yellow: 'bg-yellow-100 text-yellow-600'
-          };
           return (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+              className="glass-card rounded-xl p-6 hover:border-white/20 transition-all"
             >
               <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-lg ${colorClasses[stat.color as keyof typeof colorClasses]}`}>
-                  <Icon className="w-6 h-6" />
+                <div 
+                  className="p-3 rounded-xl"
+                  style={{ background: 'var(--theme-gradient)' }}
+                >
+                  <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-gray-800 mb-1">{stat.value}</p>
-              <p className="text-gray-500 text-sm">{stat.label}</p>
+              <p className="text-3xl font-bold text-white mb-1">{stat.value}</p>
+              <p className="text-slate-400 text-sm">{stat.label}</p>
             </motion.div>
           );
         })}
       </div>
 
-      {/* 待审核固件（维护者/管理员可见） */}
       {isMaintainer && pendingFirmware.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm">
-          <div className="p-6 border-b flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              <XCircle className="w-5 h-5 text-orange-500" />
+        <div className="glass-card rounded-xl">
+          <div className="p-6 border-b border-white/10 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+              <XCircle className="w-5 h-5 text-amber-400" />
               待审核固件
             </h3>
-            <span className="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-sm font-medium">
+            <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-sm font-medium">
               {pendingFirmware.length} 个待审核
             </span>
           </div>
-          <div className="divide-y">
+          <div className="divide-y divide-white/10">
             {pendingFirmware.map(fw => (
-              <div key={fw.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+              <div key={fw.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors">
                 <div>
-                  <p className="font-medium text-gray-800">{fw.title}</p>
-                  <p className="text-sm text-gray-500">由 {fw.author} 上传 · {fw.date}</p>
+                  <p className="font-medium text-white">{fw.title}</p>
+                  <p className="text-sm text-slate-400">由 {fw.author} 上传 · {fw.date}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors">
+                  <button className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors">
                     <CheckCircle className="w-5 h-5" />
                   </button>
-                  <button className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">
+                  <button className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors">
                     <XCircle className="w-5 h-5" />
                   </button>
                 </div>
@@ -285,34 +230,30 @@ function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMainta
         </div>
       )}
 
-      {/* 快捷操作 */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">快捷操作</h3>
+      <div className="glass-card rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">快捷操作</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {isMaintainer && (
-            <>
-              <button className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all flex flex-col items-center gap-2">
-                <Plus className="w-8 h-8 text-gray-400" />
-                <span className="text-sm text-gray-600">上传固件</span>
-              </button>
-              <button
-                onClick={() => {}}
-                className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-green-500 hover:bg-green-50 transition-all flex flex-col items-center gap-2"
-              >
-                <FolderTree className="w-8 h-8 text-gray-400" />
-                <span className="text-sm text-gray-600">管理分类</span>
-              </button>
-            </>
+            <button 
+              className="p-4 border-2 border-dashed border-white/20 rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2"
+            >
+              <Plus className="w-8 h-8 text-slate-400" />
+              <span className="text-sm text-slate-400">上传固件</span>
+            </button>
           )}
           {isAdmin && (
             <>
-              <button className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition-all flex flex-col items-center gap-2">
-                <Users className="w-8 h-8 text-gray-400" />
-                <span className="text-sm text-gray-600">管理用户</span>
+              <button className="p-4 border-2 border-dashed border-white/20 rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2">
+                <FolderTree className="w-8 h-8 text-slate-400" />
+                <span className="text-sm text-slate-400">管理分类</span>
               </button>
-              <button className="p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all flex flex-col items-center gap-2">
-                <Palette className="w-8 h-8 text-gray-400" />
-                <span className="text-sm text-gray-600">网站设置</span>
+              <button className="p-4 border-2 border-dashed border-white/20 rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2">
+                <Users className="w-8 h-8 text-slate-400" />
+                <span className="text-sm text-slate-400">管理用户</span>
+              </button>
+              <button className="p-4 border-2 border-dashed border-white/20 rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2">
+                <Settings className="w-8 h-8 text-slate-400" />
+                <span className="text-sm text-slate-400">网站设置</span>
               </button>
             </>
           )}
@@ -326,31 +267,34 @@ function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMainta
 function Profile({ user }: { user: any }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">账户信息</h2>
+      <h2 className="text-2xl font-bold text-white">账户信息</h2>
 
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="flex items-center gap-6 mb-6 pb-6 border-b">
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+      <div className="glass-card rounded-xl p-6">
+        <div className="flex items-center gap-6 mb-6 pb-6 border-b border-white/10">
+          <div 
+            className="w-24 h-24 rounded-full flex items-center justify-center"
+            style={{ background: 'var(--theme-gradient)' }}
+          >
             <User className="w-12 h-12 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-gray-800">{user.nickname}</h3>
-            <p className="text-gray-500">{user.email}</p>
+            <h3 className="text-xl font-semibold text-white">{user.nickname}</h3>
+            <p className="text-slate-400">{user.email}</p>
             <div className="flex items-center gap-2 mt-2">
               {user.role === 'admin' && (
-                <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium flex items-center gap-1">
+                <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-sm font-medium flex items-center gap-1">
                   <Crown className="w-4 h-4" />
                   管理员
                 </span>
               )}
               {user.role === 'maintainer' && (
-                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium flex items-center gap-1">
+                <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium flex items-center gap-1">
                   <Shield className="w-4 h-4" />
                   维护者
                 </span>
               )}
               {user.isPremium && (
-                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium">
                   Premium 会员
                 </span>
               )}
@@ -360,26 +304,28 @@ function Profile({ user }: { user: any }) {
 
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">昵称</label>
+            <label className="block text-sm font-medium text-slate-400 mb-2">昵称</label>
             <input
               type="text"
               defaultValue={user.nickname}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">邮箱</label>
+            <label className="block text-sm font-medium text-slate-400 mb-2">邮箱</label>
             <input
               type="email"
               defaultValue={user.email}
               disabled
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 cursor-not-allowed"
             />
           </div>
         </div>
 
-        <div className="mt-6 pt-6 border-t flex justify-end">
-          <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+        <div className="mt-6 pt-6 border-t border-white/10 flex justify-end">
+          <button 
+            className="btn-primary px-6 py-3 rounded-xl text-white font-semibold flex items-center gap-2"
+          >
             <Save className="w-4 h-4" />
             保存修改
           </button>
@@ -393,10 +339,8 @@ function Profile({ user }: { user: any }) {
 function Downloads({ user, config }: { user: any; config: any }) {
   const remainingQuota = user.isPremium
     ? 100
-    : Math.max(0, user.downloadQuota - user.downloadsUsed);
-  const totalQuota = user.isPremium ? 100 : config.quotaSettings.freeQuota;
-  const usagePercent = ((user.downloadQuota - remainingQuota) / totalQuota) * 100;
-
+    : Math.max(0, 5 - 2);
+  
   const downloads = [
     { id: 1, title: 'SM2258XT 开卡工具 v1.2', date: '2024-01-15', size: '15 MB' },
     { id: 2, title: 'PS3111 量产工具 v2.5', date: '2024-01-14', size: '22 MB' }
@@ -404,64 +348,72 @@ function Downloads({ user, config }: { user: any; config: any }) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">下载记录</h2>
+      <h2 className="text-2xl font-bold text-white">下载记录</h2>
 
-      {/* 下载额度卡片 */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="glass-card rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">本月下载额度</h3>
+          <h3 className="text-lg font-semibold text-white">本月下载额度</h3>
           {user.isPremium && (
-            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+            <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium">
               Premium 会员
             </span>
           )}
         </div>
         <div className="mb-4">
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-gray-600">已使用</span>
-            <span className="font-semibold text-gray-800">
-              {user.downloadQuota - remainingQuota} / {totalQuota}
-            </span>
+            <span className="text-slate-400">已使用</span>
+            <span className="font-semibold text-white">{2} / {user.isPremium ? 100 : 5}</span>
           </div>
-          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-3 bg-white/10 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all"
-              style={{ width: `${usagePercent}%` }}
+              className="h-full rounded-full transition-all"
+              style={{ 
+                width: `${(2 / (user.isPremium ? 100 : 5)) * 100}%`,
+                background: 'var(--theme-gradient)'
+              }}
             />
           </div>
         </div>
-        <p className="text-sm text-gray-500">
-          剩余 <span className="font-semibold text-blue-600">{remainingQuota}</span> 次下载额度
+        <p className="text-sm text-slate-400">
+          剩余 <span className="font-semibold" style={{ color: 'var(--theme-primary-400)' }}>{remainingQuota}</span> 次下载额度
         </p>
       </div>
 
-      {/* 下载历史 */}
-      <div className="bg-white rounded-xl shadow-sm">
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-gray-800">下载历史</h3>
+      <div className="glass-card rounded-xl">
+        <div className="p-6 border-b border-white/10">
+          <h3 className="text-lg font-semibold text-white">下载历史</h3>
         </div>
         {downloads.length > 0 ? (
-          <div className="divide-y">
+          <div className="divide-y divide-white/10">
             {downloads.map(dl => (
-              <div key={dl.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+              <div key={dl.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors">
                 <div className="flex items-center gap-4">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <FileText className="w-5 h-5 text-blue-600" />
+                  <div 
+                    className="p-2 rounded-lg"
+                    style={{ background: 'var(--theme-primary-900)' }}
+                  >
+                    <FileText className="w-5 h-5" style={{ color: 'var(--theme-primary-400)' }} />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-800">{dl.title}</p>
-                    <p className="text-sm text-gray-500">{dl.date} · {dl.size}</p>
+                    <p className="font-medium text-white">{dl.title}</p>
+                    <p className="text-sm text-slate-400">{dl.date} · {dl.size}</p>
                   </div>
                 </div>
-                <button className="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                <button 
+                  className="px-4 py-2 rounded-lg transition-colors"
+                  style={{ 
+                    color: 'var(--theme-primary-400)',
+                    background: 'var(--theme-primary-900)'
+                  }}
+                >
                   重新下载
                 </button>
               </div>
             ))}
           </div>
         ) : (
-          <div className="p-12 text-center text-gray-500">
-            <Download className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <div className="p-12 text-center text-slate-400">
+            <Download className="w-12 h-12 mx-auto mb-4 text-slate-600" />
             <p>暂无下载记录</p>
           </div>
         )}
@@ -472,87 +424,94 @@ function Downloads({ user, config }: { user: any; config: any }) {
 
 // 固件管理组件
 function FirmwareManage({ isAdmin }: { isAdmin: boolean }) {
-  const [firmwareList, setFirmwareList] = useState([
+  const [firmwareList] = useState([
     { id: 1, title: 'SM2258XT 开卡工具 v1.2', category: '慧荣 SM2258XT', status: 'approved', downloads: 258 },
     { id: 2, title: 'PS3111 量产工具 v2.5', category: '群联 PS3111', status: 'pending', downloads: 0 },
     { id: 3, title: 'SM2259XT 高级工具 v3.0', category: '慧荣 SM2259XT', status: 'approved', downloads: 890 },
     { id: 4, title: 'MAP1202 开卡程序 v1.0', category: '联芸 MAP1202', status: 'rejected', downloads: 0 }
   ]);
 
-  const statusColors: Record<string, string> = {
-    approved: 'bg-green-100 text-green-700',
-    pending: 'bg-yellow-100 text-yellow-700',
-    rejected: 'bg-red-100 text-red-700'
+  const getStatusStyle = (status: string) => {
+    switch(status) {
+      case 'approved': return 'bg-green-500/20 text-green-400';
+      case 'pending': return 'bg-amber-500/20 text-amber-400';
+      case 'rejected': return 'bg-red-500/20 text-red-400';
+      default: return 'bg-slate-500/20 text-slate-400';
+    }
   };
 
-  const statusLabels: Record<string, string> = {
-    approved: '已通过',
-    pending: '待审核',
-    rejected: '已拒绝'
+  const getStatusLabel = (status: string) => {
+    switch(status) {
+      case 'approved': return '已通过';
+      case 'pending': return '待审核';
+      case 'rejected': return '已拒绝';
+      default: return status;
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">固件管理</h2>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+        <h2 className="text-2xl font-bold text-white">固件管理</h2>
+        <button className="btn-primary px-4 py-3 rounded-xl text-white font-semibold flex items-center gap-2">
           <Plus className="w-4 h-4" />
           上传固件
         </button>
       </div>
 
-      {/* 固件列表 */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">固件名称</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">分类</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">下载次数</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {firmwareList.map(fw => (
-              <tr key={fw.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-gray-400" />
-                    <span className="font-medium text-gray-800">{fw.title}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-gray-600">{fw.category}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[fw.status]}`}>
-                    {statusLabels[fw.status]}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-gray-600">{fw.downloads}</td>
-                <td className="px-6 py-4">
-                  <div className="flex gap-2">
-                    <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    {fw.status === 'pending' && isAdmin && (
-                      <>
-                        <button className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors">
-                          <CheckCircle className="w-4 h-4" />
-                        </button>
-                        <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                          <XCircle className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                    <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
+      <div className="glass-card rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-white/5">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">固件名称</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">分类</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">状态</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">下载次数</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">操作</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-white/10">
+              {firmwareList.map(fw => (
+                <tr key={fw.id} className="hover:bg-white/5 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-slate-400" />
+                      <span className="font-medium text-white">{fw.title}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-slate-400">{fw.category}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(fw.status)}`}>
+                      {getStatusLabel(fw.status)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-slate-400">{fw.downloads}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex gap-2">
+                      <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors">
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      {fw.status === 'pending' && isAdmin && (
+                        <>
+                          <button className="p-2 text-green-400 hover:bg-green-500/20 rounded-lg transition-colors">
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                          <button className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                      <button className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -560,15 +519,15 @@ function FirmwareManage({ isAdmin }: { isAdmin: boolean }) {
 
 // 分类管理组件
 function CategoryManage() {
-  const [categories, setCategories] = useState([
-    { id: 'cat-1', name: '慧荣 (SMI)', parent: null, order: 1, children: [
+  const [categories] = useState([
+    { id: 'cat-1', name: '慧荣 (SMI)', order: 1, children: [
       { id: 'cat-1-1', name: 'SM2258XT', parent: 'cat-1', order: 1 },
       { id: 'cat-1-2', name: 'SM2259XT', parent: 'cat-1', order: 2 }
     ]},
-    { id: 'cat-2', name: '群联 (Phison)', parent: null, order: 2, children: [
+    { id: 'cat-2', name: '群联 (Phison)', order: 2, children: [
       { id: 'cat-2-1', name: 'PS3111', parent: 'cat-2', order: 1 }
     ]},
-    { id: 'cat-3', name: '联芸 (Maxio)', parent: null, order: 3, children: [
+    { id: 'cat-3', name: '联芸 (Maxio)', order: 3, children: [
       { id: 'cat-3-1', name: 'MAP1202', parent: 'cat-3', order: 1 }
     ]}
   ]);
@@ -577,48 +536,47 @@ function CategoryManage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">分类管理</h2>
+        <h2 className="text-2xl font-bold text-white">分类管理</h2>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="btn-primary px-4 py-3 rounded-xl text-white font-semibold flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           添加分类
         </button>
       </div>
 
-      {/* 分类树 */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="glass-card rounded-xl p-6">
         <div className="space-y-4">
           {categories.map(cat => (
-            <div key={cat.id} className="border border-gray-200 rounded-lg overflow-hidden">
-              <div className="p-4 bg-gray-50 flex items-center justify-between">
+            <div key={cat.id} className="border border-white/10 rounded-xl overflow-hidden">
+              <div className="p-4 bg-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <FolderTree className="w-5 h-5 text-blue-600" />
-                  <span className="font-semibold text-gray-800">{cat.name}</span>
+                  <FolderTree className="w-5 h-5" style={{ color: 'var(--theme-primary-400)' }} />
+                  <span className="font-semibold text-white">{cat.name}</span>
                 </div>
                 <div className="flex gap-2">
-                  <button className="p-2 text-gray-600 hover:bg-white rounded-lg transition-colors">
+                  <button className="p-2 text-slate-400 hover:bg-white/10 rounded-lg transition-colors">
                     <Edit className="w-4 h-4" />
                   </button>
-                  <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  <button className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
               {cat.children && cat.children.length > 0 && (
-                <div className="border-t">
+                <div className="border-t border-white/10">
                   {cat.children.map(child => (
-                    <div key={child.id} className="p-4 pl-12 flex items-center justify-between border-b last:border-b-0 hover:bg-gray-50">
+                    <div key={child.id} className="p-4 pl-12 flex items-center justify-between border-b border-white/10 last:border-b-0 hover:bg-white/5 transition-colors">
                       <div className="flex items-center gap-3">
-                        <ChevronRight className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-700">{child.name}</span>
+                        <span className="text-slate-400">|—</span>
+                        <span className="text-slate-300">{child.name}</span>
                       </div>
                       <div className="flex gap-2">
-                        <button className="p-2 text-gray-600 hover:bg-white rounded-lg transition-colors">
+                        <button className="p-2 text-slate-400 hover:bg-white/10 rounded-lg transition-colors">
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        <button className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -631,32 +589,31 @@ function CategoryManage() {
         </div>
       </div>
 
-      {/* 添加分类弹窗 */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl p-6 w-full max-w-md"
+            className="glass-card rounded-xl p-6 w-full max-w-md"
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-800">添加分类</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
+              <h3 className="text-lg font-semibold text-white">添加分类</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">分类名称</label>
+                <label className="block text-sm font-medium text-slate-400 mb-2">分类名称</label>
                 <input
                   type="text"
                   placeholder="例如：慧荣 SM2258XT"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">上级分类</label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <label className="block text-sm font-medium text-slate-400 mb-2">上级分类</label>
+                <select className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-white/30 focus:outline-none">
                   <option value="">无（作为一级分类）</option>
                   <option value="cat-1">慧荣 (SMI)</option>
                   <option value="cat-2">群联 (Phison)</option>
@@ -664,22 +621,22 @@ function CategoryManage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">排序</label>
+                <label className="block text-sm font-medium text-slate-400 mb-2">排序</label>
                 <input
                   type="number"
                   defaultValue={0}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-white/30 focus:outline-none"
                 />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-3 border border-white/20 text-slate-300 rounded-xl hover:bg-white/10 transition-colors"
               >
                 取消
               </button>
-              <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              <button className="btn-primary flex-1 px-4 py-3 rounded-xl text-white font-semibold">
                 添加
               </button>
             </div>
@@ -699,96 +656,95 @@ function UserManage() {
     { id: 4, email: 'wang@example.com', nickname: '王五', role: 'user', downloads: 8, isPremium: true }
   ]);
 
-  const roleColors: Record<string, string> = {
-    admin: 'bg-yellow-100 text-yellow-700',
-    maintainer: 'bg-blue-100 text-blue-700',
-    user: 'bg-gray-100 text-gray-700'
+  const getRoleStyle = (role: string) => {
+    switch(role) {
+      case 'admin': return 'bg-amber-500/20 text-amber-400';
+      case 'maintainer': return 'bg-blue-500/20 text-blue-400';
+      default: return 'bg-slate-500/20 text-slate-400';
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">用户管理</h2>
+        <h2 className="text-2xl font-bold text-white">用户管理</h2>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
             placeholder="搜索用户..."
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
           />
         </div>
       </div>
 
-      {/* 用户列表 */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">用户</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">角色</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">下载次数</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">会员状态</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {users.map(u => (
-              <tr key={u.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                      <User className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-800">{u.nickname}</p>
-                      <p className="text-sm text-gray-500">{u.email}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <select
-                    defaultValue={u.role}
-                    className={`px-3 py-1 rounded-full text-xs font-medium border-0 ${roleColors[u.role]}`}
-                  >
-                    <option value="admin">管理员</option>
-                    <option value="maintainer">维护者</option>
-                    <option value="user">普通用户</option>
-                  </select>
-                </td>
-                <td className="px-6 py-4 text-gray-600">{u.downloads}</td>
-                <td className="px-6 py-4">
-                  {u.isPremium ? (
-                    <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                      Premium
-                    </span>
-                  ) : (
-                    <span className="text-gray-400 text-sm">普通</span>
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </td>
+      <div className="glass-card rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-white/5">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">用户</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">角色</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">下载次数</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">会员状态</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">操作</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-white/10">
+              {users.map(u => (
+                <tr key={u.id} className="hover:bg-white/5 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        style={{ background: 'var(--theme-gradient)' }}
+                      >
+                        <User className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-white">{u.nickname}</p>
+                        <p className="text-sm text-slate-400">{u.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <select
+                      defaultValue={u.role}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border-0 ${getRoleStyle(u.role)}`}
+                    >
+                      <option value="admin">管理员</option>
+                      <option value="maintainer">维护者</option>
+                      <option value="user">普通用户</option>
+                    </select>
+                  </td>
+                  <td className="px-6 py-4 text-slate-400">{u.downloads}</td>
+                  <td className="px-6 py-4">
+                    {u.isPremium ? (
+                      <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium">
+                        Premium
+                      </span>
+                    ) : (
+                      <span className="text-slate-500 text-sm">普通</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {u.role !== 'admin' && (
+                      <button className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
 }
 
 // 网站设置组件
-function SiteSettings({
-  settings,
-  setSettings,
-  onSave
-}: {
-  settings: SiteSettings;
-  setSettings: (s: SiteSettings) => void;
-  onSave: () => void;
-}) {
+function SiteSettings() {
   const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'quota' | 'theme'>('basic');
 
   const sections = [
@@ -800,11 +756,10 @@ function SiteSettings({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">网站设置</h2>
+      <h2 className="text-2xl font-bold text-white">网站设置</h2>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="grid md:grid-cols-4 divide-x">
-          {/* 左侧导航 */}
+      <div className="glass-card rounded-xl overflow-hidden">
+        <div className="grid md:grid-cols-4 divide-x divide-white/10">
           <div className="p-4 space-y-1">
             {sections.map(section => {
               const Icon = section.icon;
@@ -815,8 +770,8 @@ function SiteSettings({
                   onClick={() => setActiveSection(section.id as any)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-600 hover:bg-gray-50'
+                      ? 'bg-white/10 text-white'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
@@ -826,152 +781,94 @@ function SiteSettings({
             })}
           </div>
 
-          {/* 右侧内容 */}
           <div className="md:col-span-3 p-6">
-            {/* 基本设置 */}
             {activeSection === 'basic' && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">网站名称</label>
+                  <label className="block text-sm font-medium text-slate-400 mb-2">网站名称</label>
                   <input
                     type="text"
-                    value={settings.siteName}
-                    onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    defaultValue="SSD开卡工具站"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">网站描述</label>
+                  <label className="block text-sm font-medium text-slate-400 mb-2">网站描述</label>
                   <textarea
-                    value={settings.siteDescription}
-                    onChange={(e) => setSettings({ ...settings, siteDescription: e.target.value })}
+                    defaultValue="专业的固态硬盘开卡工具分享平台"
                     rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
                   />
                 </div>
               </div>
             )}
 
-            {/* 模块开关 */}
             {activeSection === 'modules' && (
               <div className="space-y-4">
                 {[
-                  { key: 'showHero', label: '英雄区域', description: '首页顶部的大幅宣传区域' },
-                  { key: 'showHot', label: '热门工具', description: '显示热门固件模块' },
-                  { key: 'showLatest', label: '最新上传', description: '显示最新固件模块' },
-                  { key: 'showDonations', label: '捐赠公示', description: '显示捐赠记录和总额' },
-                  { key: 'showContributors', label: '贡献榜单', description: '显示贡献者列表' }
+                  { key: 'hero', label: '英雄区域', description: '首页顶部的大幅宣传区域' },
+                  { key: 'hot', label: '热门工具', description: '显示热门固件模块' },
+                  { key: 'latest', label: '最新上传', description: '显示最新固件列表' },
+                  { key: 'donations', label: '捐赠公示', description: '显示捐赠记录和总额' },
+                  { key: 'contributors', label: '贡献榜单', description: '显示贡献者列表' }
                 ].map(item => (
-                  <div key={item.key} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                  <div key={item.key} className="flex items-center justify-between p-4 border border-white/10 rounded-xl hover:bg-white/5 transition-colors">
                     <div>
-                      <p className="font-medium text-gray-800">{item.label}</p>
-                      <p className="text-sm text-gray-500">{item.description}</p>
+                      <p className="font-medium text-white">{item.label}</p>
+                      <p className="text-sm text-slate-400">{item.description}</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={settings[item.key as keyof SiteSettings] as boolean}
-                        onChange={(e) => setSettings({ ...settings, [item.key]: e.target.checked })}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <input type="checkbox" defaultChecked className="sr-only peer" />
+                      <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* 下载配额 */}
             {activeSection === 'quota' && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">免费用户每月下载次数</label>
+                  <label className="block text-sm font-medium text-slate-400 mb-2">免费用户每月下载次数</label>
                   <input
                     type="number"
-                    value={settings.freeQuota}
-                    onChange={(e) => setSettings({ ...settings, freeQuota: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    defaultValue={5}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Premium 用户每月下载次数</label>
+                  <label className="block text-sm font-medium text-slate-400 mb-2">Premium 用户每月下载次数</label>
                   <input
                     type="number"
-                    value={settings.premiumQuota}
-                    onChange={(e) => setSettings({ ...settings, premiumQuota: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    defaultValue={100}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
                   />
                 </div>
               </div>
             )}
 
-            {/* 主题配色 */}
             {activeSection === 'theme' && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">主色调</label>
-                  <div className="flex gap-4">
-                    <input
-                      type="color"
-                      value={settings.primaryColor}
-                      onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
-                      className="w-16 h-12 border rounded-lg cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={settings.primaryColor}
-                      onChange={(e) => setSettings({ ...settings, primaryColor: e.target.value })}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">辅助色调</label>
-                  <div className="flex gap-4">
-                    <input
-                      type="color"
-                      value={settings.secondaryColor}
-                      onChange={(e) => setSettings({ ...settings, secondaryColor: e.target.value })}
-                      className="w-16 h-12 border rounded-lg cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={settings.secondaryColor}
-                      onChange={(e) => setSettings({ ...settings, secondaryColor: e.target.value })}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                {/* 实时预览 */}
-                <div className="p-6 bg-gray-100 rounded-xl">
-                  <p className="text-sm font-medium text-gray-700 mb-4">实时预览</p>
-                  <div
-                    className="p-4 rounded-lg"
-                    style={{ backgroundColor: settings.primaryColor + '20' }}
-                  >
-                    <button
-                      className="px-4 py-2 text-white rounded-lg mr-2"
-                      style={{ backgroundColor: settings.primaryColor }}
-                    >
-                      主按钮
-                    </button>
-                    <button
-                      className="px-4 py-2 text-white rounded-lg"
-                      style={{ backgroundColor: settings.secondaryColor }}
-                    >
-                      次按钮
-                    </button>
+                  <label className="block text-sm font-medium text-slate-400 mb-4">选择主题</label>
+                  <div className="grid grid-cols-5 gap-4">
+                    {themes.map((theme) => (
+                      <div key={theme.id} className="text-center">
+                        <div 
+                          className="w-full aspect-square rounded-xl shadow-lg cursor-pointer hover:scale-105 transition-transform"
+                          style={{ background: theme.gradient }}
+                        />
+                        <p className="text-xs text-slate-400 mt-2">{theme.name}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* 保存按钮 */}
-            <div className="flex justify-end mt-6 pt-6 border-t">
-              <button
-                onClick={onSave}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            <div className="flex justify-end mt-6 pt-6 border-t border-white/10">
+              <button 
+                className="btn-primary px-6 py-3 rounded-xl text-white font-semibold flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />
                 保存设置

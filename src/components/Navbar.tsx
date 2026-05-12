@@ -1,15 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAppStore } from '../store';
+import { useThemeStore } from '../hooks/useTheme';
+import ThemeSwitcher from './ThemeSwitcher';
 import {
   HardDrive,
-  Search,
   User,
   Menu,
   X,
   LogOut,
-  Settings,
   UploadCloud,
   Zap
 } from 'lucide-react';
@@ -17,7 +17,12 @@ import {
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, isAuthenticated, logout, config } = useAppStore();
+  const { applyTheme } = useThemeStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    applyTheme();
+  }, [applyTheme]);
 
   const handleLogout = () => {
     logout();
@@ -30,10 +35,13 @@ export default function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-600 to-accent-500 flex items-center justify-center neon-border">
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center neon-border"
+              style={{ background: 'var(--theme-gradient)' }}
+            >
               <HardDrive className="w-6 h-6 text-white" />
             </div>
-            <span className="font-display font-bold text-xl bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">
+            <span className="font-display font-bold text-xl bg-gradient-to-r" style={{ backgroundImage: 'var(--theme-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {config.siteSettings.name}
             </span>
           </Link>
@@ -54,13 +62,18 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-4">
+            <ThemeSwitcher />
+            
             {isAuthenticated ? (
               <div className="relative">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-600 to-accent-500 flex items-center justify-center">
+                  <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ background: 'var(--theme-gradient)' }}
+                  >
                     <User className="w-4 h-4 text-white" />
                   </div>
                   <span className="text-sm font-medium">{user?.nickname}</span>
@@ -130,6 +143,9 @@ export default function Navbar() {
             className="md:hidden pb-4"
           >
             <div className="flex flex-col gap-2">
+              <div className="flex justify-center mb-4">
+                <ThemeSwitcher />
+              </div>
               <Link
                 to="/"
                 onClick={() => setIsMenuOpen(false)}
