@@ -112,18 +112,16 @@ export const firmwareDB = {
 
   // 获取热门固件
   async findHot(limit: number = 6) {
-    const [rows] = await pool.execute(
-      'SELECT * FROM firmware WHERE status = "approved" ORDER BY download_count DESC LIMIT ?',
-      [limit]
+    const [rows] = await pool.query(
+      `SELECT * FROM firmware WHERE status = "approved" ORDER BY download_count DESC LIMIT ${Number(limit)}`
     );
     return rows as any[];
   },
 
   // 获取最新固件
   async findLatest(limit: number = 6) {
-    const [rows] = await pool.execute(
-      'SELECT * FROM firmware WHERE status = "approved" ORDER BY created_at DESC LIMIT ?',
-      [limit]
+    const [rows] = await pool.query(
+      `SELECT * FROM firmware WHERE status = "approved" ORDER BY created_at DESC LIMIT ${Number(limit)}`
     );
     return rows as any[];
   },
@@ -212,9 +210,8 @@ export const donationDB = {
 
   // 获取所有捐赠记录
   async findAll(limit: number = 20) {
-    const [rows] = await pool.execute(
-      'SELECT * FROM donations ORDER BY created_at DESC LIMIT ?',
-      [limit]
+    const [rows] = await pool.query(
+      `SELECT * FROM donations ORDER BY created_at DESC LIMIT ${Number(limit)}`
     );
     return rows as any[];
   },

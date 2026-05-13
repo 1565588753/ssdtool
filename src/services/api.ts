@@ -22,20 +22,29 @@ async function fetchAPI<T>(
     (defaultHeaders as Record<string, string>)['x-user-id'] = userId;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
-  });
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...defaultHeaders,
+        ...options.headers,
+      },
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || '请求失败');
+    if (!response.ok) {
+      try {
+        const error = await response.json();
+        throw new Error(error.error || '请求失败');
+      } catch {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error(`API Error [${endpoint}]:`, error);
+    throw error;
   }
-
-  return response.json();
 }
 
 // 认证 API
@@ -215,14 +224,27 @@ export const adminAPI = {
 
 // 固件上传 API
 export const uploadFirmwareAPI = {
-  upload: (formData: FormData) =>
-    fetch(`${API_BASE_URL}/api/firmware/upload`, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'x-user-id': localStorage.getItem('userId') || '',
-      },
-    }).then(response => response.json()),
+  upload: async (formData: FormData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/firmware/upload`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'x-user-id': localStorage.getItem('userId') || '',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `上传失败: HTTP ${response.status}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('固件上传错误:', error);
+      throw error;
+    }
+  },
 };
 
 // 公共统计 API

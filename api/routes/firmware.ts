@@ -16,7 +16,7 @@ const router = Router();
 // 配置文件上传
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../../uploads'));
+    cb(null, path.join(__dirname, '../../files'));
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
