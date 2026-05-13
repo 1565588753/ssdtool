@@ -29,9 +29,11 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error) {
     console.error('获取捐赠记录错误:', error);
-    res.status(500).json({
-      success: false,
-      error: '获取捐赠记录失败'
+    // 数据库不可用时返回空数据
+    res.json({
+      success: true,
+      donations: [],
+      message: '数据库未连接或查询失败'
     });
   }
 });
