@@ -65,9 +65,9 @@ export default function Home() {
     { icon: GitBranch, label: '主控品牌', value: topLevelCategories.toString() },
   ];
 
-  // 获取排序后的模块（排除donations和contributors，它们会单独并排显示）
+  // 获取排序后的模块（排除donations和contributors和latest，它们会单独并排显示或不需要）
   const sortedModules = [...config.homeModules]
-    .filter(m => m.id !== 'donations' && m.id !== 'contributors')
+    .filter(m => m.id !== 'donations' && m.id !== 'contributors' && m.id !== 'latest')
     .sort((a, b) => a.order - b.order);
 
   // 渲染模块

@@ -58,21 +58,16 @@ export default function Navbar() {
               <Key className="w-4 h-4" />
               卡密查询
             </Link>
-            {isAuthenticated && (
-              <Link to="/user" className="text-theme-secondary hover:text-theme-main transition-colors">
-                用户中心
-              </Link>
-            )}
           </div>
 
           <div className="hidden md:flex items-center gap-4">
             <ThemeSwitcher />
             
             {isAuthenticated ? (
-              <div className="relative">
-                <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-theme-card hover:bg-theme-hover transition-colors border border-theme"
+              <div className="flex items-center gap-4 px-4 py-2 rounded-xl bg-theme-card border border-theme">
+                <Link
+                  to="/user"
+                  className="flex items-center gap-3 hover:bg-theme-hover transition-colors text-theme-main rounded-lg px-2 py-1"
                 >
                   <div 
                     className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -80,39 +75,22 @@ export default function Navbar() {
                   >
                     <User className="w-4 h-4 text-white" />
                   </div>
-                  <span className="text-sm font-medium text-theme-main">{user?.nickname}</span>
-                </button>
-
-                {isMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute right-0 top-full mt-2 w-48 glass-card rounded-xl p-2 shadow-xl border border-theme"
-                  >
-                    <Link
-                      to="/user"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-theme-hover transition-colors text-theme-main"
-                    >
-                      <User className="w-4 h-4" />
-                      用户中心
-                    </Link>
-                    {user?.isPremium && (
-                      <div className="flex items-center gap-3 px-3 py-2 text-theme-primary text-sm">
-                        <Zap className="w-4 h-4" />
-                        Premium
-                      </div>
-                    )}
-                    <hr className="border-theme my-2" />
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-theme-hover transition-colors text-red-500"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      退出登录
-                    </button>
-                  </motion.div>
+                  <span className="text-sm font-medium">{user?.nickname}</span>
+                </Link>
+                
+                {user?.isPremium && (
+                  <div className="flex items-center gap-2 px-2 py-1 rounded-lg" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
+                    <Zap className="w-4 h-4" style={{ color: 'var(--theme-accent-400)' }} />
+                    <span className="text-sm font-medium" style={{ color: 'var(--theme-accent-400)' }}>Premium</span>
+                  </div>
                 )}
+                
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-theme-hover transition-colors text-red-500"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
               </div>
             ) : (
               <div className="flex items-center gap-3">
@@ -124,7 +102,8 @@ export default function Navbar() {
                 </Link>
                 <Link
                   to="/register"
-                  className="btn-primary px-4 py-2 rounded-xl text-white font-semibold"
+                  className="px-4 py-2 rounded-xl text-white font-semibold"
+                  style={{ background: 'var(--theme-gradient)' }}
                 >
                   注册
                 </Link>
@@ -142,70 +121,95 @@ export default function Navbar() {
 
         {isMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="md:hidden pb-4"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="md:hidden py-4 border-t border-theme"
           >
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-center mb-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-center py-2">
                 <ThemeSwitcher />
               </div>
-              <Link
-                to="/"
-                onClick={() => setIsMenuOpen(false)}
-                className="px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
-              >
-                首页
-              </Link>
-              <Link
-                to="/categories"
-                onClick={() => setIsMenuOpen(false)}
-                className="px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
-              >
-                分类浏览
-              </Link>
+              
+              <div className="flex flex-wrap gap-2 px-2">
+                <Link
+                  to="/"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex-1 min-w-[120px] px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main text-center font-medium"
+                  style={{ backgroundColor: 'var(--theme-bg-card)' }}
+                >
+                  首页
+                </Link>
+                <Link
+                  to="/categories"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex-1 min-w-[120px] px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main text-center font-medium"
+                  style={{ backgroundColor: 'var(--theme-bg-card)' }}
+                >
+                  分类浏览
+                </Link>
+              </div>
+              
               <Link
                 to="/license-query"
                 onClick={() => setIsMenuOpen(false)}
-                className="px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main flex items-center gap-2"
+                className="mx-2 px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main flex items-center gap-3"
+                style={{ backgroundColor: 'var(--theme-bg-card)' }}
               >
-                <Key className="w-4 h-4" />
+                <Key className="w-5 h-5" />
                 卡密查询
               </Link>
-              <hr className="border-theme" />
+              
+              <div className="border-t border-theme my-2"></div>
+              
               {isAuthenticated ? (
-                <>
+                <div className="space-y-2 px-2">
                   <Link
                     to="/user"
                     onClick={() => setIsMenuOpen(false)}
-                    className="px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
+                    style={{ backgroundColor: 'var(--theme-bg-card)' }}
                   >
-                    用户中心
+                    <div 
+                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ background: 'var(--theme-gradient)' }}
+                    >
+                      <User className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">{user?.nickname}</div>
+                      {user?.isPremium && (
+                        <div className="text-xs" style={{ color: 'var(--theme-accent-400)' }}>Premium 会员</div>
+                      )}
+                    </div>
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="text-left px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-red-500"
+                    className="w-full text-left px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-red-500 flex items-center gap-3"
+                    style={{ backgroundColor: 'var(--theme-bg-card)' }}
                   >
+                    <LogOut className="w-5 h-5" />
                     退出登录
                   </button>
-                </>
+                </div>
               ) : (
-                <>
+                <div className="flex gap-2 px-2">
                   <Link
                     to="/login"
                     onClick={() => setIsMenuOpen(false)}
-                    className="px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
+                    className="flex-1 px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main text-center font-medium"
+                    style={{ backgroundColor: 'var(--theme-bg-card)' }}
                   >
                     登录
                   </Link>
                   <Link
                     to="/register"
                     onClick={() => setIsMenuOpen(false)}
-                    className="btn-primary px-4 py-3 rounded-xl text-white font-semibold text-center"
+                    className="flex-1 px-4 py-3 rounded-xl text-white text-center font-semibold"
+                    style={{ background: 'var(--theme-gradient)' }}
                   >
                     注册
                   </Link>
-                </>
+                </div>
               )}
             </div>
           </motion.div>
