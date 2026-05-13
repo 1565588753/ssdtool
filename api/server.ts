@@ -3,6 +3,7 @@
  */
 import app from './app.js';
 import { testConnection } from './db.js';
+import { setUseMockData } from './dboperations.js';
 import dotenv from 'dotenv';
 
 // 加载环境变量
@@ -17,7 +18,12 @@ const server = app.listen(PORT, async () => {
   console.log(`Server ready on port ${PORT}`);
   
   // 测试数据库连接
-  await testConnection();
+  const connected = await testConnection();
+  
+  if (!connected) {
+    console.log('⚠️  Database connection failed, switching to mock data mode');
+    setUseMockData(true);
+  }
 });
 
 /**
