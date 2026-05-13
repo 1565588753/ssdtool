@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAppStore } from '../store';
-import { themes } from '../hooks/useTheme';
+import { themes, useThemeStore } from '../hooks/useTheme';
 import {
   User,
   Users,
@@ -22,14 +22,18 @@ import {
   Palette,
   Globe,
   Zap,
-  X
+  X,
+  Tag,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 
-type TabType = 'dashboard' | 'profile' | 'downloads' | 'firmware' | 'categories' | 'users' | 'settings';
+type TabType = 'dashboard' | 'profile' | 'downloads' | 'firmware' | 'categories' | 'tags' | 'users' | 'settings';
 
 export default function UserCenter() {
   const navigate = useNavigate();
-  const { user, logout, config } = useAppStore();
+  const { user, logout, config, categories, firmware, tags, addCategory, updateCategory, deleteCategory, addTag, updateTag, deleteTag, updateFirmware, deleteFirmware } = useAppStore();
+  const { setTheme, currentTheme } = useThemeStore();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
 
   if (!user) {
@@ -46,6 +50,7 @@ export default function UserCenter() {
     { id: 'downloads', icon: Download, label: '下载记录', roles: ['all'] },
     { id: 'firmware', icon: FileText, label: '固件管理', roles: ['maintainer', 'admin'] },
     { id: 'categories', icon: FolderTree, label: '分类管理', roles: ['admin'] },
+    { id: 'tags', icon: Tag, label: '标签管理', roles: ['admin'] },
     { id: 'users', icon: Users, label: '用户管理', roles: ['admin'] },
     { id: 'settings', icon: Settings, label: '网站设置', roles: ['admin'] }
   ].filter(item => {
@@ -56,25 +61,25 @@ export default function UserCenter() {
   });
 
   return (
-    <div className="min-h-screen gradient-bg flex">
+    <div className="min-h-screen flex" style={{ background: 'var(--theme-bg-base)' }}>
       {/* 左侧导航 */}
-      <aside className="w-64 glass border-r border-white/10 flex flex-col">
-        <div className="p-6 border-b border-white/10">
+      <aside className="w-64 glass border-r flex flex-col" style={{ borderColor: 'var(--theme-border)' }}>
+        <div className="p-6 border-b" style={{ borderColor: 'var(--theme-border)' }}>
           <div className="flex items-center gap-3">
             <div 
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              className="w-10 h-10 rounded-xl flex items-center justify-center neon-border"
               style={{ background: 'var(--theme-gradient)' }}
             >
               <FileText className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-white">SSD管理中心</h1>
-              <p className="text-xs text-slate-400">控制面板</p>
+              <h1 className="font-bold" style={{ color: 'var(--theme-text)' }}>SSD管理中心</h1>
+              <p className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>控制面板</p>
             </div>
           </div>
         </div>
 
-        <div className="p-4 border-b border-white/10">
+        <div className="p-4 border-b" style={{ borderColor: 'var(--theme-border)' }}>
           <div className="flex items-center gap-3">
             <div 
               className="w-12 h-12 rounded-full flex items-center justify-center"
@@ -83,7 +88,7 @@ export default function UserCenter() {
               <User className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-white truncate">{user.nickname}</p>
+              <p className="font-semibold truncate" style={{ color: 'var(--theme-text)' }}>{user.nickname}</p>
               <p className="text-xs flex items-center gap-1">
                 {isAdmin ? (
                   <>
@@ -96,7 +101,7 @@ export default function UserCenter() {
                     <span className="text-blue-400">维护者</span>
                   </>
                 ) : (
-                  <span className="text-slate-400">普通用户</span>
+                  <span style={{ color: 'var(--theme-text-secondary)' }}>普通用户</span>
                 )}
               </p>
             </div>
@@ -113,10 +118,14 @@ export default function UserCenter() {
                 onClick={() => setActiveTab(item.id as TabType)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                   isActive
-                    ? 'bg-white/10 text-white border-l-2'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'text-white border-l-2'
+                    : 'hover:text-white'
                 }`}
-                style={{ borderLeftColor: isActive ? 'var(--theme-primary-500)' : 'transparent' }}
+                style={{ 
+                  backgroundColor: isActive ? 'var(--theme-bg-hover)' : 'transparent',
+                  color: isActive ? 'var(--theme-text)' : 'var(--theme-text-secondary)',
+                  borderLeftColor: isActive ? 'var(--theme-primary-500)' : 'transparent'
+                }}
               >
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
@@ -125,7 +134,7 @@ export default function UserCenter() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t" style={{ borderColor: 'var(--theme-border)' }}>
           <button
             onClick={logout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all"
@@ -144,10 +153,11 @@ export default function UserCenter() {
           )}
           {activeTab === 'profile' && <Profile user={user} />}
           {activeTab === 'downloads' && <Downloads user={user} config={config} />}
-          {activeTab === 'firmware' && isMaintainer && <FirmwareManage isAdmin={isAdmin} />}
-          {activeTab === 'categories' && isAdmin && <CategoryManage />}
+          {activeTab === 'firmware' && isMaintainer && <FirmwareManage isAdmin={isAdmin} firmware={firmware} updateFirmware={updateFirmware} deleteFirmware={deleteFirmware} />}
+          {activeTab === 'categories' && isAdmin && <CategoryManage categories={categories} addCategory={addCategory} updateCategory={updateCategory} deleteCategory={deleteCategory} />}
+          {activeTab === 'tags' && isAdmin && <TagManage tags={tags} addTag={addTag} updateTag={updateTag} deleteTag={deleteTag} />}
           {activeTab === 'users' && isAdmin && <UserManage />}
-          {activeTab === 'settings' && isAdmin && <SiteSettings />}
+          {activeTab === 'settings' && isAdmin && <SiteSettings setTheme={setTheme} currentTheme={currentTheme} />}
         </div>
       </main>
     </div>
@@ -170,7 +180,7 @@ function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMainta
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">仪表盘</h2>
+      <h2 className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>仪表盘</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
@@ -182,6 +192,7 @@ function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMainta
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
               className="glass-card rounded-xl p-6 hover:border-white/20 transition-all"
+              style={{ borderColor: 'var(--theme-border)' }}
             >
               <div className="flex items-center justify-between mb-4">
                 <div 
@@ -191,17 +202,17 @@ function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMainta
                   <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>
-              <p className="text-3xl font-bold text-white mb-1">{stat.value}</p>
-              <p className="text-slate-400 text-sm">{stat.label}</p>
+              <p className="text-3xl font-bold mb-1" style={{ color: 'var(--theme-text)' }}>{stat.value}</p>
+              <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>{stat.label}</p>
             </motion.div>
           );
         })}
       </div>
 
       {isMaintainer && pendingFirmware.length > 0 && (
-        <div className="glass-card rounded-xl">
-          <div className="p-6 border-b border-white/10 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+        <div className="glass-card rounded-xl" style={{ borderColor: 'var(--theme-border)' }}>
+          <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--theme-border)' }}>
+            <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--theme-text)' }}>
               <XCircle className="w-5 h-5 text-amber-400" />
               待审核固件
             </h3>
@@ -209,12 +220,12 @@ function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMainta
               {pendingFirmware.length} 个待审核
             </span>
           </div>
-          <div className="divide-y divide-white/10">
+          <div className="divide-y" style={{ borderColor: 'var(--theme-border)' }}>
             {pendingFirmware.map(fw => (
-              <div key={fw.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors">
+              <div key={fw.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
                 <div>
-                  <p className="font-medium text-white">{fw.title}</p>
-                  <p className="text-sm text-slate-400">由 {fw.author} 上传 · {fw.date}</p>
+                  <p className="font-medium" style={{ color: 'var(--theme-text)' }}>{fw.title}</p>
+                  <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>由 {fw.author} 上传 · {fw.date}</p>
                 </div>
                 <div className="flex gap-2">
                   <button className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors">
@@ -230,30 +241,31 @@ function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMainta
         </div>
       )}
 
-      <div className="glass-card rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">快捷操作</h3>
+      <div className="glass-card rounded-xl p-6" style={{ borderColor: 'var(--theme-border)' }}>
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--theme-text)' }}>快捷操作</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {isMaintainer && (
             <button 
-              className="p-4 border-2 border-dashed border-white/20 rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2"
+              className="p-4 border-2 border-dashed rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2"
+              style={{ borderColor: 'var(--theme-border)' }}
             >
-              <Plus className="w-8 h-8 text-slate-400" />
-              <span className="text-sm text-slate-400">上传固件</span>
+              <Plus className="w-8 h-8" style={{ color: 'var(--theme-text-secondary)' }} />
+              <span className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>上传固件</span>
             </button>
           )}
           {isAdmin && (
             <>
-              <button className="p-4 border-2 border-dashed border-white/20 rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2">
-                <FolderTree className="w-8 h-8 text-slate-400" />
-                <span className="text-sm text-slate-400">管理分类</span>
+              <button className="p-4 border-2 border-dashed rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2" style={{ borderColor: 'var(--theme-border)' }}>
+                <FolderTree className="w-8 h-8" style={{ color: 'var(--theme-text-secondary)' }} />
+                <span className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>管理分类</span>
               </button>
-              <button className="p-4 border-2 border-dashed border-white/20 rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2">
-                <Users className="w-8 h-8 text-slate-400" />
-                <span className="text-sm text-slate-400">管理用户</span>
+              <button className="p-4 border-2 border-dashed rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2" style={{ borderColor: 'var(--theme-border)' }}>
+                <Tag className="w-8 h-8" style={{ color: 'var(--theme-text-secondary)' }} />
+                <span className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>管理标签</span>
               </button>
-              <button className="p-4 border-2 border-dashed border-white/20 rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2">
-                <Settings className="w-8 h-8 text-slate-400" />
-                <span className="text-sm text-slate-400">网站设置</span>
+              <button className="p-4 border-2 border-dashed rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2" style={{ borderColor: 'var(--theme-border)' }}>
+                <Settings className="w-8 h-8" style={{ color: 'var(--theme-text-secondary)' }} />
+                <span className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>网站设置</span>
               </button>
             </>
           )}
@@ -267,10 +279,10 @@ function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMainta
 function Profile({ user }: { user: any }) {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">账户信息</h2>
+      <h2 className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>账户信息</h2>
 
-      <div className="glass-card rounded-xl p-6">
-        <div className="flex items-center gap-6 mb-6 pb-6 border-b border-white/10">
+      <div className="glass-card rounded-xl p-6" style={{ borderColor: 'var(--theme-border)' }}>
+        <div className="flex items-center gap-6 mb-6 pb-6 border-b" style={{ borderColor: 'var(--theme-border)' }}>
           <div 
             className="w-24 h-24 rounded-full flex items-center justify-center"
             style={{ background: 'var(--theme-gradient)' }}
@@ -278,8 +290,8 @@ function Profile({ user }: { user: any }) {
             <User className="w-12 h-12 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-white">{user.nickname}</h3>
-            <p className="text-slate-400">{user.email}</p>
+            <h3 className="text-xl font-semibold" style={{ color: 'var(--theme-text)' }}>{user.nickname}</h3>
+            <p style={{ color: 'var(--theme-text-secondary)' }}>{user.email}</p>
             <div className="flex items-center gap-2 mt-2">
               {user.role === 'admin' && (
                 <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-sm font-medium flex items-center gap-1">
@@ -304,25 +316,35 @@ function Profile({ user }: { user: any }) {
 
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">昵称</label>
+            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>昵称</label>
             <input
               type="text"
               defaultValue={user.nickname}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
+              className="w-full px-4 py-3 rounded-xl focus:outline-none"
+              style={{ 
+                backgroundColor: 'var(--theme-bg-card)',
+                border: '1px solid var(--theme-border)',
+                color: 'var(--theme-text)'
+              }}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-2">邮箱</label>
+            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>邮箱</label>
             <input
               type="email"
               defaultValue={user.email}
               disabled
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 cursor-not-allowed"
+              className="w-full px-4 py-3 rounded-xl cursor-not-allowed"
+              style={{ 
+                backgroundColor: 'var(--theme-bg-card)',
+                border: '1px solid var(--theme-border)',
+                color: 'var(--theme-text-secondary)'
+              }}
             />
           </div>
         </div>
 
-        <div className="mt-6 pt-6 border-t border-white/10 flex justify-end">
+        <div className="mt-6 pt-6 border-t flex justify-end" style={{ borderColor: 'var(--theme-border)' }}>
           <button 
             className="btn-primary px-6 py-3 rounded-xl text-white font-semibold flex items-center gap-2"
           >
@@ -348,11 +370,11 @@ function Downloads({ user, config }: { user: any; config: any }) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">下载记录</h2>
+      <h2 className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>下载记录</h2>
 
-      <div className="glass-card rounded-xl p-6">
+      <div className="glass-card rounded-xl p-6" style={{ borderColor: 'var(--theme-border)' }}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white">本月下载额度</h3>
+          <h3 className="text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>本月下载额度</h3>
           {user.isPremium && (
             <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium">
               Premium 会员
@@ -361,10 +383,10 @@ function Downloads({ user, config }: { user: any; config: any }) {
         </div>
         <div className="mb-4">
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-slate-400">已使用</span>
-            <span className="font-semibold text-white">{2} / {user.isPremium ? 100 : 5}</span>
+            <span style={{ color: 'var(--theme-text-secondary)' }}>已使用</span>
+            <span className="font-semibold" style={{ color: 'var(--theme-text)' }}>{2} / {user.isPremium ? 100 : 5}</span>
           </div>
-          <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--theme-bg-card)' }}>
             <div
               className="h-full rounded-full transition-all"
               style={{ 
@@ -374,36 +396,36 @@ function Downloads({ user, config }: { user: any; config: any }) {
             />
           </div>
         </div>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>
           剩余 <span className="font-semibold" style={{ color: 'var(--theme-primary-400)' }}>{remainingQuota}</span> 次下载额度
         </p>
       </div>
 
-      <div className="glass-card rounded-xl">
-        <div className="p-6 border-b border-white/10">
-          <h3 className="text-lg font-semibold text-white">下载历史</h3>
+      <div className="glass-card rounded-xl" style={{ borderColor: 'var(--theme-border)' }}>
+        <div className="p-6 border-b" style={{ borderColor: 'var(--theme-border)' }}>
+          <h3 className="text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>下载历史</h3>
         </div>
         {downloads.length > 0 ? (
-          <div className="divide-y divide-white/10">
+          <div className="divide-y" style={{ borderColor: 'var(--theme-border)' }}>
             {downloads.map(dl => (
-              <div key={dl.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors">
+              <div key={dl.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
                 <div className="flex items-center gap-4">
                   <div 
                     className="p-2 rounded-lg"
-                    style={{ background: 'var(--theme-primary-900)' }}
+                    style={{ backgroundColor: 'var(--theme-primary-900)' }}
                   >
                     <FileText className="w-5 h-5" style={{ color: 'var(--theme-primary-400)' }} />
                   </div>
                   <div>
-                    <p className="font-medium text-white">{dl.title}</p>
-                    <p className="text-sm text-slate-400">{dl.date} · {dl.size}</p>
+                    <p className="font-medium" style={{ color: 'var(--theme-text)' }}>{dl.title}</p>
+                    <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>{dl.date} · {dl.size}</p>
                   </div>
                 </div>
                 <button 
                   className="px-4 py-2 rounded-lg transition-colors"
                   style={{ 
                     color: 'var(--theme-primary-400)',
-                    background: 'var(--theme-primary-900)'
+                    backgroundColor: 'var(--theme-primary-900)'
                   }}
                 >
                   重新下载
@@ -412,8 +434,8 @@ function Downloads({ user, config }: { user: any; config: any }) {
             ))}
           </div>
         ) : (
-          <div className="p-12 text-center text-slate-400">
-            <Download className="w-12 h-12 mx-auto mb-4 text-slate-600" />
+          <div className="p-12 text-center" style={{ color: 'var(--theme-text-secondary)' }}>
+            <Download className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--theme-bg-hover)' }} />
             <p>暂无下载记录</p>
           </div>
         )}
@@ -423,14 +445,7 @@ function Downloads({ user, config }: { user: any; config: any }) {
 }
 
 // 固件管理组件
-function FirmwareManage({ isAdmin }: { isAdmin: boolean }) {
-  const [firmwareList] = useState([
-    { id: 1, title: 'SM2258XT 开卡工具 v1.2', category: '慧荣 SM2258XT', status: 'approved', downloads: 258 },
-    { id: 2, title: 'PS3111 量产工具 v2.5', category: '群联 PS3111', status: 'pending', downloads: 0 },
-    { id: 3, title: 'SM2259XT 高级工具 v3.0', category: '慧荣 SM2259XT', status: 'approved', downloads: 890 },
-    { id: 4, title: 'MAP1202 开卡程序 v1.0', category: '联芸 MAP1202', status: 'rejected', downloads: 0 }
-  ]);
-
+function FirmwareManage({ isAdmin, firmware, updateFirmware, deleteFirmware }: { isAdmin: boolean; firmware: any[]; updateFirmware: (id: string, data: any) => void; deleteFirmware: (id: string) => void }) {
   const getStatusStyle = (status: string) => {
     switch(status) {
       case 'approved': return 'bg-green-500/20 text-green-400';
@@ -452,41 +467,41 @@ function FirmwareManage({ isAdmin }: { isAdmin: boolean }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">固件管理</h2>
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>固件管理</h2>
         <button className="btn-primary px-4 py-3 rounded-xl text-white font-semibold flex items-center gap-2">
           <Plus className="w-4 h-4" />
           上传固件
         </button>
       </div>
 
-      <div className="glass-card rounded-xl overflow-hidden">
+      <div className="glass-card rounded-xl overflow-hidden" style={{ borderColor: 'var(--theme-border)' }}>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-white/5">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">固件名称</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">分类</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">状态</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">下载次数</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">操作</th>
+            <thead>
+              <tr style={{ backgroundColor: 'var(--theme-bg-card)' }}>
+                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>固件名称</th>
+                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>分类</th>
+                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>状态</th>
+                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>下载次数</th>
+                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>操作</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10">
-              {firmwareList.map(fw => (
-                <tr key={fw.id} className="hover:bg-white/5 transition-colors">
+            <tbody className="divide-y" style={{ borderColor: 'var(--theme-border)' }}>
+              {firmware.map(fw => (
+                <tr key={fw.id} className="hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-slate-400" />
-                      <span className="font-medium text-white">{fw.title}</span>
+                      <FileText className="w-5 h-5" style={{ color: 'var(--theme-text-secondary)' }} />
+                      <span className="font-medium" style={{ color: 'var(--theme-text)' }}>{fw.title}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-slate-400">{fw.category}</td>
+                  <td className="px-6 py-4" style={{ color: 'var(--theme-text-secondary)' }}>{fw.categoryName}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(fw.status)}`}>
                       {getStatusLabel(fw.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-slate-400">{fw.downloads}</td>
+                  <td className="px-6 py-4" style={{ color: 'var(--theme-text-secondary)' }}>{fw.downloadCount}</td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
                       <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors">
@@ -502,7 +517,7 @@ function FirmwareManage({ isAdmin }: { isAdmin: boolean }) {
                           </button>
                         </>
                       )}
-                      <button className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
+                      <button onClick={() => deleteFirmware(fw.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -518,25 +533,27 @@ function FirmwareManage({ isAdmin }: { isAdmin: boolean }) {
 }
 
 // 分类管理组件
-function CategoryManage() {
-  const [categories] = useState([
-    { id: 'cat-1', name: '慧荣 (SMI)', order: 1, children: [
-      { id: 'cat-1-1', name: 'SM2258XT', parent: 'cat-1', order: 1 },
-      { id: 'cat-1-2', name: 'SM2259XT', parent: 'cat-1', order: 2 }
-    ]},
-    { id: 'cat-2', name: '群联 (Phison)', order: 2, children: [
-      { id: 'cat-2-1', name: 'PS3111', parent: 'cat-2', order: 1 }
-    ]},
-    { id: 'cat-3', name: '联芸 (Maxio)', order: 3, children: [
-      { id: 'cat-3-1', name: 'MAP1202', parent: 'cat-3', order: 1 }
-    ]}
-  ]);
+function CategoryManage({ categories, addCategory, updateCategory, deleteCategory }: { categories: any[]; addCategory: (data: any) => void; updateCategory: (id: string, data: any) => void; deleteCategory: (id: string) => void }) {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(categories.map(c => c.id));
+  const [newCategory, setNewCategory] = useState({ name: '', parentId: '', orderIndex: 0, icon: '', description: '' });
+
+  const toggleCategory = (id: string) => {
+    setExpandedCategories(prev => 
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    );
+  };
+
+  const handleAddCategory = () => {
+    addCategory(newCategory);
+    setShowAddModal(false);
+    setNewCategory({ name: '', parentId: '', orderIndex: 0, icon: '', description: '' });
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">分类管理</h2>
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>分类管理</h2>
         <button
           onClick={() => setShowAddModal(true)}
           className="btn-primary px-4 py-3 rounded-xl text-white font-semibold flex items-center gap-2"
@@ -546,37 +563,43 @@ function CategoryManage() {
         </button>
       </div>
 
-      <div className="glass-card rounded-xl p-6">
+      <div className="glass-card rounded-xl p-6" style={{ borderColor: 'var(--theme-border)' }}>
         <div className="space-y-4">
           {categories.map(cat => (
-            <div key={cat.id} className="border border-white/10 rounded-xl overflow-hidden">
-              <div className="p-4 bg-white/5 flex items-center justify-between">
+            <div key={cat.id} className="border rounded-xl overflow-hidden" style={{ borderColor: 'var(--theme-border)' }}>
+              <div className="p-4 flex items-center justify-between" style={{ backgroundColor: 'var(--theme-bg-card)' }}>
                 <div className="flex items-center gap-3">
+                  <button onClick={() => toggleCategory(cat.id)} className="p-1 hover:bg-white/10 rounded">
+                    {expandedCategories.includes(cat.id) ? 
+                      <ChevronDown className="w-5 h-5" style={{ color: 'var(--theme-text-secondary)' }} /> : 
+                      <ChevronRight className="w-5 h-5" style={{ color: 'var(--theme-text-secondary)' }} />
+                    }
+                  </button>
                   <FolderTree className="w-5 h-5" style={{ color: 'var(--theme-primary-400)' }} />
-                  <span className="font-semibold text-white">{cat.name}</span>
+                  <span className="font-semibold" style={{ color: 'var(--theme-text)' }}>{cat.name}</span>
                 </div>
                 <div className="flex gap-2">
-                  <button className="p-2 text-slate-400 hover:bg-white/10 rounded-lg transition-colors">
+                  <button className="p-2 hover:bg-white/10 rounded-lg transition-colors" style={{ color: 'var(--theme-text-secondary)' }}>
                     <Edit className="w-4 h-4" />
                   </button>
-                  <button className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
+                  <button onClick={() => deleteCategory(cat.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              {cat.children && cat.children.length > 0 && (
-                <div className="border-t border-white/10">
-                  {cat.children.map(child => (
-                    <div key={child.id} className="p-4 pl-12 flex items-center justify-between border-b border-white/10 last:border-b-0 hover:bg-white/5 transition-colors">
+              {expandedCategories.includes(cat.id) && cat.children && cat.children.length > 0 && (
+                <div className="border-t" style={{ borderColor: 'var(--theme-border)' }}>
+                  {cat.children.map((child: any) => (
+                    <div key={child.id} className="p-4 pl-12 flex items-center justify-between border-b last:border-b-0 hover:bg-white/5 transition-colors" style={{ borderColor: 'var(--theme-border)', backgroundColor: 'var(--theme-bg-hover)' }}>
                       <div className="flex items-center gap-3">
-                        <span className="text-slate-400">|—</span>
-                        <span className="text-slate-300">{child.name}</span>
+                        <span style={{ color: 'var(--theme-text-secondary)' }}>|—</span>
+                        <span style={{ color: 'var(--theme-text)' }}>{child.name}</span>
                       </div>
                       <div className="flex gap-2">
-                        <button className="p-2 text-slate-400 hover:bg-white/10 rounded-lg transition-colors">
+                        <button className="p-2 hover:bg-white/10 rounded-lg transition-colors" style={{ color: 'var(--theme-text-secondary)' }}>
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
+                        <button onClick={() => deleteCategory(child.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -595,48 +618,240 @@ function CategoryManage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="glass-card rounded-xl p-6 w-full max-w-md"
+            style={{ borderColor: 'var(--theme-border)' }}
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-white">添加分类</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white">
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>添加分类</h3>
+              <button onClick={() => setShowAddModal(false)} className="hover:text-white" style={{ color: 'var(--theme-text-secondary)' }}>
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">分类名称</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>分类名称</label>
                 <input
                   type="text"
+                  value={newCategory.name}
+                  onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
                   placeholder="例如：慧荣 SM2258XT"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ 
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">上级分类</label>
-                <select className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-white/30 focus:outline-none">
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>上级分类</label>
+                <select 
+                  value={newCategory.parentId}
+                  onChange={(e) => setNewCategory({ ...newCategory, parentId: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ 
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                >
                   <option value="">无（作为一级分类）</option>
-                  <option value="cat-1">慧荣 (SMI)</option>
-                  <option value="cat-2">群联 (Phison)</option>
-                  <option value="cat-3">联芸 (Maxio)</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-400 mb-2">排序</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>排序</label>
                 <input
                   type="number"
-                  defaultValue={0}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:border-white/30 focus:outline-none"
+                  value={newCategory.orderIndex}
+                  onChange={(e) => setNewCategory({ ...newCategory, orderIndex: Number(e.target.value) })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ 
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>描述</label>
+                <textarea
+                  value={newCategory.description}
+                  onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                  placeholder="分类描述"
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ 
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
                 />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="flex-1 px-4 py-3 border border-white/20 text-slate-300 rounded-xl hover:bg-white/10 transition-colors"
+                className="flex-1 px-4 py-3 border rounded-xl hover:bg-white/10 transition-colors"
+                style={{ 
+                  borderColor: 'var(--theme-border)',
+                  color: 'var(--theme-text-secondary)'
+                }}
               >
                 取消
               </button>
-              <button className="btn-primary flex-1 px-4 py-3 rounded-xl text-white font-semibold">
+              <button onClick={handleAddCategory} className="btn-primary flex-1 px-4 py-3 rounded-xl text-white font-semibold">
+                添加
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// 标签管理组件
+function TagManage({ tags, addTag, updateTag, deleteTag }: { tags: any[]; addTag: (data: any) => void; updateTag: (id: string, data: any) => void; deleteTag: (id: string) => void }) {
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newTag, setNewTag] = useState({ name: '', slug: '', category: '', color: '', description: '' });
+
+  const handleAddTag = () => {
+    addTag(newTag);
+    setShowAddModal(false);
+    setNewTag({ name: '', slug: '', category: '', color: '', description: '' });
+  };
+
+  // 按分类分组标签
+  const tagsByCategory = tags.reduce((acc, tag) => {
+    if (!acc[tag.category]) {
+      acc[tag.category] = [];
+    }
+    acc[tag.category].push(tag);
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>标签管理</h2>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="btn-primary px-4 py-3 rounded-xl text-white font-semibold flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          添加标签
+        </button>
+      </div>
+
+      <div className="space-y-6">
+        {Object.entries(tagsByCategory).map(([category, categoryTags]) => (
+          <div key={category} className="glass-card rounded-xl p-6" style={{ borderColor: 'var(--theme-border)' }}>
+            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--theme-text)' }}>{category}</h3>
+            <div className="flex flex-wrap gap-3">
+              {(categoryTags as any[]).map(tag => (
+                <div key={tag.id} className="flex items-center gap-2 px-4 py-2 rounded-full border" style={{ 
+                  backgroundColor: tag.color ? `${tag.color}20` : 'var(--theme-bg-card)',
+                  borderColor: 'var(--theme-border)'
+                }}>
+                  {tag.color && <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }} />}
+                  <span style={{ color: tag.color || 'var(--theme-text)' }}>{tag.name}</span>
+                  <button onClick={() => deleteTag(tag.id)} className="p-1 hover:bg-white/10 rounded-full">
+                    <X className="w-3 h-3" style={{ color: 'var(--theme-text-secondary)' }} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card rounded-xl p-6 w-full max-w-md"
+            style={{ borderColor: 'var(--theme-border)' }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>添加标签</h3>
+              <button onClick={() => setShowAddModal(false)} className="hover:text-white" style={{ color: 'var(--theme-text-secondary)' }}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>标签名称</label>
+                <input
+                  type="text"
+                  value={newTag.name}
+                  onChange={(e) => setNewTag({ ...newTag, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                  placeholder="例如：TLC"
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ 
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>标签分类</label>
+                <select 
+                  value={newTag.category}
+                  onChange={(e) => setNewTag({ ...newTag, category: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ 
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                >
+                  <option value="">选择分类</option>
+                  <option value="颗粒类型">颗粒类型</option>
+                  <option value="颗粒制程">颗粒制程</option>
+                  <option value="固件年份">固件年份</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>标签颜色</label>
+                <input
+                  type="color"
+                  value={newTag.color || '#3b82f6'}
+                  onChange={(e) => setNewTag({ ...newTag, color: e.target.value })}
+                  className="w-full h-10 rounded-xl cursor-pointer"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>描述</label>
+                <textarea
+                  value={newTag.description}
+                  onChange={(e) => setNewTag({ ...newTag, description: e.target.value })}
+                  placeholder="标签描述"
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ 
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="flex-1 px-4 py-3 border rounded-xl hover:bg-white/10 transition-colors"
+                style={{ 
+                  borderColor: 'var(--theme-border)',
+                  color: 'var(--theme-text-secondary)'
+                }}
+              >
+                取消
+              </button>
+              <button onClick={handleAddTag} className="btn-primary flex-1 px-4 py-3 rounded-xl text-white font-semibold">
                 添加
               </button>
             </div>
@@ -667,31 +882,36 @@ function UserManage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">用户管理</h2>
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>用户管理</h2>
         <div className="relative">
           <input
             type="text"
             placeholder="搜索用户..."
-            className="pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
+            className="pl-10 pr-4 py-3 rounded-xl focus:outline-none"
+            style={{ 
+              backgroundColor: 'var(--theme-bg-card)',
+              border: '1px solid var(--theme-border)',
+              color: 'var(--theme-text)'
+            }}
           />
         </div>
       </div>
 
-      <div className="glass-card rounded-xl overflow-hidden">
+      <div className="glass-card rounded-xl overflow-hidden" style={{ borderColor: 'var(--theme-border)' }}>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-white/5">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">用户</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">角色</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">下载次数</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">会员状态</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">操作</th>
+            <thead>
+              <tr style={{ backgroundColor: 'var(--theme-bg-card)' }}>
+                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>用户</th>
+                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>角色</th>
+                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>下载次数</th>
+                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>会员状态</th>
+                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>操作</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10">
+            <tbody className="divide-y" style={{ borderColor: 'var(--theme-border)' }}>
               {users.map(u => (
-                <tr key={u.id} className="hover:bg-white/5 transition-colors">
+                <tr key={u.id} className="hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div 
@@ -701,8 +921,8 @@ function UserManage() {
                         <User className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="font-medium text-white">{u.nickname}</p>
-                        <p className="text-sm text-slate-400">{u.email}</p>
+                        <p className="font-medium" style={{ color: 'var(--theme-text)' }}>{u.nickname}</p>
+                        <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>{u.email}</p>
                       </div>
                     </div>
                   </td>
@@ -716,14 +936,14 @@ function UserManage() {
                       <option value="user">普通用户</option>
                     </select>
                   </td>
-                  <td className="px-6 py-4 text-slate-400">{u.downloads}</td>
+                  <td className="px-6 py-4" style={{ color: 'var(--theme-text-secondary)' }}>{u.downloads}</td>
                   <td className="px-6 py-4">
                     {u.isPremium ? (
                       <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium">
                         Premium
                       </span>
                     ) : (
-                      <span className="text-slate-500 text-sm">普通</span>
+                      <span className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>普通</span>
                     )}
                   </td>
                   <td className="px-6 py-4">
@@ -744,7 +964,7 @@ function UserManage() {
 }
 
 // 网站设置组件
-function SiteSettings() {
+function SiteSettings({ setTheme, currentTheme }: { setTheme: (themeId: string) => void; currentTheme: string }) {
   const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'quota' | 'theme'>('basic');
 
   const sections = [
@@ -756,10 +976,10 @@ function SiteSettings() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">网站设置</h2>
+      <h2 className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>网站设置</h2>
 
-      <div className="glass-card rounded-xl overflow-hidden">
-        <div className="grid md:grid-cols-4 divide-x divide-white/10">
+      <div className="glass-card rounded-xl overflow-hidden" style={{ borderColor: 'var(--theme-border)' }}>
+        <div className="grid md:grid-cols-4 divide-x" style={{ borderColor: 'var(--theme-border)' }}>
           <div className="p-4 space-y-1">
             {sections.map(section => {
               const Icon = section.icon;
@@ -770,9 +990,13 @@ function SiteSettings() {
                   onClick={() => setActiveSection(section.id as any)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     isActive
-                      ? 'bg-white/10 text-white'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      ? 'text-white'
+                      : 'hover:text-white'
                   }`}
+                  style={{ 
+                    backgroundColor: isActive ? 'var(--theme-bg-hover)' : 'transparent',
+                    color: isActive ? 'var(--theme-text)' : 'var(--theme-text-secondary)'
+                  }}
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{section.label}</span>
@@ -785,19 +1009,29 @@ function SiteSettings() {
             {activeSection === 'basic' && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-2">网站名称</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>网站名称</label>
                   <input
                     type="text"
                     defaultValue="SSD开卡工具站"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                    style={{ 
+                      backgroundColor: 'var(--theme-bg-card)',
+                      border: '1px solid var(--theme-border)',
+                      color: 'var(--theme-text)'
+                    }}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-2">网站描述</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>网站描述</label>
                   <textarea
                     defaultValue="专业的固态硬盘开卡工具分享平台"
                     rows={3}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                    style={{ 
+                      backgroundColor: 'var(--theme-bg-card)',
+                      border: '1px solid var(--theme-border)',
+                      color: 'var(--theme-text)'
+                    }}
                   />
                 </div>
               </div>
@@ -812,14 +1046,14 @@ function SiteSettings() {
                   { key: 'donations', label: '捐赠公示', description: '显示捐赠记录和总额' },
                   { key: 'contributors', label: '贡献榜单', description: '显示贡献者列表' }
                 ].map(item => (
-                  <div key={item.key} className="flex items-center justify-between p-4 border border-white/10 rounded-xl hover:bg-white/5 transition-colors">
+                  <div key={item.key} className="flex items-center justify-between p-4 border rounded-xl hover:bg-white/5 transition-colors" style={{ borderColor: 'var(--theme-border)', backgroundColor: 'var(--theme-bg-hover)' }}>
                     <div>
-                      <p className="font-medium text-white">{item.label}</p>
-                      <p className="text-sm text-slate-400">{item.description}</p>
+                      <p className="font-medium" style={{ color: 'var(--theme-text)' }}>{item.label}</p>
+                      <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>{item.description}</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" defaultChecked className="sr-only peer" />
-                      <div className="w-11 h-6 bg-white/10 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600" style={{ backgroundColor: 'var(--theme-bg-card)' }}></div>
                     </label>
                   </div>
                 ))}
@@ -829,19 +1063,29 @@ function SiteSettings() {
             {activeSection === 'quota' && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-2">免费用户每月下载次数</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>免费用户每月下载次数</label>
                   <input
                     type="number"
                     defaultValue={5}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                    style={{ 
+                      backgroundColor: 'var(--theme-bg-card)',
+                      border: '1px solid var(--theme-border)',
+                      color: 'var(--theme-text)'
+                    }}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-2">Premium 用户每月下载次数</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>Premium 用户每月下载次数</label>
                   <input
                     type="number"
                     defaultValue={100}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:border-white/30 focus:outline-none"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                    style={{ 
+                      backgroundColor: 'var(--theme-bg-card)',
+                      border: '1px solid var(--theme-border)',
+                      color: 'var(--theme-text)'
+                    }}
                   />
                 </div>
               </div>
@@ -850,23 +1094,31 @@ function SiteSettings() {
             {activeSection === 'theme' && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-400 mb-4">选择主题</label>
-                  <div className="grid grid-cols-5 gap-4">
-                    {themes.map((theme) => (
-                      <div key={theme.id} className="text-center">
-                        <div 
-                          className="w-full aspect-square rounded-xl shadow-lg cursor-pointer hover:scale-105 transition-transform"
-                          style={{ background: theme.gradient }}
-                        />
-                        <p className="text-xs text-slate-400 mt-2">{theme.name}</p>
-                      </div>
-                    ))}
+                  <label className="block text-sm font-medium mb-4" style={{ color: 'var(--theme-text-secondary)' }}>选择主题</label>
+                  <div className="grid grid-cols-4 gap-4">
+                    {themes.map((theme) => {
+                      const isActive = currentTheme === theme.id;
+                      return (
+                        <div key={theme.id} className="text-center cursor-pointer" onClick={() => setTheme(theme.id)}>
+                          <div 
+                            className="w-full aspect-square rounded-xl shadow-lg hover:scale-105 transition-transform border-2 flex items-center justify-center"
+                            style={{ 
+                              background: theme.gradient,
+                              borderColor: isActive ? theme.primary[500] : 'transparent'
+                            }}
+                          >
+                            {isActive && <CheckCircle className="w-6 h-6 text-white drop-shadow-lg" />}
+                          </div>
+                          <p className="text-xs mt-2" style={{ color: 'var(--theme-text-secondary)' }}>{theme.name}</p>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
             )}
 
-            <div className="flex justify-end mt-6 pt-6 border-t border-white/10">
+            <div className="flex justify-end mt-6 pt-6 border-t" style={{ borderColor: 'var(--theme-border)' }}>
               <button 
                 className="btn-primary px-6 py-3 rounded-xl text-white font-semibold flex items-center gap-2"
               >

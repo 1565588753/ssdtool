@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { User, Category, Firmware, Donation, Contributor, Config, Download } from '../../shared/types';
-import { mockCategories, mockFirmware, mockDonations, mockContributors, mockConfig } from '../lib/mockData';
+import { User, Category, Firmware, Donation, Contributor, Config, Download, Tag } from '../../shared/types';
+import { mockCategories, mockFirmware, mockDonations, mockContributors, mockConfig, mockTags } from '../lib/mockData';
 import { authAPI, firmwareAPI, categoryAPI, donationAPI } from '../services/api';
 
 interface AppState {
@@ -13,6 +13,7 @@ interface AppState {
 
   categories: Category[];
   firmware: Firmware[];
+  tags: Tag[];
   donations: Donation[];
   contributors: Contributor[];
   config: Config;
@@ -20,16 +21,33 @@ interface AppState {
 
   getFirmwareById: (id: string) => Firmware | undefined;
   getFirmwareByCategory: (categoryId: string) => Firmware[];
+  getFirmwareByTags: (tagIds: string[]) => Firmware[];
   getHotFirmware: () => Firmware[];
   getLatestFirmware: () => Firmware[];
   downloadFirmware: (firmwareId: string) => Promise<boolean>;
   upgradeToPremium: () => Promise<boolean>;
   singleDownloadPayment: (firmwareId: string) => Promise<boolean>;
 
+  // 分类管理
+  addCategory: (category: Omit<Category, 'id' | 'createdAt' | 'children'>) => void;
+  updateCategory: (id: string, category: Partial<Category>) => void;
+  deleteCategory: (id: string) => void;
+
+  // 标签管理
+  addTag: (tag: Omit<Tag, 'id' | 'createdAt'>) => void;
+  updateTag: (id: string, tag: Partial<Tag>) => void;
+  deleteTag: (id: string) => void;
+
+  // 固件管理
+  updateFirmware: (id: string, firmware: Partial<Firmware>) => void;
+  deleteFirmware: (id: string) => void;
+
   selectedCategory: string | null;
-  setSelectedCategory: (id: string | null) => void;
+  setSelectedCategory: (id: string | null | ((prev: string | null) => string | null)) => void;
+  selectedTags: string[];
+  setSelectedTags: (tags: string[] | ((prev: string[]) => string[])) => void;
   searchQuery: string;
-  setSearchQuery: (query: string) => void;
+  setSearchQuery: (query: string | ((prev: string) => string)) => void;
 
   // 数据加载
   loadInitialData: () => Promise<void>;
@@ -68,11 +86,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   isAuthenticated: false,
   categories: mockCategories,
   firmware: mockFirmware,
+  tags: mockTags,
   donations: mockDonations,
   contributors: mockContributors,
   config: mockConfig,
   downloads: [],
   selectedCategory: null,
+  selectedTags: [],
   searchQuery: '',
   isLoading: false,
   error: null,
@@ -157,6 +177,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       firmwareList = firmwareList.concat(state.firmware.filter(fw => fw.categoryId === cid));
     });
     return firmwareList;
+  },
+
+  getFirmwareByTags: (tagIds) => {
+    const state = get();
+    if (tagIds.length === 0) return state.firmware;
+    return state.firmware.filter(fw => 
+      tagIds.some(tagId => fw.tags.includes(tagId))
+    );
   },
 
   getHotFirmware: () => [...get().firmware].sort((a, b) => b.downloadCount - a.downloadCount).slice(0, 6),
@@ -304,8 +332,92 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  setSelectedCategory: (id) => set({ selectedCategory: id }),
-  setSearchQuery: (query) => set({ searchQuery: query }),
+  // 分类管理
+  addCategory: (category) => {
+    const newCategory: Category = {
+      ...category,
+      id: `cat-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      children: []
+    };
+    set((state) => ({
+      categories: [...state.categories, newCategory]
+    }));
+  },
+
+  updateCategory: (id, category) => {
+    set((state) => ({
+      categories: state.categories.map(cat =>
+        cat.id === id ? { ...cat, ...category } : cat
+      )
+    }));
+  },
+
+  deleteCategory: (id) => {
+    const deleteCategoryRecursive = (categories: Category[]): Category[] => {
+      return categories.filter(cat => {
+        if (cat.id === id) return false;
+        if (cat.children) {
+          cat.children = deleteCategoryRecursive(cat.children);
+        }
+        return true;
+      });
+    };
+    set((state) => ({
+      categories: deleteCategoryRecursive(state.categories)
+    }));
+  },
+
+  // 标签管理
+  addTag: (tag) => {
+    const newTag: Tag = {
+      ...tag,
+      id: `tag-${Date.now()}`,
+      createdAt: new Date().toISOString()
+    };
+    set((state) => ({
+      tags: [...state.tags, newTag]
+    }));
+  },
+
+  updateTag: (id, tag) => {
+    set((state) => ({
+      tags: state.tags.map(t =>
+        t.id === id ? { ...t, ...tag } : t
+      )
+    }));
+  },
+
+  deleteTag: (id) => {
+    set((state) => ({
+      tags: state.tags.filter(t => t.id !== id)
+    }));
+  },
+
+  // 固件管理
+  updateFirmware: (id, firmware) => {
+    set((state) => ({
+      firmware: state.firmware.map(fw =>
+        fw.id === id ? { ...fw, ...firmware } : fw
+      )
+    }));
+  },
+
+  deleteFirmware: (id) => {
+    set((state) => ({
+      firmware: state.firmware.filter(fw => fw.id !== id)
+    }));
+  },
+
+  setSelectedCategory: (id) => set((state) => ({ 
+    selectedCategory: typeof id === 'function' ? id(state.selectedCategory) : id 
+  })),
+  setSelectedTags: (tags) => set((state) => ({ 
+    selectedTags: typeof tags === 'function' ? tags(state.selectedTags) : tags 
+  })),
+  setSearchQuery: (query) => set((state) => ({ 
+    searchQuery: typeof query === 'function' ? query(state.searchQuery) : query 
+  })),
 
   loadInitialData: async () => {
     set({ isLoading: true, error: null });
@@ -325,6 +437,8 @@ export const useAppStore = create<AppState>((set, get) => ({
           name: c.name,
           parentId: c.parentId,
           orderIndex: c.orderIndex,
+          icon: c.icon,
+          description: c.description,
           children: c.children || [],
           createdAt: c.createdAt
         }));
@@ -339,6 +453,8 @@ export const useAppStore = create<AppState>((set, get) => ({
           description: f.description,
           version: f.version,
           categoryId: f.categoryId,
+          categoryName: f.categoryName,
+          tags: f.tags || [],
           uploaderId: f.uploaderId,
           uploaderName: f.uploaderName,
           filePath: f.filePath,

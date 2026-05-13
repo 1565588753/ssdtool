@@ -13,13 +13,26 @@ export interface User {
   createdAt: string;
 }
 
-// 分类类型
+// 分类类型（支持多层级）
 export interface Category {
   id: string;
   name: string;
-  parentId?: string;
+  parentId?: string; // 父分类ID，为空表示一级分类
   orderIndex: number;
-  children?: Category[];
+  icon?: string;
+  description?: string;
+  children?: Category[]; // 子分类
+  createdAt: string;
+}
+
+// 标签类型
+export interface Tag {
+  id: string;
+  name: string;
+  slug: string;
+  color?: string;
+  description?: string;
+  category: string; // 标签分类，如 "颗粒制程"、"固件年份" 等
   createdAt: string;
 }
 
@@ -30,6 +43,8 @@ export interface Firmware {
   description: string;
   version: string;
   categoryId: string;
+  categoryName?: string;
+  tags: string[]; // 标签ID数组
   uploaderId: string;
   uploaderName?: string;
   filePath: string;

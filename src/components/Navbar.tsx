@@ -31,7 +31,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10">
+    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-theme">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
@@ -47,14 +47,14 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
-            <Link to="/" className="text-slate-300 hover:text-white transition-colors">
+            <Link to="/" className="text-theme-secondary hover:text-theme-main transition-colors">
               首页
             </Link>
-            <Link to="/categories" className="text-slate-300 hover:text-white transition-colors">
+            <Link to="/categories" className="text-theme-secondary hover:text-theme-main transition-colors">
               分类浏览
             </Link>
             {user?.role === 'maintainer' || user?.role === 'admin' ? (
-              <button className="text-slate-300 hover:text-white transition-colors flex items-center gap-2">
+              <button className="text-theme-secondary hover:text-theme-main transition-colors flex items-center gap-2">
                 <UploadCloud className="w-4 h-4" />
                 上传固件
               </button>
@@ -68,7 +68,7 @@ export default function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-theme-card hover:bg-theme-hover transition-colors border border-theme"
                 >
                   <div 
                     className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -76,33 +76,33 @@ export default function Navbar() {
                   >
                     <User className="w-4 h-4 text-white" />
                   </div>
-                  <span className="text-sm font-medium">{user?.nickname}</span>
+                  <span className="text-sm font-medium text-theme-main">{user?.nickname}</span>
                 </button>
 
                 {isMenuOpen && (
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="absolute right-0 top-full mt-2 w-48 glass-card rounded-xl p-2 shadow-xl"
+                    className="absolute right-0 top-full mt-2 w-48 glass-card rounded-xl p-2 shadow-xl border border-theme"
                   >
                     <Link
                       to="/user"
                       onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors"
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-theme-hover transition-colors text-theme-main"
                     >
                       <User className="w-4 h-4" />
                       用户中心
                     </Link>
                     {user?.isPremium && (
-                      <div className="flex items-center gap-3 px-3 py-2 text-amber-400 text-sm">
+                      <div className="flex items-center gap-3 px-3 py-2 text-theme-primary text-sm">
                         <Zap className="w-4 h-4" />
                         Premium
                       </div>
                     )}
-                    <hr className="border-white/10 my-2" />
+                    <hr className="border-theme my-2" />
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors text-red-400"
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-theme-hover transition-colors text-red-500"
                     >
                       <LogOut className="w-4 h-4" />
                       退出登录
@@ -114,7 +114,7 @@ export default function Navbar() {
               <div className="flex items-center gap-3">
                 <Link
                   to="/login"
-                  className="px-4 py-2 rounded-xl hover:bg-white/5 transition-colors"
+                  className="px-4 py-2 rounded-xl hover:bg-theme-hover transition-colors text-theme-secondary hover:text-theme-main"
                 >
                   登录
                 </Link>
@@ -130,7 +130,7 @@ export default function Navbar() {
 
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-white/5 transition-colors"
+            className="md:hidden p-2 rounded-lg hover:bg-theme-hover transition-colors text-theme-main"
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -149,30 +149,30 @@ export default function Navbar() {
               <Link
                 to="/"
                 onClick={() => setIsMenuOpen(false)}
-                className="px-4 py-3 rounded-xl hover:bg-white/5 transition-colors"
+                className="px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
               >
                 首页
               </Link>
               <Link
                 to="/categories"
                 onClick={() => setIsMenuOpen(false)}
-                className="px-4 py-3 rounded-xl hover:bg-white/5 transition-colors"
+                className="px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
               >
                 分类浏览
               </Link>
-              <hr className="border-white/10" />
+              <hr className="border-theme" />
               {isAuthenticated ? (
                 <>
                   <Link
                     to="/user"
                     onClick={() => setIsMenuOpen(false)}
-                    className="px-4 py-3 rounded-xl hover:bg-white/5 transition-colors"
+                    className="px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
                   >
                     用户中心
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="text-left px-4 py-3 rounded-xl hover:bg-white/5 transition-colors text-red-400"
+                    className="text-left px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-red-500"
                   >
                     退出登录
                   </button>
@@ -182,7 +182,7 @@ export default function Navbar() {
                   <Link
                     to="/login"
                     onClick={() => setIsMenuOpen(false)}
-                    className="px-4 py-3 rounded-xl hover:bg-white/5 transition-colors"
+                    className="px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
                   >
                     登录
                   </Link>

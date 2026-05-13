@@ -1,5 +1,81 @@
 
-import { Category, Firmware, Donation, Contributor, Config } from '../../shared/types';
+import { Category, Firmware, Donation, Contributor, Config, Tag } from '../../shared/types';
+
+// 模拟标签数据
+export const mockTags: Tag[] = [
+  {
+    id: 'tag-1',
+    name: 'TLC',
+    slug: 'tlc',
+    color: '#3b82f6',
+    category: '颗粒类型',
+    description: 'TLC 3-bit NAND Flash颗粒',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'tag-2',
+    name: 'QLC',
+    slug: 'qlc',
+    color: '#8b5cf6',
+    category: '颗粒类型',
+    description: 'QLC 4-bit NAND Flash颗粒',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'tag-3',
+    name: 'SLC',
+    slug: 'slc',
+    color: '#10b981',
+    category: '颗粒类型',
+    description: 'SLC 1-bit NAND Flash颗粒',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'tag-4',
+    name: '1xnm',
+    slug: '1xnm',
+    color: '#f59e0b',
+    category: '颗粒制程',
+    description: '1xnm工艺制程',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'tag-5',
+    name: '2xnm',
+    slug: '2xnm',
+    color: '#ef4444',
+    category: '颗粒制程',
+    description: '2xnm工艺制程',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'tag-6',
+    name: '2024',
+    slug: '2024',
+    color: '#06b6d4',
+    category: '固件年份',
+    description: '2024年发布的固件',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'tag-7',
+    name: '2023',
+    slug: '2023',
+    color: '#ec4899',
+    category: '固件年份',
+    description: '2023年发布的固件',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'tag-8',
+    name: '2022',
+    slug: '2022',
+    color: '#84cc16',
+    category: '固件年份',
+    description: '2022年发布的固件',
+    createdAt: new Date().toISOString(),
+  },
+];
 
 // 模拟分类数据
 export const mockCategories: Category[] = [
@@ -8,6 +84,8 @@ export const mockCategories: Category[] = [
     name: '慧荣 (SMI)',
     parentId: undefined,
     orderIndex: 1,
+    icon: 'chip',
+    description: '慧荣科技固态硬盘主控',
     createdAt: new Date().toISOString(),
     children: [
       {
@@ -15,6 +93,8 @@ export const mockCategories: Category[] = [
         name: 'SM2258XT',
         parentId: 'cat-1',
         orderIndex: 1,
+        icon: 'chip',
+        description: 'SM2258XT SATA SSD主控',
         createdAt: new Date().toISOString(),
       },
       {
@@ -22,6 +102,8 @@ export const mockCategories: Category[] = [
         name: 'SM2259XT',
         parentId: 'cat-1',
         orderIndex: 2,
+        icon: 'chip',
+        description: 'SM2259XT SATA SSD主控',
         createdAt: new Date().toISOString(),
       },
       {
@@ -29,6 +111,8 @@ export const mockCategories: Category[] = [
         name: 'SM2263XT',
         parentId: 'cat-1',
         orderIndex: 3,
+        icon: 'chip',
+        description: 'SM2263XT NVMe SSD主控',
         createdAt: new Date().toISOString(),
       },
     ],
@@ -38,6 +122,8 @@ export const mockCategories: Category[] = [
     name: '群联 (Phison)',
     parentId: undefined,
     orderIndex: 2,
+    icon: 'chip',
+    description: '群联电子固态硬盘主控',
     createdAt: new Date().toISOString(),
     children: [
       {
@@ -45,6 +131,8 @@ export const mockCategories: Category[] = [
         name: 'PS3111',
         parentId: 'cat-2',
         orderIndex: 1,
+        icon: 'chip',
+        description: 'PS3111 SATA SSD主控',
         createdAt: new Date().toISOString(),
       },
       {
@@ -52,6 +140,8 @@ export const mockCategories: Category[] = [
         name: 'PS5013',
         parentId: 'cat-2',
         orderIndex: 2,
+        icon: 'chip',
+        description: 'PS5013 NVMe SSD主控',
         createdAt: new Date().toISOString(),
       },
     ],
@@ -61,6 +151,8 @@ export const mockCategories: Category[] = [
     name: '联芸 (Maxio)',
     parentId: undefined,
     orderIndex: 3,
+    icon: 'chip',
+    description: '联芸科技固态硬盘主控',
     createdAt: new Date().toISOString(),
     children: [
       {
@@ -68,6 +160,8 @@ export const mockCategories: Category[] = [
         name: 'MAP1202',
         parentId: 'cat-3',
         orderIndex: 1,
+        icon: 'chip',
+        description: 'MAP1202 SATA SSD主控',
         createdAt: new Date().toISOString(),
       },
     ],
@@ -77,6 +171,8 @@ export const mockCategories: Category[] = [
     name: '得一微 (YMC)',
     parentId: undefined,
     orderIndex: 4,
+    icon: 'chip',
+    description: '得一微固态硬盘主控',
     createdAt: new Date().toISOString(),
   },
 ];
@@ -89,6 +185,8 @@ export const mockFirmware: Firmware[] = [
     description: '慧荣SM2258XT主控固态硬盘开卡工具，支持多种闪存颗粒，修复SSD无法识别问题。',
     version: '1.2',
     categoryId: 'cat-1-1',
+    categoryName: 'SM2258XT',
+    tags: ['tag-1', 'tag-5', 'tag-7'],
     uploaderId: 'user-1',
     uploaderName: '科技达人',
     filePath: '/files/sm2258xt-v1.2.zip',
@@ -105,6 +203,8 @@ export const mockFirmware: Firmware[] = [
     description: '群联PS3111主控SSD开卡工具，支持最新固件版本，提供完整的开卡教程。',
     version: '2.5',
     categoryId: 'cat-2-1',
+    categoryName: 'PS3111',
+    tags: ['tag-2', 'tag-4', 'tag-6'],
     uploaderId: 'user-2',
     uploaderName: '硬件维修师',
     filePath: '/files/ps3111-v2.5.zip',
@@ -121,6 +221,8 @@ export const mockFirmware: Firmware[] = [
     description: '专业版SM2259XT开卡工具，支持高级设置和调试功能，适合专业维修人员使用。',
     version: '3.0',
     categoryId: 'cat-1-2',
+    categoryName: 'SM2259XT',
+    tags: ['tag-1', 'tag-4', 'tag-6'],
     uploaderId: 'user-1',
     uploaderName: '科技达人',
     filePath: '/files/sm2259xt-pro-v3.0.zip',
@@ -138,6 +240,8 @@ export const mockFirmware: Firmware[] = [
     description: '联芸MAP1202主控专用开卡工具，操作简单，支持自动检测颗粒。',
     version: '1.0',
     categoryId: 'cat-3-1',
+    categoryName: 'MAP1202',
+    tags: ['tag-3', 'tag-5', 'tag-8'],
     uploaderId: 'user-2',
     uploaderName: '硬件维修师',
     filePath: '/files/map1202-v1.0.zip',
@@ -154,6 +258,8 @@ export const mockFirmware: Firmware[] = [
     description: 'PS5013主控SSD修复工具，可解决掉盘、格式化失败等常见问题。',
     version: '1.8',
     categoryId: 'cat-2-2',
+    categoryName: 'PS5013',
+    tags: ['tag-2', 'tag-4', 'tag-7'],
     uploaderId: 'user-3',
     uploaderName: 'SSD工程师',
     filePath: '/files/ps5013-fix-v1.8.zip',
@@ -170,6 +276,8 @@ export const mockFirmware: Firmware[] = [
     description: 'SM2263XT完整工具包，包含开卡工具、驱动程序和使用说明书。',
     version: '2.1',
     categoryId: 'cat-1-3',
+    categoryName: 'SM2263XT',
+    tags: ['tag-1', 'tag-4', 'tag-6'],
     uploaderId: 'user-1',
     uploaderName: '科技达人',
     filePath: '/files/sm2263xt-package-v2.1.zip',
