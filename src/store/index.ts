@@ -400,8 +400,7 @@ export const useAppStore = create<AppState>()(
         const newCategory: Category = {
           ...category,
           id: `cat-${Date.now()}`,
-          createdAt: new Date().toISOString(),
-          children: []
+          createdAt: new Date().toISOString()
         };
         set((state) => ({
           categories: [...state.categories, newCategory]
@@ -417,18 +416,26 @@ export const useAppStore = create<AppState>()(
       },
 
       deleteCategory: (id) => {
-        const deleteCategoryRecursive = (categories: Category[]): Category[] => {
-          return categories.filter(cat => {
-            if (cat.id === id) return false;
-            if (cat.children) {
-              cat.children = deleteCategoryRecursive(cat.children);
-            }
-            return true;
-          });
-        };
-        set((state) => ({
-          categories: deleteCategoryRecursive(state.categories)
-        }));
+        // 扁平化数据时，删除一个分类需要删除所有以该ID为parentId的子分类
+        set((state) => {
+          const idsToDelete = new Set<string>([id]);
+          
+          // 找出所有需要删除的分类ID（包括所有后代分类）
+          let found = true;
+          while (found) {
+            found = false;
+            state.categories.forEach(cat => {
+              if (cat.parentId && idsToDelete.has(cat.parentId) && !idsToDelete.has(cat.id)) {
+                idsToDelete.add(cat.id);
+                found = true;
+              }
+            });
+          }
+          
+          return {
+            categories: state.categories.filter(cat => !idsToDelete.has(cat.id))
+          };
+        });
       },
 
       // 标签管理
