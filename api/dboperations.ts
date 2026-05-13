@@ -1,12 +1,10 @@
 import pool from './db.js';
-// 模拟用户数据
-const mockUsers = [
+export const mockUsers = [
  { id: 'user-001', email: 'admin@example.com', password: '$2a$10$8K1p/a0dL1LXMIgZ6.ydI.tS8y3AqrN7K8h3.3K3K3K3K3K3K3K3K', nickname: '系统管理员', role: 'admin', download_quota: 9999, downloads_used: 0, is_premium: true },
  { id: 'user-1', email: 'user1@example.com', password: 'hashed', nickname: '科技达人', role: 'user', download_quota: 5, downloads_used: 2, is_premium: false },
  { id: 'user-2', email: 'user2@example.com', password: 'hashed', nickname: '硬件维修师', role: 'user', download_quota: 5, downloads_used: 1, is_premium: true },
 ];
-// 模拟分类数据
-const mockCategories = [
+export const mockCategories = [
  { id: 'cat-1', name: '慧荣 (SMI)', parent_id: null, order_index: 1 },
  { id: 'cat-2', name: '群联 (Phison)', parent_id: null, order_index: 2 },
  { id: 'cat-3', name: '联芸 (Maxio)', parent_id: null, order_index: 3 },
@@ -18,21 +16,18 @@ const mockCategories = [
  { id: 'cat-2-2', name: 'PS5013', parent_id: 'cat-2', order_index: 2 },
  { id: 'cat-3-1', name: 'MAP1202', parent_id: 'cat-3', order_index: 1 },
 ];
-// 模拟固件数据
-const mockFirmware = [
+export const mockFirmware = [
  { id: 'fw-1', title: 'SM2258XT 开卡工具 v1.2', description: '慧荣SM2258XT主控固态硬盘开卡工具，支持多种闪存颗粒，修复SSD无法识别问题。', version: '1.2', category_id: 'cat-1-1', uploader_id: 'user-001', uploader_name: '系统管理员', file_path: '/files/sm2258xt-v1.2.zip', file_size: 15728640, download_count: 2580, is_paid: false, price: null, status: 'approved', created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
  { id: 'fw-2', title: 'PS3111 量产工具 v2.5', description: '群联PS3111主控SSD开卡工具，支持最新固件版本，提供完整的开卡教程。', version: '2.5', category_id: 'cat-2-1', uploader_id: 'user-001', uploader_name: '系统管理员', file_path: '/files/ps3111-v2.5.zip', file_size: 23068672, download_count: 1845, is_paid: false, price: null, status: 'approved', created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
  { id: 'fw-3', title: 'SM2259XT 高级工具 v3.0', description: '专业版SM2259XT开卡工具，支持高级设置和调试功能，适合专业维修人员使用。', version: '3.0', category_id: 'cat-1-2', uploader_id: 'user-001', uploader_name: '系统管理员', file_path: '/files/sm2259xt-pro-v3.0.zip', file_size: 36700160, download_count: 890, is_paid: true, price: 19.9, status: 'approved', created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
  { id: 'fw-4', title: 'MAP1202 开卡程序 v1.0', description: '联芸MAP1202主控专用开卡工具，操作简单，支持自动检测颗粒。', version: '1.0', category_id: 'cat-3-1', uploader_id: 'user-001', uploader_name: '系统管理员', file_path: '/files/map1202-v1.0.zip', file_size: 12582912, download_count: 654, is_paid: false, price: null, status: 'approved', created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), updated_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
 ];
-// 模拟捐赠数据
-const mockDonations = [
+export const mockDonations = [
  { id: 'don-1', user_id: null, user_nickname: '张*明', amount: 8, type: 'premium_upgrade', created_at: new Date(Date.now() - 1 * 60 * 1000).toISOString() },
  { id: 'don-2', user_id: null, user_nickname: '李*华', amount: 1, type: 'single_download', created_at: new Date(Date.now() - 3 * 60 * 1000).toISOString() },
  { id: 'don-3', user_id: null, user_nickname: '王*强', amount: 8, type: 'premium_upgrade', created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString() },
 ];
-// 模拟系统配置
-const mockConfigs = {
+export const mockConfigs = {
  site_settings: JSON.stringify({ name: 'SSD开卡工具站', description: '专业的固态硬盘开卡工具分享平台' }),
  module_settings: JSON.stringify({ showHero: true, showHot: true, showLatest: true, showDonations: true, showContributors: true }),
  quota_settings: JSON.stringify({ freeQuota: 5, premiumQuota: 100, singleDownloadPrice: 1, premiumPrice: 8 }),
@@ -343,6 +338,13 @@ export const configDB = {
  return row ? JSON.parse(row.value) : null;
  },
  async set(key: string, value: object) {
+ if (useMockData) {
+ mockConfigs[key as keyof typeof mockConfigs] = JSON.stringify(value);
+ return;
+ }
+ await pool.execute('UPDATE config SET value = ? WHERE `key` = ?', [JSON.stringify(value), key]);
+ },
+ async update(key: string, value: object) {
  if (useMockData) {
  mockConfigs[key as keyof typeof mockConfigs] = JSON.stringify(value);
  return;
