@@ -147,11 +147,11 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       user: null,
       isAuthenticated: false,
-      categories: mockCategories,
-      firmware: mockFirmware,
-      tags: mockTags,
-      donations: mockDonations,
-      contributors: mockContributors,
+      categories: [],
+      firmware: [],
+      tags: [],
+      donations: [],
+      contributors: [],
       config: extendedConfig,
       downloads: [],
       selectedCategory: null,
@@ -551,17 +551,42 @@ export const useAppStore = create<AppState>()(
 
       loadInitialData: async () => {
         set({ isLoading: true, error: null });
+        const state = get();
+        
         try {
+          // 检查是否已经有扁平化的分类数据
+          const hasValidCategories = state.categories.length > 0 && 
+            state.categories.some(c => c.parentId === null);
+          
+          // 如果没有有效数据，加载模拟数据并扁平化
+          if (!hasValidCategories) {
+            const flatCategories = mockCategories.flatMap(cat => [
+              { ...cat, children: [] },
+              ...(cat.children || [])
+            ]);
+            set({ categories: flatCategories });
+          }
+          if (state.firmware.length === 0) {
+            set({ firmware: mockFirmware });
+          }
+          if (state.tags.length === 0) {
+            set({ tags: mockTags });
+          }
+          if (state.donations.length === 0) {
+            set({ donations: mockDonations });
+          }
+          if (state.contributors.length === 0) {
+            set({ contributors: mockContributors });
+          }
+
           // 尝试从 API 加载数据
-          const [categoriesRes, firmwareRes, donationsRes, configRes] = await Promise.all([
-            categoryAPI.getAll().catch(() => ({ success: false, categories: mockCategories })),
-            firmwareAPI.getAll().catch(() => ({ success: false, firmware: mockFirmware })),
-            donationAPI.getAll().catch(() => ({ success: false, donations: mockDonations })),
-            Promise.resolve({ success: false, config: mockConfig })
+          const [categoriesRes, firmwareRes, donationsRes] = await Promise.all([
+            categoryAPI.getAll().catch(() => ({ success: false, categories: [] })),
+            firmwareAPI.getAll().catch(() => ({ success: false, firmware: [] })),
+            donationAPI.getAll().catch(() => ({ success: false, donations: [] }))
           ]);
 
-          if (categoriesRes.success) {
-            // 转换分类数据格式
+          if (categoriesRes.success && categoriesRes.categories.length > 0) {
             const categories = categoriesRes.categories.map((c: any) => ({
               id: c.id,
               name: c.name,
@@ -575,8 +600,7 @@ export const useAppStore = create<AppState>()(
             set({ categories });
           }
 
-          if (firmwareRes.success) {
-            // 转换固件数据格式
+          if (firmwareRes.success && firmwareRes.firmware.length > 0) {
             const firmware = firmwareRes.firmware.map((f: any) => ({
               id: f.id,
               title: f.title,
@@ -599,7 +623,7 @@ export const useAppStore = create<AppState>()(
             set({ firmware });
           }
 
-          if (donationsRes.success) {
+          if (donationsRes.success && donationsRes.donations.length > 0) {
             const donations = donationsRes.donations.map((d: any) => ({
               id: d.id,
               userId: d.userId,

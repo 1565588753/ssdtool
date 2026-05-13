@@ -82,7 +82,7 @@ export const mockCategories: Category[] = [
   {
     id: 'cat-1',
     name: '慧荣 (SMI)',
-    parentId: undefined,
+    parentId: null,
     orderIndex: 1,
     icon: 'chip',
     description: '慧荣科技固态硬盘主控',
@@ -120,7 +120,7 @@ export const mockCategories: Category[] = [
   {
     id: 'cat-2',
     name: '群联 (Phison)',
-    parentId: undefined,
+    parentId: null,
     orderIndex: 2,
     icon: 'chip',
     description: '群联电子固态硬盘主控',
@@ -149,7 +149,7 @@ export const mockCategories: Category[] = [
   {
     id: 'cat-3',
     name: '联芸 (Maxio)',
-    parentId: undefined,
+    parentId: null,
     orderIndex: 3,
     icon: 'chip',
     description: '联芸科技固态硬盘主控',
@@ -169,7 +169,7 @@ export const mockCategories: Category[] = [
   {
     id: 'cat-4',
     name: '得一微 (YMC)',
-    parentId: undefined,
+    parentId: null,
     orderIndex: 4,
     icon: 'chip',
     description: '得一微固态硬盘主控',
