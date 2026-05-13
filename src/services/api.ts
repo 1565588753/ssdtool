@@ -247,7 +247,7 @@ export const uploadFirmwareAPI = {
   },
 };
 
-// 公共统计 API
+// 统计 API
 export const statsAPI = {
   getPublicStats: () =>
     fetchAPI<{ success: boolean; stats: any }>('/api/stats'),
