@@ -366,17 +366,18 @@ router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: 
       title,
       description: description || '',
       version: version || '1.0',
-      category_id: categoryId,
-      uploader_id: userId,
-      uploader_name: user.nickname,
-      file_path: `/uploads/${req.file.filename}`,
-      file_size: req.file.size,
-      is_paid: isPaid === 'true' || isPaid === true,
+      categoryId: categoryId,
+      uploaderId: userId,
+      uploaderName: user.nickname,
+      filePath: `/uploads/${req.file.filename}`,
+      fileSize: req.file.size,
+      isPaid: isPaid === 'true' || isPaid === true,
       price: price ? parseFloat(price) : 0,
       status: 'pending' // 默认待审核
     };
 
-    const id = await firmwareDB.create(firmwareData);
+    const result = await firmwareDB.create(firmwareData);
+    const id = typeof result === 'object' && result !== null ? (result as any).insertId : result;
 
     res.json({
       success: true,

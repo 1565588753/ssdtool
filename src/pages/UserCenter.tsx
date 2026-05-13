@@ -155,7 +155,7 @@ export default function UserCenter() {
           )}
           {activeTab === 'profile' && <Profile user={user} />}
           {activeTab === 'downloads' && <Downloads user={user} config={config} />}
-          {activeTab === 'firmware' && isMaintainer && <FirmwareManage isAdmin={isAdmin} firmware={firmware} categories={categories} updateFirmware={updateFirmware} deleteFirmware={deleteFirmware} />}
+          {activeTab === 'firmware' && isMaintainer && <FirmwareManage isAdmin={isAdmin} isMaintainer={isMaintainer} firmware={firmware} categories={categories} updateFirmware={updateFirmware} deleteFirmware={deleteFirmware} />}
           {activeTab === 'categories' && isAdmin && <CategoryManage categories={categories} addCategory={addCategory} updateCategory={updateCategory} deleteCategory={deleteCategory} />}
           {activeTab === 'tags' && isAdmin && <TagManage tags={tags} addTag={addTag} updateTag={updateTag} deleteTag={deleteTag} />}
           {activeTab === 'users' && isAdmin && <UserManage />}
@@ -501,7 +501,7 @@ function Downloads({ user, config }: { user: any; config: any }) {
 }
 
 // 固件管理组件
-function FirmwareManage({ isAdmin, firmware: storeFirmware, categories, updateFirmware, deleteFirmware }: { isAdmin: boolean; firmware: any[]; categories: any[]; updateFirmware: (id: string, data: any) => void; deleteFirmware: (id: string) => void }) {
+function FirmwareManage({ isAdmin, isMaintainer, firmware: storeFirmware, categories, updateFirmware, deleteFirmware }: { isAdmin: boolean; isMaintainer: boolean; firmware: any[]; categories: any[]; updateFirmware: (id: string, data: any) => void; deleteFirmware: (id: string) => void }) {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadForm, setUploadForm] = useState({
@@ -515,6 +515,7 @@ function FirmwareManage({ isAdmin, firmware: storeFirmware, categories, updateFi
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [firmwareList, setFirmwareList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // 从API获取固件列表
   useEffect(() => {
@@ -531,13 +532,13 @@ function FirmwareManage({ isAdmin, firmware: storeFirmware, categories, updateFi
       }
     };
 
-    if (isAdmin) {
+    if (isAdmin || isMaintainer) {
       fetchFirmware();
     }
-  }, [isAdmin]);
+  }, [isAdmin, refreshKey]);
 
   // 使用API数据或store数据
-  const firmware = firmwareList.length > 0 ? firmwareList : storeFirmware;
+  const displayFirmware = firmwareList.length > 0 ? firmwareList : storeFirmware;
 
   const getStatusStyle = (status: string) => {
     switch(status) {
@@ -602,14 +603,7 @@ function FirmwareManage({ isAdmin, firmware: storeFirmware, categories, updateFi
       setSelectedFile(null);
 
       // 刷新固件列表
-      try {
-        const response = await adminAPI.getFirmware();
-        if (response.success) {
-          setFirmwareList(response.firmware);
-        }
-      } catch (error) {
-        console.error('刷新固件列表失败:', error);
-      }
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
       console.error('上传固件失败:', error);
       alert('上传失败，请重试');
@@ -649,7 +643,7 @@ function FirmwareManage({ isAdmin, firmware: storeFirmware, categories, updateFi
                 </tr>
               </thead>
               <tbody className="divide-y" style={{ borderColor: 'var(--theme-border)' }}>
-                {firmware.map(fw => (
+                {displayFirmware.map(fw => (
                   <tr key={fw.id} className="hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">

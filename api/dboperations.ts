@@ -198,52 +198,54 @@ export const firmwareDB = {
  await pool.execute('UPDATE firmware SET download_count = download_count + 1 WHERE id = ?', [id]);
  },
  async create(firmware: {
- title: string;
- description: string;
- version: string;
- categoryId: string;
- uploaderId: string;
- uploaderName: string;
- filePath: string;
- fileSize: number;
- isPaid?: boolean;
- price?: number;
- }) {
- if (useMockData) {
- const newFirmware = {
- id: `fw-${Date.now()}`,
- title: firmware.title,
- description: firmware.description,
- version: firmware.version,
- category_id: firmware.categoryId,
- uploader_id: firmware.uploaderId,
- uploader_name: firmware.uploaderName,
- file_path: firmware.filePath,
- file_size: firmware.fileSize,
- download_count: 0,
- is_paid: firmware.isPaid || false,
- price: firmware.price || null,
- status: 'approved',
- created_at: new Date().toISOString(),
- updated_at: new Date().toISOString(),
- };
- mockFirmware.push(newFirmware);
- return { insertId: newFirmware.id };
- }
- const [result] = await pool.execute(`INSERT INTO firmware (title, description, version, category_id, uploader_id, uploader_name, file_path, file_size, is_paid, price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved')`, [
- firmware.title,
- firmware.description,
- firmware.version,
- firmware.categoryId,
- firmware.uploaderId,
- firmware.uploaderName,
- firmware.filePath,
- firmware.fileSize,
- firmware.isPaid || false,
- firmware.price || null
- ]);
- return result;
- },
+  title: string;
+  description: string;
+  version: string;
+  categoryId: string;
+  uploaderId: string;
+  uploaderName: string;
+  filePath: string;
+  fileSize: number;
+  isPaid?: boolean;
+  price?: number;
+  status?: string;
+}) {
+  if (useMockData) {
+    const newFirmware = {
+      id: `fw-${Date.now()}`,
+      title: firmware.title,
+      description: firmware.description,
+      version: firmware.version,
+      category_id: firmware.categoryId,
+      uploader_id: firmware.uploaderId,
+      uploader_name: firmware.uploaderName,
+      file_path: firmware.filePath,
+      file_size: firmware.fileSize,
+      download_count: 0,
+      is_paid: firmware.isPaid || false,
+      price: firmware.price || null,
+      status: firmware.status || 'pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    mockFirmware.push(newFirmware);
+    return { insertId: newFirmware.id };
+  }
+  const [result] = await pool.execute(`INSERT INTO firmware (title, description, version, category_id, uploader_id, uploader_name, file_path, file_size, is_paid, price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+    firmware.title,
+    firmware.description,
+    firmware.version,
+    firmware.categoryId,
+    firmware.uploaderId,
+    firmware.uploaderName,
+    firmware.filePath,
+    firmware.fileSize,
+    firmware.isPaid || false,
+    firmware.price || null,
+    firmware.status || 'pending'
+  ]);
+  return result;
+},
  async findPending() {
  if (useMockData) {
  return mockFirmware.filter(f => f.status === 'pending');
