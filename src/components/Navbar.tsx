@@ -58,12 +58,6 @@ export default function Navbar() {
               <Key className="w-4 h-4" />
               卡密查询
             </Link>
-            {isAuthenticated && (user?.role === 'maintainer' || user?.role === 'admin') ? (
-              <button className="text-theme-secondary hover:text-theme-main transition-colors flex items-center gap-2">
-                <UploadCloud className="w-4 h-4" />
-                上传固件
-              </button>
-            ) : null}
             {isAuthenticated && (
               <Link to="/user" className="text-theme-secondary hover:text-theme-main transition-colors">
                 用户中心

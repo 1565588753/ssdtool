@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { useAppStore } from '../store';
 import FirmwareCard from '../components/FirmwareCard';
+import { statsAPI } from '../services/api';
 import {
   HardDrive,
   ArrowRight,
@@ -25,19 +27,41 @@ export default function Home() {
     user
   } = useAppStore();
 
+  const [publicStats, setPublicStats] = useState({
+    totalUsers: 0,
+    totalFirmware: 0,
+    totalDownloads: 0,
+    totalDonations: 0
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
+
   const hotFirmware = getHotFirmware();
   const latestFirmware = getLatestFirmware();
 
-  // 计算真实统计数据
-  const firmwareCount = firmware.length;
-  const downloadCount = firmware.reduce((sum, fw) => sum + (fw.downloadCount || 0), 0);
+  // 获取公共统计数据
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await statsAPI.getPublicStats();
+        if (response.success) {
+          setPublicStats(response.stats);
+        }
+      } catch (error) {
+        console.error('获取统计数据失败:', error);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const topLevelCategories = categories.filter(c => !c.parentId).length;
-  const userCount = user ? 1 : 0; // 如果需要真实用户数，需要从API获取
 
   const stats = [
-    { icon: HardDrive, label: '固件总数', value: firmwareCount.toString() },
-    { icon: Zap, label: '下载次数', value: downloadCount.toLocaleString() },
-    { icon: ShieldCheck, label: '用户数量', value: userCount.toString() },
+    { icon: HardDrive, label: '固件总数', value: (loadingStats ? '...' : publicStats.totalFirmware.toString()) },
+    { icon: Zap, label: '下载次数', value: (loadingStats ? '...' : publicStats.totalDownloads.toLocaleString()) },
+    { icon: ShieldCheck, label: '用户数量', value: (loadingStats ? '...' : publicStats.totalUsers.toString()) },
     { icon: GitBranch, label: '主控品牌', value: topLevelCategories.toString() },
   ];
 

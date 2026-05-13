@@ -4,8 +4,27 @@
  */
 import { Router, type Request, type Response } from 'express';
 import { firmwareDB, categoryDB, downloadDB, userDB, configDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = Router();
+
+// 配置文件上传
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../uploads'));
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage });
 
 /**
  * 获取所有固件
@@ -294,6 +313,81 @@ router.get('/category/:categoryId', async (req: Request, res: Response): Promise
     res.status(500).json({
       success: false,
       error: '获取分类固件失败'
+    });
+  }
+});
+
+/**
+ * 上传固件
+ * POST /api/firmware/upload
+ */
+router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.headers['x-user-id'] as string;
+    
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: '请先登录'
+      });
+      return;
+    }
+
+    const { title, description, version, categoryId, isPaid, price } = req.body;
+    
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        error: '请选择要上传的固件文件'
+      });
+      return;
+    }
+
+    if (!title || !categoryId) {
+      res.status(400).json({
+        success: false,
+        error: '请填写完整的固件信息'
+      });
+      return;
+    }
+
+    // 获取上传者信息
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        error: '用户不存在'
+      });
+      return;
+    }
+
+    // 创建固件记录
+    const firmwareData = {
+      title,
+      description: description || '',
+      version: version || '1.0',
+      category_id: categoryId,
+      uploader_id: userId,
+      uploader_name: user.nickname,
+      file_path: `/uploads/${req.file.filename}`,
+      file_size: req.file.size,
+      is_paid: isPaid === 'true' || isPaid === true,
+      price: price ? parseFloat(price) : 0,
+      status: 'pending' // 默认待审核
+    };
+
+    const id = await firmwareDB.create(firmwareData);
+
+    res.json({
+      success: true,
+      message: '固件上传成功，等待审核',
+      id
+    });
+  } catch (error) {
+    console.error('上传固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '上传失败'
     });
   }
 });

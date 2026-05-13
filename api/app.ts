@@ -17,6 +17,7 @@ import categoryRoutes from './routes/categories.js'
 import donationRoutes from './routes/donations.js'
 import adminRoutes from './routes/admin.js'
 import licenseRoutes from './routes/license.js'
+import statsRoutes from './routes/stats.js'
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url)
@@ -31,6 +32,9 @@ app.use(cors())
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
+// 静态文件服务 - 提供上传文件的访问
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
+
 /**
  * API Routes
  */
@@ -40,6 +44,7 @@ app.use('/api/categories', categoryRoutes)
 app.use('/api/donations', donationRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/license', licenseRoutes)
+app.use('/api/stats', statsRoutes)
 
 /**
  * health

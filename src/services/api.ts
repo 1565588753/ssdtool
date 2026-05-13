@@ -145,10 +145,99 @@ export const configAPI = {
     }>('/api/donations/config'),
 };
 
+// 管理员 API
+export const adminAPI = {
+  // 用户管理
+  getUsers: () =>
+    fetchAPI<{ success: boolean; users: any[] }>('/api/admin/users'),
+  
+  updateUserRole: (id: string, role: string) =>
+    fetchAPI<{ success: boolean }>(`/api/admin/users/${id}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    }),
+  
+  deleteUser: (id: string) =>
+    fetchAPI<{ success: boolean }>(`/api/admin/users/${id}`, {
+      method: 'DELETE',
+    }),
+  
+  // 固件管理
+  getFirmware: () =>
+    fetchAPI<{ success: boolean; firmware: any[] }>('/api/admin/firmware'),
+  
+  updateFirmwareStatus: (id: string, status: string) =>
+    fetchAPI<{ success: boolean }>(`/api/admin/firmware/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    }),
+  
+  deleteFirmware: (id: string) =>
+    fetchAPI<{ success: boolean }>(`/api/admin/firmware/${id}`, {
+      method: 'DELETE',
+    }),
+  
+  // 分类管理
+  getCategories: () =>
+    fetchAPI<{ success: boolean; categories: any[]; categoryTree: any[] }>('/api/admin/categories'),
+  
+  createCategory: (data: { name: string; parentId?: string; orderIndex?: number }) =>
+    fetchAPI<{ success: boolean; id: string }>('/api/admin/categories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  
+  updateCategory: (id: string, data: { name?: string; parentId?: string; orderIndex?: number }) =>
+    fetchAPI<{ success: boolean }>(`/api/admin/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  
+  deleteCategory: (id: string) =>
+    fetchAPI<{ success: boolean }>(`/api/admin/categories/${id}`, {
+      method: 'DELETE',
+    }),
+  
+  // 仪表盘
+  getDashboard: () =>
+    fetchAPI<{ success: boolean; dashboard: any }>('/api/admin/dashboard'),
+  
+  // 系统配置
+  getConfig: () =>
+    fetchAPI<{ success: boolean; config: any }>('/api/admin/config'),
+  
+  updateConfig: (data: { siteSettings?: any; moduleSettings?: any; quotaSettings?: any }) =>
+    fetchAPI<{ success: boolean }>('/api/admin/config', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+};
+
+// 固件上传 API
+export const uploadFirmwareAPI = {
+  upload: (formData: FormData) =>
+    fetch(`${API_BASE_URL}/api/firmware/upload`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'x-user-id': localStorage.getItem('userId') || '',
+      },
+    }).then(response => response.json()),
+};
+
+// 公共统计 API
+export const statsAPI = {
+  getPublicStats: () =>
+    fetchAPI<{ success: boolean; stats: any }>('/api/stats'),
+};
+
 export default {
   auth: authAPI,
   firmware: firmwareAPI,
   category: categoryAPI,
   donation: donationAPI,
   config: configAPI,
+  admin: adminAPI,
+  uploadFirmware: uploadFirmwareAPI,
+  stats: statsAPI,
 };

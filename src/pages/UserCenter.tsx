@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAppStore } from '../store';
 import { themes, useThemeStore } from '../hooks/useTheme';
+import { adminAPI, uploadFirmwareAPI } from '../services/api';
 import {
   User,
   Users,
@@ -25,7 +26,8 @@ import {
   X,
   Tag,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  UploadCloud
 } from 'lucide-react';
 
 type TabType = 'dashboard' | 'profile' | 'downloads' | 'firmware' | 'categories' | 'tags' | 'users' | 'settings';
@@ -153,7 +155,7 @@ export default function UserCenter() {
           )}
           {activeTab === 'profile' && <Profile user={user} />}
           {activeTab === 'downloads' && <Downloads user={user} config={config} />}
-          {activeTab === 'firmware' && isMaintainer && <FirmwareManage isAdmin={isAdmin} firmware={firmware} updateFirmware={updateFirmware} deleteFirmware={deleteFirmware} />}
+          {activeTab === 'firmware' && isMaintainer && <FirmwareManage isAdmin={isAdmin} firmware={firmware} categories={categories} updateFirmware={updateFirmware} deleteFirmware={deleteFirmware} />}
           {activeTab === 'categories' && isAdmin && <CategoryManage categories={categories} addCategory={addCategory} updateCategory={updateCategory} deleteCategory={deleteCategory} />}
           {activeTab === 'tags' && isAdmin && <TagManage tags={tags} addTag={addTag} updateTag={updateTag} deleteTag={deleteTag} />}
           {activeTab === 'users' && isAdmin && <UserManage />}
@@ -166,16 +168,48 @@ export default function UserCenter() {
 
 // 仪表盘组件
 function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMaintainer: boolean; user: any }) {
-  const stats = [
-    { label: '总用户数', value: '156', icon: Users },
-    { label: '固件总数', value: '89', icon: FileText },
-    { label: '下载次数', value: '2,458', icon: Download },
-    { label: '捐赠总额', value: '¥1,280', icon: Zap }
-  ];
+  const [dashboardData, setDashboardData] = useState({
+    totalUsers: 0,
+    totalFirmware: 0,
+    totalDownloads: 0,
+    totalDonations: 0,
+    pendingFirmware: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [pendingFirmware, setPendingFirmware] = useState<any[]>([]);
 
-  const pendingFirmware = [
-    { id: 1, title: 'SM2258XT 新版工具', author: '张三', date: '2024-01-15' },
-    { id: 2, title: 'PS3111 量产工具 v2.1', author: '李四', date: '2024-01-14' }
+  // 从API获取仪表盘数据
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await adminAPI.getDashboard();
+        if (response.success) {
+          setDashboardData(response.dashboard);
+        }
+
+        // 获取待审核固件
+        const firmwareResponse = await adminAPI.getFirmware();
+        if (firmwareResponse.success) {
+          const pending = firmwareResponse.firmware.filter((fw: any) => fw.status === 'pending');
+          setPendingFirmware(pending);
+        }
+      } catch (error) {
+        console.error('获取仪表盘数据失败:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isAdmin || isMaintainer) {
+      fetchDashboardData();
+    }
+  }, [isAdmin, isMaintainer]);
+
+  const stats = [
+    { label: '总用户数', value: loading ? '...' : dashboardData.totalUsers.toString(), icon: Users },
+    { label: '固件总数', value: loading ? '...' : dashboardData.totalFirmware.toString(), icon: FileText },
+    { label: '下载次数', value: loading ? '...' : dashboardData.totalDownloads.toLocaleString(), icon: Download },
+    { label: '捐赠总额', value: loading ? '...' : `¥${dashboardData.totalDonations}`, icon: Zap }
   ];
 
   return (
@@ -225,13 +259,35 @@ function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMainta
               <div key={fw.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
                 <div>
                   <p className="font-medium" style={{ color: 'var(--theme-text)' }}>{fw.title}</p>
-                  <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>由 {fw.author} 上传 · {fw.date}</p>
+                  <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>由 {fw.uploaderName} 上传 · {new Date(fw.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors">
+                  <button 
+                    onClick={async () => {
+                      try {
+                        await adminAPI.updateFirmwareStatus(fw.id, 'approved');
+                        setPendingFirmware(prev => prev.filter(f => f.id !== fw.id));
+                        alert('审核通过！');
+                      } catch (error) {
+                        alert('审核失败，请重试');
+                      }
+                    }}
+                    className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors"
+                  >
                     <CheckCircle className="w-5 h-5" />
                   </button>
-                  <button className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors">
+                  <button 
+                    onClick={async () => {
+                      try {
+                        await adminAPI.updateFirmwareStatus(fw.id, 'rejected');
+                        setPendingFirmware(prev => prev.filter(f => f.id !== fw.id));
+                        alert('已拒绝');
+                      } catch (error) {
+                        alert('操作失败，请重试');
+                      }
+                    }}
+                    className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
+                  >
                     <XCircle className="w-5 h-5" />
                   </button>
                 </div>
@@ -445,7 +501,44 @@ function Downloads({ user, config }: { user: any; config: any }) {
 }
 
 // 固件管理组件
-function FirmwareManage({ isAdmin, firmware, updateFirmware, deleteFirmware }: { isAdmin: boolean; firmware: any[]; updateFirmware: (id: string, data: any) => void; deleteFirmware: (id: string) => void }) {
+function FirmwareManage({ isAdmin, firmware: storeFirmware, categories, updateFirmware, deleteFirmware }: { isAdmin: boolean; firmware: any[]; categories: any[]; updateFirmware: (id: string, data: any) => void; deleteFirmware: (id: string) => void }) {
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadForm, setUploadForm] = useState({
+    title: '',
+    description: '',
+    version: '1.0',
+    categoryId: '',
+    isPaid: false,
+    price: 0
+  });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [firmwareList, setFirmwareList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // 从API获取固件列表
+  useEffect(() => {
+    const fetchFirmware = async () => {
+      try {
+        const response = await adminAPI.getFirmware();
+        if (response.success) {
+          setFirmwareList(response.firmware);
+        }
+      } catch (error) {
+        console.error('获取固件列表失败:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isAdmin) {
+      fetchFirmware();
+    }
+  }, [isAdmin]);
+
+  // 使用API数据或store数据
+  const firmware = firmwareList.length > 0 ? firmwareList : storeFirmware;
+
   const getStatusStyle = (status: string) => {
     switch(status) {
       case 'approved': return 'bg-green-500/20 text-green-400';
@@ -464,70 +557,386 @@ function FirmwareManage({ isAdmin, firmware, updateFirmware, deleteFirmware }: {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleSubmitUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFile) {
+      alert('请选择要上传的固件文件');
+      return;
+    }
+    if (!uploadForm.title || !uploadForm.categoryId) {
+      alert('请填写完整的固件信息');
+      return;
+    }
+    
+    setUploading(true);
+    try {
+      // 创建FormData对象
+      const formData = new FormData();
+      formData.append('firmwareFile', selectedFile);
+      formData.append('title', uploadForm.title);
+      formData.append('description', uploadForm.description);
+      formData.append('version', uploadForm.version);
+      formData.append('categoryId', uploadForm.categoryId);
+      formData.append('isPaid', String(uploadForm.isPaid));
+      formData.append('price', String(uploadForm.price));
+
+      // 调用API上传
+      await uploadFirmwareAPI.upload(formData);
+      
+      alert('固件上传成功，等待审核');
+      setShowUploadModal(false);
+      setUploadForm({
+        title: '',
+        description: '',
+        version: '1.0',
+        categoryId: '',
+        isPaid: false,
+        price: 0
+      });
+      setSelectedFile(null);
+
+      // 刷新固件列表
+      try {
+        const response = await adminAPI.getFirmware();
+        if (response.success) {
+          setFirmwareList(response.firmware);
+        }
+      } catch (error) {
+        console.error('刷新固件列表失败:', error);
+      }
+    } catch (error) {
+      console.error('上传固件失败:', error);
+      alert('上传失败，请重试');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>固件管理</h2>
-        <button className="btn-primary px-4 py-3 rounded-xl text-white font-semibold flex items-center gap-2">
+        <button 
+          onClick={() => setShowUploadModal(true)}
+          className="btn-primary px-4 py-3 rounded-xl text-white font-semibold flex items-center gap-2"
+        >
           <Plus className="w-4 h-4" />
           上传固件
         </button>
       </div>
 
       <div className="glass-card rounded-xl overflow-hidden" style={{ borderColor: 'var(--theme-border)' }}>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr style={{ backgroundColor: 'var(--theme-bg-card)' }}>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>固件名称</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>分类</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>状态</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>下载次数</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y" style={{ borderColor: 'var(--theme-border)' }}>
-              {firmware.map(fw => (
-                <tr key={fw.id} className="hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5" style={{ color: 'var(--theme-text-secondary)' }} />
-                      <span className="font-medium" style={{ color: 'var(--theme-text)' }}>{fw.title}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4" style={{ color: 'var(--theme-text-secondary)' }}>{fw.categoryName}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(fw.status)}`}>
-                      {getStatusLabel(fw.status)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4" style={{ color: 'var(--theme-text-secondary)' }}>{fw.downloadCount}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      {fw.status === 'pending' && isAdmin && (
-                        <>
-                          <button className="p-2 text-green-400 hover:bg-green-500/20 rounded-lg transition-colors">
-                            <CheckCircle className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
-                            <XCircle className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
-                      <button onClick={() => deleteFirmware(fw.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+        {loading ? (
+          <div className="p-12 text-center" style={{ color: 'var(--theme-text-secondary)' }}>
+            <p>加载中...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr style={{ backgroundColor: 'var(--theme-bg-card)' }}>
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>固件名称</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>分类</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>状态</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>下载次数</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>操作</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y" style={{ borderColor: 'var(--theme-border)' }}>
+                {firmware.map(fw => (
+                  <tr key={fw.id} className="hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-5 h-5" style={{ color: 'var(--theme-text-secondary)' }} />
+                        <span className="font-medium" style={{ color: 'var(--theme-text)' }}>{fw.title}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4" style={{ color: 'var(--theme-text-secondary)' }}>{fw.categoryName || categories.find(c => c.id === fw.categoryId)?.name || '未知分类'}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(fw.status)}`}>
+                        {getStatusLabel(fw.status)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4" style={{ color: 'var(--theme-text-secondary)' }}>{fw.downloadCount}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex gap-2">
+                        <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        {fw.status === 'pending' && isAdmin && (
+                          <>
+                            <button 
+                              onClick={async () => {
+                                try {
+                                  await adminAPI.updateFirmwareStatus(fw.id, 'approved');
+                                  setFirmwareList(prev => prev.map(f => f.id === fw.id ? { ...f, status: 'approved' } : f));
+                                  alert('审核通过！');
+                                } catch (error) {
+                                  alert('审核失败，请重试');
+                                }
+                              }}
+                              className="p-2 text-green-400 hover:bg-green-500/20 rounded-lg transition-colors"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={async () => {
+                                try {
+                                  await adminAPI.updateFirmwareStatus(fw.id, 'rejected');
+                                  setFirmwareList(prev => prev.map(f => f.id === fw.id ? { ...f, status: 'rejected' } : f));
+                                  alert('已拒绝');
+                                } catch (error) {
+                                  alert('操作失败，请重试');
+                                }
+                              }}
+                              className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                        <button 
+                          onClick={async () => {
+                            if (confirm('确定要删除这个固件吗？')) {
+                              try {
+                                await adminAPI.deleteFirmware(fw.id);
+                                setFirmwareList(prev => prev.filter(f => f.id !== fw.id));
+                                alert('固件已删除');
+                              } catch (error) {
+                                alert('删除失败，请重试');
+                              }
+                            }
+                          }}
+                          className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+
+      {/* 上传固件模态框 */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            style={{ borderColor: 'var(--theme-border)' }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold" style={{ color: 'var(--theme-text)' }}>上传固件</h3>
+              <button 
+                onClick={() => setShowUploadModal(false)}
+                className="hover:text-white transition-colors"
+                style={{ color: 'var(--theme-text-secondary)' }}
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitUpload} className="space-y-4">
+              {/* 固件标题 */}
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
+                  固件标题 *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={uploadForm.title}
+                  onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
+                  placeholder="例如：SM2258XT 开卡工具 v1.0"
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                />
+              </div>
+
+              {/* 分类选择 */}
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
+                  分类 *
+                </label>
+                <select
+                  required
+                  value={uploadForm.categoryId}
+                  onChange={(e) => setUploadForm({ ...uploadForm, categoryId: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                >
+                  <option value="">请选择分类</option>
+                  {categories.filter(c => !c.parentId).map(cat => (
+                    <optgroup key={cat.id} label={cat.name}>
+                      <option value={cat.id}>{cat.name}</option>
+                      {categories.filter(c => c.parentId === cat.id).map(subCat => (
+                        <option key={subCat.id} value={subCat.id}>
+                          └ {subCat.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+
+              {/* 固件版本 */}
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
+                  版本号
+                </label>
+                <input
+                  type="text"
+                  value={uploadForm.version}
+                  onChange={(e) => setUploadForm({ ...uploadForm, version: e.target.value })}
+                  placeholder="例如：1.0"
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                />
+              </div>
+
+              {/* 固件描述 */}
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
+                  固件描述
+                </label>
+                <textarea
+                  value={uploadForm.description}
+                  onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
+                  placeholder="请输入固件的详细描述..."
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none resize-none"
+                  style={{
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                />
+              </div>
+
+              {/* 文件上传 */}
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
+                  固件文件 *
+                </label>
+                <div 
+                  className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all hover:border-opacity-70"
+                  style={{ borderColor: 'var(--theme-border)' }}
+                  onClick={() => document.getElementById('firmwareFile')?.click()}
+                >
+                  <input
+                    id="firmwareFile"
+                    type="file"
+                    required
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept=".zip,.rar,.7z,.exe,.iso,.bin"
+                  />
+                  {selectedFile ? (
+                    <div>
+                      <FileText className="w-12 h-12 mx-auto mb-2" style={{ color: 'var(--theme-primary-400)' }} />
+                      <p style={{ color: 'var(--theme-text)' }}>{selectedFile.name}</p>
+                      <p style={{ color: 'var(--theme-text-secondary)' }} className="text-sm">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <UploadCloud className="w-12 h-12 mx-auto mb-2" style={{ color: 'var(--theme-text-secondary)' }} />
+                      <p style={{ color: 'var(--theme-text-secondary)' }}>点击选择文件或拖拽到此处</p>
+                      <p style={{ color: 'var(--theme-text-secondary)' }} className="text-sm mt-1">
+                        支持 .zip, .rar, .7z, .exe, .iso, .bin 格式
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 高级收费固件选项 */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    id="isPaid"
+                    type="checkbox"
+                    checked={uploadForm.isPaid}
+                    onChange={(e) => setUploadForm({ ...uploadForm, isPaid: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="isPaid" className="text-sm font-medium" style={{ color: 'var(--theme-text)' }}>
+                    高级收费固件
+                  </label>
+                </div>
+
+                {uploadForm.isPaid && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
+                      价格（元）
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={uploadForm.price}
+                      onChange={(e) => setUploadForm({ ...uploadForm, price: parseFloat(e.target.value) || 0 })}
+                      placeholder="例如：9.99"
+                      className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                      style={{
+                        backgroundColor: 'var(--theme-bg-card)',
+                        border: '1px solid var(--theme-border)',
+                        color: 'var(--theme-text)'
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 提交按钮 */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowUploadModal(false)}
+                  className="flex-1 px-4 py-3 border rounded-xl hover:bg-white/10 transition-colors"
+                  style={{
+                    borderColor: 'var(--theme-border)',
+                    color: 'var(--theme-text-secondary)'
+                  }}
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploading}
+                  className="btn-primary flex-1 px-4 py-3 rounded-xl text-white font-semibold disabled:opacity-50"
+                >
+                  {uploading ? '上传中...' : '上传固件'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
@@ -884,18 +1293,55 @@ function TagManage({ tags, addTag, updateTag, deleteTag }: { tags: any[]; addTag
 
 // 用户管理组件
 function UserManage() {
-  const [users] = useState([
-    { id: 1, email: 'admin@example.com', nickname: '系统管理员', role: 'admin', downloads: 0, isPremium: true },
-    { id: 2, email: 'zhang@example.com', nickname: '张三', role: 'maintainer', downloads: 12, isPremium: false },
-    { id: 3, email: 'li@example.com', nickname: '李四', role: 'user', downloads: 3, isPremium: false },
-    { id: 4, email: 'wang@example.com', nickname: '王五', role: 'user', downloads: 8, isPremium: true }
-  ]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // 从API获取用户列表
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await adminAPI.getUsers();
+        if (response.success) {
+          setUsers(response.users);
+        }
+      } catch (error) {
+        console.error('获取用户列表失败:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const getRoleStyle = (role: string) => {
     switch(role) {
       case 'admin': return 'bg-amber-500/20 text-amber-400';
       case 'maintainer': return 'bg-blue-500/20 text-blue-400';
       default: return 'bg-slate-500/20 text-slate-400';
+    }
+  };
+
+  // 删除用户
+  const handleDeleteUser = async (userId: string) => {
+    if (confirm('确定要删除这个用户吗？')) {
+      try {
+        await adminAPI.deleteUser(userId);
+        setUsers(users.filter(u => u.id !== userId));
+        alert('用户已删除');
+      } catch (error) {
+        alert('删除失败，请重试');
+      }
+    }
+  };
+
+  // 更新用户角色
+  const handleUpdateRole = async (userId: string, newRole: string) => {
+    try {
+      await adminAPI.updateUserRole(userId, newRole);
+      setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    } catch (error) {
+      alert('更新角色失败，请重试');
     }
   };
 
@@ -918,66 +1364,76 @@ function UserManage() {
       </div>
 
       <div className="glass-card rounded-xl overflow-hidden" style={{ borderColor: 'var(--theme-border)' }}>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr style={{ backgroundColor: 'var(--theme-bg-card)' }}>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>用户</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>角色</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>下载次数</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>会员状态</th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>操作</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y" style={{ borderColor: 'var(--theme-border)' }}>
-              {users.map(u => (
-                <tr key={u.id} className="hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-10 h-10 rounded-full flex items-center justify-center"
-                        style={{ background: 'var(--theme-gradient)' }}
-                      >
-                        <User className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-medium" style={{ color: 'var(--theme-text)' }}>{u.nickname}</p>
-                        <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>{u.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <select
-                      defaultValue={u.role}
-                      className={`px-3 py-1 rounded-full text-xs font-medium border-0 ${getRoleStyle(u.role)}`}
-                    >
-                      <option value="admin">管理员</option>
-                      <option value="maintainer">维护者</option>
-                      <option value="user">普通用户</option>
-                    </select>
-                  </td>
-                  <td className="px-6 py-4" style={{ color: 'var(--theme-text-secondary)' }}>{u.downloads}</td>
-                  <td className="px-6 py-4">
-                    {u.isPremium ? (
-                      <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium">
-                        Premium
-                      </span>
-                    ) : (
-                      <span className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>普通</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    {u.role !== 'admin' && (
-                      <button className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </td>
+        {loading ? (
+          <div className="p-12 text-center" style={{ color: 'var(--theme-text-secondary)' }}>
+            <p>加载中...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr style={{ backgroundColor: 'var(--theme-bg-card)' }}>
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>用户</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>角色</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>下载次数</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>会员状态</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>操作</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y" style={{ borderColor: 'var(--theme-border)' }}>
+                {users.map(u => (
+                  <tr key={u.id} className="hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-10 h-10 rounded-full flex items-center justify-center"
+                          style={{ background: 'var(--theme-gradient)' }}
+                        >
+                          <User className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-medium" style={{ color: 'var(--theme-text)' }}>{u.nickname}</p>
+                          <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>{u.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <select
+                        value={u.role}
+                        onChange={(e) => handleUpdateRole(u.id, e.target.value)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border-0 ${getRoleStyle(u.role)}`}
+                      >
+                        <option value="admin">管理员</option>
+                        <option value="maintainer">维护者</option>
+                        <option value="user">普通用户</option>
+                      </select>
+                    </td>
+                    <td className="px-6 py-4" style={{ color: 'var(--theme-text-secondary)' }}>{u.downloadsUsed}</td>
+                    <td className="px-6 py-4">
+                      {u.isPremium ? (
+                        <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium">
+                          Premium
+                        </span>
+                      ) : (
+                        <span className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>普通</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {u.role !== 'admin' && (
+                        <button 
+                          onClick={() => handleDeleteUser(u.id)}
+                          className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
