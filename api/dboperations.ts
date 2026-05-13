@@ -249,11 +249,120 @@ export const configDB = {
   }
 };
 
+// 卡密表操作
+export const licenseKeyDB = {
+  // 创建卡密
+  async create(data: {
+    key: string;
+    firmwareId: string;
+    firmwareTitle: string;
+    userEmail?: string;
+    expiresAt: Date;
+  }) {
+    const [result] = await pool.execute(
+      `INSERT INTO license_keys (\`key\`, firmware_id, firmware_title, user_email, expires_at) 
+       VALUES (?, ?, ?, ?, ?)`,
+      [data.key, data.firmwareId, data.firmwareTitle, data.userEmail || null, data.expiresAt]
+    );
+    return result;
+  },
+
+  // 根据卡密查找
+  async findByKey(key: string) {
+    const [rows] = await pool.execute(
+      'SELECT * FROM license_keys WHERE `key` = ?',
+      [key]
+    );
+    return (rows as any[])[0];
+  },
+
+  // 标记卡密为已使用
+  async markAsUsed(id: string, userEmail: string) {
+    await pool.execute(
+      'UPDATE license_keys SET is_used = TRUE, used_at = NOW(), user_email = ? WHERE id = ?',
+      [userEmail, id]
+    );
+  },
+
+  // 获取用户的所有卡密
+  async findByUserEmail(email: string) {
+    const [rows] = await pool.execute(
+      'SELECT * FROM license_keys WHERE user_email = ? ORDER BY created_at DESC',
+      [email]
+    );
+    return rows as any[];
+  },
+
+  // 获取固件的所有卡密
+  async findByFirmwareId(firmwareId: string) {
+    const [rows] = await pool.execute(
+      'SELECT * FROM license_keys WHERE firmware_id = ? ORDER BY created_at DESC',
+      [firmwareId]
+    );
+    return rows as any[];
+  },
+
+  // 删除过期卡密
+  async deleteExpired() {
+    const [result] = await pool.execute(
+      'DELETE FROM license_keys WHERE expires_at < NOW()'
+    );
+    return result;
+  }
+};
+
+// 用户固件下载记录表操作
+export const userFirmwareDownloadDB = {
+  // 查找用户的固件下载记录
+  async findByUserAndFirmware(userId: string, firmwareId: string) {
+    const [rows] = await pool.execute(
+      'SELECT * FROM user_firmware_downloads WHERE user_id = ? AND firmware_id = ?',
+      [userId, firmwareId]
+    );
+    return (rows as any[])[0];
+  },
+
+  // 创建下载记录
+  async create(data: {
+    userId: string;
+    firmwareId: string;
+  }) {
+    const [result] = await pool.execute(
+      `INSERT INTO user_firmware_downloads (user_id, firmware_id, download_count) 
+       VALUES (?, ?, 1)`,
+      [data.userId, data.firmwareId]
+    );
+    return result;
+  },
+
+  // 增加下载次数
+  async incrementDownloadCount(userId: string, firmwareId: string) {
+    await pool.execute(
+      `UPDATE user_firmware_downloads 
+       SET download_count = download_count + 1, last_download_at = NOW()
+       WHERE user_id = ? AND firmware_id = ?`,
+      [userId, firmwareId]
+    );
+  },
+
+  // 获取用户最近30天内的下载记录
+  async findRecentDownloads(userId: string, days: number = 30) {
+    const [rows] = await pool.execute(
+      `SELECT * FROM user_firmware_downloads 
+       WHERE user_id = ? AND last_download_at > DATE_SUB(NOW(), INTERVAL ? DAY)`,
+      [userId, days]
+    );
+    return rows as any[];
+  }
+};
+
 export default {
   userDB,
   categoryDB,
   firmwareDB,
   downloadDB,
   donationDB,
-  configDB
+  configDB,
+  licenseKeyDB,
+  userFirmwareDownloadDB
 };

@@ -92,6 +92,39 @@ CREATE TABLE IF NOT EXISTS config (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 卡密表
+CREATE TABLE IF NOT EXISTS license_keys (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    `key` VARCHAR(100) UNIQUE NOT NULL,
+    firmware_id VARCHAR(36) NOT NULL,
+    firmware_title VARCHAR(200) NOT NULL,
+    user_email VARCHAR(255),
+    is_used BOOLEAN DEFAULT FALSE,
+    used_at TIMESTAMP NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (firmware_id) REFERENCES firmware(id),
+    INDEX idx_key (`key`),
+    INDEX idx_firmware_id (firmware_id),
+    INDEX idx_expires_at (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 用户固件下载记录表（用于限制同一固件的下载次数）
+CREATE TABLE IF NOT EXISTS user_firmware_downloads (
+    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    user_id VARCHAR(36) NOT NULL,
+    firmware_id VARCHAR(36) NOT NULL,
+    download_count INT DEFAULT 1,
+    first_download_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_download_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (firmware_id) REFERENCES firmware(id),
+    UNIQUE KEY unique_user_firmware (user_id, firmware_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_firmware_id (firmware_id),
+    INDEX idx_last_download (last_download_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- 插入初始管理员账号 (密码: admin123 - bcrypt 加密)
 -- $2a$10$8K1p/a0dL1LXMIgZ6.ydI.tS8y3AqrN7K8h3.3K3K3K3K3K3K3K3K
 INSERT INTO users (id, email, password, nickname, role, download_quota, is_premium)

@@ -37,8 +37,38 @@ export default function FirmwareDetail() {
   }
 
   const handleDownload = async () => {
+    // 管理员无下载限制
+    if (user?.role === 'admin') {
+      setDownloading(true);
+      try {
+        const success = await downloadFirmware(firmware.id);
+        if (success) {
+          setDownloadSuccess(true);
+          setTimeout(() => setDownloadSuccess(false), 3000);
+        }
+      } catch (err) {
+        console.error('Download failed:', err);
+      } finally {
+        setDownloading(false);
+      }
+      return;
+    }
+
+    // 游客需要登录或购买
     if (!user) {
-      setShowSponsorModal(true);
+      if (firmware.isPaid) {
+        // 付费固件跳转到卡密查询页面
+        navigate('/license-query');
+      } else {
+        // 免费固件提示登录
+        setShowSponsorModal(true);
+      }
+      return;
+    }
+
+    // 登录用户检查下载次数限制
+    if (quotaInfo && quotaInfo.remaining <= 0) {
+      // 下载次数已用完
       return;
     }
 
@@ -47,9 +77,7 @@ export default function FirmwareDetail() {
       const success = await downloadFirmware(firmware.id);
       if (success) {
         setDownloadSuccess(true);
-        setTimeout(() => {
-          setDownloadSuccess(false);
-        }, 3000);
+        setTimeout(() => setDownloadSuccess(false), 3000);
       }
     } catch (err) {
       console.error('Download failed:', err);
@@ -208,48 +236,68 @@ export default function FirmwareDetail() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <button
-                    onClick={handleDownload}
-                    disabled={downloading || (user && quotaInfo?.remaining === 0)}
-                    className="btn-primary w-full py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {downloading ? (
-                      '下载中...'
-                    ) : (
-                      <>
-                        <Download className="w-5 h-5" />
-                        {firmware.isPaid ? `购买并下载 ¥${firmware.price}` : '立即下载'}
-                      </>
-                    )}
-                  </button>
-
-                  {user && quotaInfo?.remaining === 0 && (
-                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm">
-                      <div className="flex items-start gap-2">
-                        <Zap className="w-5 h-5 text-amber-400 flex-shrink-0" />
-                        <div>
-                          <div className="font-medium text-amber-400 mb-1">本月额度已用完</div>
-                          <p className="text-slate-400 text-xs">
-                            升级 Premium 可获得更多下载次数
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {!user && (
-                    <div className="pt-4 border-t border-white/10">
-                      <p className="text-slate-400 text-sm text-center mb-4">
-                        或赞助 1 元立即下载
-                      </p>
+                  {/* 管理员下载按钮 */}
+                  {user?.role === 'admin' ? (
+                    <button
+                      onClick={handleDownload}
+                      disabled={downloading}
+                      className="btn-primary w-full py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {downloading ? (
+                        '下载中...'
+                      ) : (
+                        <>
+                          <Download className="w-5 h-5" />
+                          管理员下载（无限制）
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <>
                       <button
-                        onClick={() => setShowSponsorModal(true)}
-                        className="w-full py-3 rounded-xl bg-white/10 text-white font-semibold hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
+                        onClick={handleDownload}
+                        disabled={downloading || (user && quotaInfo?.remaining === 0)}
+                        className="btn-primary w-full py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Heart className="w-5 h-5" />
-                        赞助下载 ¥1
+                        {downloading ? (
+                          '下载中...'
+                        ) : (
+                          <>
+                            <Download className="w-5 h-5" />
+                            {firmware.isPaid ? `购买并下载 ¥${firmware.price}` : '立即下载'}
+                          </>
+                        )}
                       </button>
-                    </div>
+
+                      {user && quotaInfo?.remaining === 0 && (
+                        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-sm">
+                          <div className="flex items-start gap-2">
+                            <Zap className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                            <div>
+                              <div className="font-medium text-amber-400 mb-1">本月额度已用完</div>
+                              <p className="text-slate-400 text-xs">
+                                升级 Premium 可获得更多下载次数
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {!user && (
+                        <div className="pt-4 border-t border-white/10">
+                          <p className="text-slate-400 text-sm text-center mb-4">
+                            或赞助 1 元立即下载
+                          </p>
+                          <button
+                            onClick={() => setShowSponsorModal(true)}
+                            className="w-full py-3 rounded-xl bg-white/10 text-white font-semibold hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
+                          >
+                            <Heart className="w-5 h-5" />
+                            赞助下载 ¥1
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}

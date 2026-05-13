@@ -11,7 +11,8 @@ import {
   X,
   LogOut,
   UploadCloud,
-  Zap
+  Zap,
+  Key
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -53,12 +54,21 @@ export default function Navbar() {
             <Link to="/categories" className="text-theme-secondary hover:text-theme-main transition-colors">
               分类浏览
             </Link>
-            {user?.role === 'maintainer' || user?.role === 'admin' ? (
+            <Link to="/license-query" className="text-theme-secondary hover:text-theme-main transition-colors flex items-center gap-2">
+              <Key className="w-4 h-4" />
+              卡密查询
+            </Link>
+            {isAuthenticated && (user?.role === 'maintainer' || user?.role === 'admin') ? (
               <button className="text-theme-secondary hover:text-theme-main transition-colors flex items-center gap-2">
                 <UploadCloud className="w-4 h-4" />
                 上传固件
               </button>
             ) : null}
+            {isAuthenticated && (
+              <Link to="/user" className="text-theme-secondary hover:text-theme-main transition-colors">
+                用户中心
+              </Link>
+            )}
           </div>
 
           <div className="hidden md:flex items-center gap-4">
@@ -159,6 +169,14 @@ export default function Navbar() {
                 className="px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
               >
                 分类浏览
+              </Link>
+              <Link
+                to="/license-query"
+                onClick={() => setIsMenuOpen(false)}
+                className="px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main flex items-center gap-2"
+              >
+                <Key className="w-4 h-4" />
+                卡密查询
               </Link>
               <hr className="border-theme" />
               {isAuthenticated ? (
