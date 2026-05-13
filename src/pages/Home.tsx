@@ -210,80 +210,84 @@ export default function Home() {
         );
 
       case 'donations':
-      case 'contributors':
+        const donationsModule = config.homeModules.find(m => m.id === 'donations');
+        if (!donationsModule?.enabled) return null;
         return (
-          <section key={module.id} className="py-12">
+          <section key="donations" className="py-12">
             <div className="container mx-auto px-4">
-              <div className="grid md:grid-cols-2 gap-6">
-                {config.homeModules.find(m => m.id === 'donations')?.enabled && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    className="glass-card rounded-2xl p-6"
-                    style={{ borderColor: 'var(--theme-border)' }}
-                  >
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(236, 72, 153, 0.2)' }}>
-                        <Heart className="w-5 h-5 text-pink-400" />
-                      </div>
-                      <div>
-                        <h3 className="font-display text-lg font-bold" style={{ color: 'var(--theme-text)' }}>
-                          {config.homeModules.find(m => m.id === 'donations')?.title || '爱心捐赠'}
-                        </h3>
-                        <p className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>
-                          {config.homeModules.find(m => m.id === 'donations')?.description || '感谢支持网站运营的朋友们'}
-                        </p>
-                      </div>
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="glass-card rounded-2xl p-6"
+                style={{ borderColor: 'var(--theme-border)' }}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(236, 72, 153, 0.2)' }}>
+                    <Heart className="w-5 h-5 text-pink-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-lg font-bold" style={{ color: 'var(--theme-text)' }}>
+                      {donationsModule.title || '爱心捐赠'}
+                    </h3>
+                    <p className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>
+                      {donationsModule.description || '感谢支持网站运营的朋友们'}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {donations.slice(0, 4).map((donation) => (
+                    <div key={donation.id} className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
+                      <span className="text-sm font-medium" style={{ color: 'var(--theme-text)' }}>{donation.userNickname}</span>
+                      <span className="text-sm font-semibold" style={{ color: 'var(--theme-accent-400)' }}>¥{donation.amount}</span>
                     </div>
-                    <div className="space-y-2">
-                      {donations.slice(0, 4).map((donation) => (
-                        <div key={donation.id} className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
-                          <span className="text-sm font-medium" style={{ color: 'var(--theme-text)' }}>{donation.userNickname}</span>
-                          <span className="text-sm font-semibold" style={{ color: 'var(--theme-accent-400)' }}>¥{donation.amount}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          </section>
+        );
 
-                {config.homeModules.find(m => m.id === 'contributors')?.enabled && (
-                  <motion.div
-                    initial={{ opacity: 0, x: 30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    className="glass-card rounded-2xl p-6"
-                    style={{ borderColor: 'var(--theme-border)' }}
-                  >
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)' }}>
-                        <Trophy className="w-5 h-5 text-amber-400" />
-                      </div>
-                      <div>
-                        <h3 className="font-display text-lg font-bold" style={{ color: 'var(--theme-text)' }}>
-                          {config.homeModules.find(m => m.id === 'contributors')?.title || '贡献榜'}
-                        </h3>
-                        <p className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>
-                          {config.homeModules.find(m => m.id === 'contributors')?.description || '感谢分享固件的贡献者们'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      {contributors.slice(0, 4).map((contributor, index) => (
-                        <div key={contributor.userId} className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
-                          <div className="flex items-center gap-3">
-                            <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'var(--theme-gradient)' }}>
-                              {index + 1}
-                            </div>
-                            <span className="text-sm font-medium" style={{ color: 'var(--theme-text)' }}>{contributor.nickname}</span>
-                          </div>
-                          <span className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>{contributor.firmwareCount} 个固件</span>
+      case 'contributors':
+        const contributorsModule = config.homeModules.find(m => m.id === 'contributors');
+        if (!contributorsModule?.enabled) return null;
+        return (
+          <section key="contributors" className="py-12">
+            <div className="container mx-auto px-4">
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="glass-card rounded-2xl p-6"
+                style={{ borderColor: 'var(--theme-border)' }}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)' }}>
+                    <Trophy className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-lg font-bold" style={{ color: 'var(--theme-text)' }}>
+                      {contributorsModule.title || '贡献榜'}
+                    </h3>
+                    <p className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>
+                      {contributorsModule.description || '感谢分享固件的贡献者们'}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {contributors.slice(0, 4).map((contributor, index) => (
+                    <div key={contributor.userId} className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'var(--theme-gradient)' }}>
+                          {index + 1}
                         </div>
-                      ))}
+                        <span className="text-sm font-medium" style={{ color: 'var(--theme-text)' }}>{contributor.nickname}</span>
+                      </div>
+                      <span className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>{contributor.firmwareCount} 个固件</span>
                     </div>
-                  </motion.div>
-                )}
-              </div>
+                  ))}
+                </div>
+              </motion.div>
             </div>
           </section>
         );
