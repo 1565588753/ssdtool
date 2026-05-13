@@ -34,7 +34,7 @@ type TabType = 'dashboard' | 'profile' | 'downloads' | 'firmware' | 'categories'
 
 export default function UserCenter() {
   const navigate = useNavigate();
-  const { user, logout, config, categories, firmware, tags, addCategory, updateCategory, deleteCategory, addTag, updateTag, deleteTag, updateFirmware, deleteFirmware } = useAppStore();
+  const { user, logout, config, categories, firmware, tags, addCategory, updateCategory, deleteCategory, addTag, updateTag, deleteTag, updateFirmware, deleteFirmware, updateSiteSettings, updateModuleSettings, updateQuotaSettings } = useAppStore();
   const { setTheme, currentTheme } = useThemeStore();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
 
@@ -1435,7 +1435,7 @@ function UserManage() {
 
 // 网站设置组件
 function SiteSettings({ setTheme, currentTheme }: { setTheme: (themeId: string) => void; currentTheme: string }) {
-  const { config, updateSiteSettings, updateHomeModule, updateModuleOrder, updateAdSlot, addAdSlot, deleteAdSlot, updateModuleSettings } = useAppStore();
+  const { config, updateSiteSettings, updateHomeModule, updateModuleOrder, updateAdSlot, addAdSlot, deleteAdSlot, updateModuleSettings, updateQuotaSettings } = useAppStore();
   const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' | 'homeText' | 'quota' | 'theme'>('basic');
 
   const sections = [
@@ -1757,7 +1757,7 @@ function SiteSettings({ setTheme, currentTheme }: { setTheme: (themeId: string) 
                   <input
                     type="number"
                     value={config.quotaSettings.freeQuota}
-                    onChange={(e) => updateModuleSettings({ freeQuota: Number(e.target.value) })}
+                    onChange={(e) => updateQuotaSettings({ freeQuota: Number(e.target.value) })}
                     className="w-full px-4 py-3 rounded-xl focus:outline-none"
                     style={{ 
                       backgroundColor: 'var(--theme-bg-card)',
@@ -1771,7 +1771,7 @@ function SiteSettings({ setTheme, currentTheme }: { setTheme: (themeId: string) 
                   <input
                     type="number"
                     value={config.quotaSettings.premiumQuota}
-                    onChange={(e) => updateModuleSettings({ premiumQuota: Number(e.target.value) })}
+                    onChange={(e) => updateQuotaSettings({ premiumQuota: Number(e.target.value) })}
                     className="w-full px-4 py-3 rounded-xl focus:outline-none"
                     style={{ 
                       backgroundColor: 'var(--theme-bg-card)',
@@ -1785,7 +1785,7 @@ function SiteSettings({ setTheme, currentTheme }: { setTheme: (themeId: string) 
                   <input
                     type="number"
                     value={config.quotaSettings.premiumPrice}
-                    onChange={(e) => updateModuleSettings({ premiumPrice: Number(e.target.value) })}
+                    onChange={(e) => updateQuotaSettings({ premiumPrice: Number(e.target.value) })}
                     className="w-full px-4 py-3 rounded-xl focus:outline-none"
                     style={{ 
                       backgroundColor: 'var(--theme-bg-card)',

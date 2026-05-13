@@ -72,6 +72,7 @@ interface AppState {
   // 配置管理
   updateSiteSettings: (settings: Partial<ExtendedConfig['siteSettings']>) => void;
   updateModuleSettings: (settings: Partial<ExtendedConfig['moduleSettings']>) => void;
+  updateQuotaSettings: (settings: Partial<ExtendedConfig['quotaSettings']>) => void;
   updateModuleOrder: (order: string[]) => void;
   updateHomeModule: (id: string, module: Partial<HomeModule>) => void;
   updateAdSlot: (id: string, slot: Partial<AdSlot>) => void;
@@ -493,6 +494,15 @@ export const useAppStore = create<AppState>()(
           config: {
             ...state.config,
             moduleSettings: { ...state.config.moduleSettings, ...settings }
+          }
+        }));
+      },
+
+      updateQuotaSettings: (settings) => {
+        set((state) => ({
+          config: {
+            ...state.config,
+            quotaSettings: { ...state.config.quotaSettings, ...settings }
           }
         }));
       },
