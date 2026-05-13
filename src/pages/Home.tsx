@@ -19,21 +19,32 @@ export default function Home() {
     getLatestFirmware,
     donations,
     contributors,
-    config
+    config,
+    firmware,
+    categories,
+    user
   } = useAppStore();
 
   const hotFirmware = getHotFirmware();
   const latestFirmware = getLatestFirmware();
 
+  // 计算真实统计数据
+  const firmwareCount = firmware.length;
+  const downloadCount = firmware.reduce((sum, fw) => sum + (fw.downloadCount || 0), 0);
+  const topLevelCategories = categories.filter(c => !c.parentId).length;
+  const userCount = user ? 1 : 0; // 如果需要真实用户数，需要从API获取
+
   const stats = [
-    { icon: HardDrive, label: '固件总数', value: '1,280+' },
-    { icon: Zap, label: '下载次数', value: '50K+' },
-    { icon: ShieldCheck, label: '用户数量', value: '8,500+' },
-    { icon: GitBranch, label: '主控品牌', value: '20+' },
+    { icon: HardDrive, label: '固件总数', value: firmwareCount.toString() },
+    { icon: Zap, label: '下载次数', value: downloadCount.toLocaleString() },
+    { icon: ShieldCheck, label: '用户数量', value: userCount.toString() },
+    { icon: GitBranch, label: '主控品牌', value: topLevelCategories.toString() },
   ];
 
-  // 获取排序后的模块
-  const sortedModules = [...config.homeModules].sort((a, b) => a.order - b.order);
+  // 获取排序后的模块（排除donations和contributors，它们会单独并排显示）
+  const sortedModules = [...config.homeModules]
+    .filter(m => m.id !== 'donations' && m.id !== 'contributors')
+    .sort((a, b) => a.order - b.order);
 
   // 渲染模块
   const renderModule = (module: any) => {
@@ -210,84 +221,98 @@ export default function Home() {
         );
 
       case 'donations':
-        const donationsModule = config.homeModules.find(m => m.id === 'donations');
-        if (!donationsModule?.enabled) return null;
-        return (
-          <section key="donations" className="py-12">
-            <div className="container mx-auto px-4">
-              <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="glass-card rounded-2xl p-6"
-                style={{ borderColor: 'var(--theme-border)' }}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(236, 72, 153, 0.2)' }}>
-                    <Heart className="w-5 h-5 text-pink-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-lg font-bold" style={{ color: 'var(--theme-text)' }}>
-                      {donationsModule.title || '爱心捐赠'}
-                    </h3>
-                    <p className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>
-                      {donationsModule.description || '感谢支持网站运营的朋友们'}
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  {donations.slice(0, 4).map((donation) => (
-                    <div key={donation.id} className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
-                      <span className="text-sm font-medium" style={{ color: 'var(--theme-text)' }}>{donation.userNickname}</span>
-                      <span className="text-sm font-semibold" style={{ color: 'var(--theme-accent-400)' }}>¥{donation.amount}</span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            </div>
-          </section>
-        );
-
       case 'contributors':
+        const donationsModule = config.homeModules.find(m => m.id === 'donations');
         const contributorsModule = config.homeModules.find(m => m.id === 'contributors');
-        if (!contributorsModule?.enabled) return null;
+        
+        // 如果两个模块都没启用，则不显示
+        if (!donationsModule?.enabled && !contributorsModule?.enabled) return null;
+        
         return (
-          <section key="contributors" className="py-12">
+          <section key="donations-contributors" className="py-12">
             <div className="container mx-auto px-4">
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="glass-card rounded-2xl p-6"
-                style={{ borderColor: 'var(--theme-border)' }}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)' }}>
-                    <Trophy className="w-5 h-5 text-amber-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-lg font-bold" style={{ color: 'var(--theme-text)' }}>
-                      {contributorsModule.title || '贡献榜'}
-                    </h3>
-                    <p className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>
-                      {contributorsModule.description || '感谢分享固件的贡献者们'}
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  {contributors.slice(0, 4).map((contributor, index) => (
-                    <div key={contributor.userId} className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'var(--theme-gradient)' }}>
-                          {index + 1}
-                        </div>
-                        <span className="text-sm font-medium" style={{ color: 'var(--theme-text)' }}>{contributor.nickname}</span>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* 爱心捐赠 */}
+                {donationsModule?.enabled && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    className="glass-card rounded-2xl p-6"
+                    style={{ borderColor: 'var(--theme-border)' }}
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(236, 72, 153, 0.2)' }}>
+                        <Heart className="w-5 h-5 text-pink-400" />
                       </div>
-                      <span className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>{contributor.firmwareCount} 个固件</span>
+                      <div>
+                        <h3 className="font-display text-lg font-bold" style={{ color: 'var(--theme-text)' }}>
+                          {donationsModule.title || '爱心捐赠'}
+                        </h3>
+                        <p className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>
+                          {donationsModule.description || '感谢支持网站运营的朋友们'}
+                        </p>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </motion.div>
+                    <div className="space-y-2">
+                      {donations.slice(0, 4).map((donation) => (
+                        <div key={donation.id} className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
+                          <span className="text-sm font-medium" style={{ color: 'var(--theme-text)' }}>{donation.userNickname}</span>
+                          <span className="text-sm font-semibold" style={{ color: 'var(--theme-accent-400)' }}>¥{donation.amount}</span>
+                        </div>
+                      ))}
+                      {donations.length === 0 && (
+                        <div className="text-center py-4" style={{ color: 'var(--theme-text-secondary)' }}>
+                          暂无捐赠记录
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* 贡献榜 */}
+                {contributorsModule?.enabled && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    className="glass-card rounded-2xl p-6"
+                    style={{ borderColor: 'var(--theme-border)' }}
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)' }}>
+                        <Trophy className="w-5 h-5 text-amber-400" />
+                      </div>
+                      <div>
+                        <h3 className="font-display text-lg font-bold" style={{ color: 'var(--theme-text)' }}>
+                          {contributorsModule.title || '贡献榜'}
+                        </h3>
+                        <p className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>
+                          {contributorsModule.description || '感谢分享固件的贡献者们'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {contributors.slice(0, 4).map((contributor, index) => (
+                        <div key={contributor.userId} className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
+                          <div className="flex items-center gap-3">
+                            <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'var(--theme-gradient)' }}>
+                              {index + 1}
+                            </div>
+                            <span className="text-sm font-medium" style={{ color: 'var(--theme-text)' }}>{contributor.nickname}</span>
+                          </div>
+                          <span className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>{contributor.firmwareCount} 个固件</span>
+                        </div>
+                      ))}
+                      {contributors.length === 0 && (
+                        <div className="text-center py-4" style={{ color: 'var(--theme-text-secondary)' }}>
+                          暂无贡献者记录
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </div>
             </div>
           </section>
         );
