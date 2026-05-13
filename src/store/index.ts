@@ -122,10 +122,9 @@ const defaultHomeModules: HomeModule[] = [
   { id: 'hero', name: '首屏横幅', enabled: true, order: 1, title: '', description: '' },
   { id: 'stats', name: '统计数据', enabled: true, order: 2, title: '', description: '' },
   { id: 'hot', name: '热门固件', enabled: true, order: 3, title: '热门固件', description: '下载量最高的开卡工具' },
-  { id: 'latest', name: '最新上传', enabled: true, order: 4, title: '最新上传', description: '最新更新的开卡工具' },
-  { id: 'donations', name: '爱心捐赠', enabled: true, order: 5, title: '爱心捐赠', description: '感谢支持网站运营的朋友们' },
-  { id: 'contributors', name: '贡献榜', enabled: true, order: 6, title: '贡献榜', description: '感谢分享固件的贡献者们' },
-  { id: 'cta', name: '行动号召', enabled: true, order: 7, title: '', description: '' }
+  { id: 'donations', name: '爱心捐赠', enabled: true, order: 4, title: '爱心捐赠', description: '感谢支持网站运营的朋友们' },
+  { id: 'contributors', name: '贡献榜', enabled: true, order: 5, title: '贡献榜', description: '感谢分享固件的贡献者们' },
+  { id: 'cta', name: '行动号召', enabled: true, order: 6, title: '', description: '' }
 ];
 
 // 默认广告位

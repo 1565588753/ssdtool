@@ -4,6 +4,7 @@
  */
 import { Router, type Request, type Response } from 'express';
 import pool from '../db.js';
+import { getUseMockData, userDB, firmwareDB, configDB } from '../dboperations.js';
 
 const router = Router();
 
@@ -17,8 +18,13 @@ async function adminMiddleware(req: Request, res: Response, next: Function) {
   }
 
   try {
-    const [rows] = await pool.execute('SELECT role FROM users WHERE id = ?', [userId]);
-    const user = (rows as any[])[0];
+    let user;
+    if (getUseMockData()) {
+      user = await userDB.findById(userId);
+    } else {
+      const [rows] = await pool.execute('SELECT role FROM users WHERE id = ?', [userId]);
+      user = (rows as any[])[0];
+    }
     
     if (!user || user.role !== 'admin') {
       res.status(403).json({ success: false, error: '权限不足，需要管理员权限' });
@@ -40,13 +46,19 @@ router.use(adminMiddleware);
  */
 router.get('/users', async (req: Request, res: Response): Promise<void> => {
   try {
-    const [rows] = await pool.execute(
-      'SELECT * FROM users ORDER BY created_at DESC'
-    );
+    let users;
+    if (getUseMockData()) {
+      users = await userDB.findAll();
+    } else {
+      const [rows] = await pool.execute(
+        'SELECT * FROM users ORDER BY created_at DESC'
+      );
+      users = rows as any[];
+    }
     
     res.json({
       success: true,
-      users: (rows as any[]).map(user => ({
+      users: users.map(user => ({
         id: user.id,
         email: user.email,
         nickname: user.nickname,
@@ -79,10 +91,17 @@ router.put('/users/:id/role', async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    await pool.execute(
-      'UPDATE users SET role = ? WHERE id = ?',
-      [role, id]
-    );
+    if (getUseMockData()) {
+      const user = (await userDB.findAll()).find(u => u.id === id);
+      if (user) {
+        user.role = role;
+      }
+    } else {
+      await pool.execute(
+        'UPDATE users SET role = ? WHERE id = ?',
+        [role, id]
+      );
+    }
 
     res.json({ success: true, message: '角色更新成功' });
   } catch (error) {
@@ -105,7 +124,11 @@ router.delete('/users/:id', async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    await pool.execute('DELETE FROM users WHERE id = ?', [id]);
+    if (getUseMockData()) {
+      await userDB.delete(id);
+    } else {
+      await pool.execute('DELETE FROM users WHERE id = ?', [id]);
+    }
 
     res.json({ success: true, message: '用户删除成功' });
   } catch (error) {
@@ -120,13 +143,26 @@ router.delete('/users/:id', async (req: Request, res: Response): Promise<void> =
  */
 router.get('/firmware', async (req: Request, res: Response): Promise<void> => {
   try {
-    const [rows] = await pool.execute(
-      'SELECT * FROM firmware ORDER BY created_at DESC'
-    );
+    let firmwareList;
+    if (getUseMockData()) {
+      // 从 mock 数据获取所有固件（不筛选状态）
+      const allFirmware = [];
+      // dboperations 里的 mockFirmware 就是完整列表
+      const { default: dbops } = await import('../dboperations.js');
+      // 直接访问 mockFirmware 不太方便，我们从 dboperations 里获取所有状态的固件
+      // 让我们自己构造一个包含所有状态的列表
+      const { mockFirmware } = await import('../dboperations.js');
+      firmwareList = mockFirmware;
+    } else {
+      const [rows] = await pool.execute(
+        'SELECT * FROM firmware ORDER BY created_at DESC'
+      );
+      firmwareList = rows as any[];
+    }
     
     res.json({
       success: true,
-      firmware: (rows as any[]).map(fw => ({
+      firmware: firmwareList.map(fw => ({
         id: fw.id,
         title: fw.title,
         description: fw.description,
@@ -146,7 +182,32 @@ router.get('/firmware', async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error) {
     console.error('获取固件列表错误:', error);
-    res.status(500).json({ success: false, error: '获取固件列表失败' });
+    // 如果上面的方法失败，使用简单的 mock
+    if (getUseMockData()) {
+      const { mockFirmware } = await import('../dboperations.js');
+      res.json({
+        success: true,
+        firmware: mockFirmware.map(fw => ({
+          id: fw.id,
+          title: fw.title,
+          description: fw.description,
+          version: fw.version,
+          categoryId: fw.category_id,
+          uploaderId: fw.uploader_id,
+          uploaderName: fw.uploader_name,
+          filePath: fw.file_path,
+          fileSize: fw.file_size,
+          downloadCount: fw.download_count,
+          isPaid: Boolean(fw.is_paid),
+          price: fw.price,
+          status: fw.status,
+          createdAt: fw.created_at,
+          updatedAt: fw.updated_at
+        }))
+      });
+    } else {
+      res.status(500).json({ success: false, error: '获取固件列表失败' });
+    }
   }
 });
 
@@ -164,10 +225,14 @@ router.put('/firmware/:id/status', async (req: Request, res: Response): Promise<
       return;
     }
 
-    await pool.execute(
-      'UPDATE firmware SET status = ? WHERE id = ?',
-      [status, id]
-    );
+    if (getUseMockData()) {
+      await firmwareDB.updateStatus(id, status);
+    } else {
+      await pool.execute(
+        'UPDATE firmware SET status = ? WHERE id = ?',
+        [status, id]
+      );
+    }
 
     res.json({ success: true, message: '固件状态更新成功' });
   } catch (error) {
@@ -183,7 +248,11 @@ router.put('/firmware/:id/status', async (req: Request, res: Response): Promise<
 router.delete('/firmware/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    await pool.execute('DELETE FROM firmware WHERE id = ?', [id]);
+    if (getUseMockData()) {
+      await firmwareDB.delete(id);
+    } else {
+      await pool.execute('DELETE FROM firmware WHERE id = ?', [id]);
+    }
     res.json({ success: true, message: '固件删除成功' });
   } catch (error) {
     console.error('删除固件错误:', error);
@@ -204,12 +273,26 @@ router.post('/categories', async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const [result] = await pool.execute(
-      'INSERT INTO categories (name, parent_id, order_index) VALUES (?, ?, ?)',
-      [name, parentId || null, orderIndex || 0]
-    );
+    let insertId;
+    if (getUseMockData()) {
+      // Mock 模式下简单处理
+      const newCategory = {
+        id: `cat-${Date.now()}`,
+        name,
+        parent_id: parentId || null,
+        order_index: orderIndex || 0,
+        created_at: new Date().toISOString()
+      };
+      insertId = newCategory.id;
+    } else {
+      const [result] = await pool.execute(
+        'INSERT INTO categories (name, parent_id, order_index) VALUES (?, ?, ?)',
+        [name, parentId || null, orderIndex || 0]
+      );
+      insertId = (result as any).insertId;
+    }
 
-    res.json({ success: true, message: '分类创建成功', id: (result as any).insertId });
+    res.json({ success: true, message: '分类创建成功', id: insertId });
   } catch (error) {
     console.error('创建分类错误:', error);
     res.status(500).json({ success: false, error: '创建分类失败' });
@@ -225,10 +308,14 @@ router.put('/categories/:id', async (req: Request, res: Response): Promise<void>
     const { id } = req.params;
     const { name, parentId, orderIndex } = req.body;
 
-    await pool.execute(
-      'UPDATE categories SET name = ?, parent_id = ?, order_index = ? WHERE id = ?',
-      [name, parentId || null, orderIndex || 0, id]
-    );
+    if (getUseMockData()) {
+      // Mock 模式下不做实际更新
+    } else {
+      await pool.execute(
+        'UPDATE categories SET name = ?, parent_id = ?, order_index = ? WHERE id = ?',
+        [name, parentId || null, orderIndex || 0, id]
+      );
+    }
 
     res.json({ success: true, message: '分类更新成功' });
   } catch (error) {
@@ -245,12 +332,20 @@ router.delete('/categories/:id', async (req: Request, res: Response): Promise<vo
   try {
     const { id } = req.params;
     
-    const [firmware] = await pool.execute(
-      'SELECT COUNT(*) as count FROM firmware WHERE category_id = ?',
-      [id]
-    );
+    let hasFirmware = false;
+    if (getUseMockData()) {
+      // Mock 模式下检查是否有固件
+      const { mockFirmware } = await import('../dboperations.js');
+      hasFirmware = mockFirmware.some(f => f.category_id === id);
+    } else {
+      const [firmware] = await pool.execute(
+        'SELECT COUNT(*) as count FROM firmware WHERE category_id = ?',
+        [id]
+      );
+      hasFirmware = (firmware as any[])[0].count > 0;
+    }
     
-    if ((firmware as any[])[0].count > 0) {
+    if (hasFirmware) {
       res.status(400).json({ 
         success: false, 
         error: '该分类下存在固件，无法删除' 
@@ -258,7 +353,12 @@ router.delete('/categories/:id', async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    await pool.execute('DELETE FROM categories WHERE id = ?', [id]);
+    if (getUseMockData()) {
+      // Mock 模式下简单处理
+    } else {
+      await pool.execute('DELETE FROM categories WHERE id = ?', [id]);
+    }
+    
     res.json({ success: true, message: '分类删除成功' });
   } catch (error) {
     console.error('删除分类错误:', error);
@@ -272,17 +372,29 @@ router.delete('/categories/:id', async (req: Request, res: Response): Promise<vo
  */
 router.get('/categories', async (req: Request, res: Response): Promise<void> => {
   try {
-    const [rows] = await pool.execute(
-      'SELECT * FROM categories ORDER BY order_index ASC, created_at DESC'
-    );
-    
-    const categories = (rows as any[]).map(cat => ({
-      id: cat.id,
-      name: cat.name,
-      parentId: cat.parent_id,
-      orderIndex: cat.order_index,
-      createdAt: cat.created_at
-    }));
+    let categories;
+    if (getUseMockData()) {
+      const { mockCategories } = await import('../dboperations.js');
+      categories = mockCategories.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        parentId: cat.parent_id,
+        orderIndex: cat.order_index,
+        createdAt: new Date().toISOString()
+      }));
+    } else {
+      const [rows] = await pool.execute(
+        'SELECT * FROM categories ORDER BY order_index ASC, created_at DESC'
+      );
+      
+      categories = (rows as any[]).map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        parentId: cat.parent_id,
+        orderIndex: cat.order_index,
+        createdAt: cat.created_at
+      }));
+    }
     
     const categoryTree = buildCategoryTree(categories);
     
@@ -332,21 +444,35 @@ function buildCategoryTree(categories: any[]): any[] {
  */
 router.get('/dashboard', async (req: Request, res: Response): Promise<void> => {
   try {
-    const [userStats] = await pool.execute('SELECT COUNT(*) as count FROM users');
-    const [firmwareStats] = await pool.execute('SELECT COUNT(*) as count FROM firmware');
-    const [downloadStats] = await pool.execute('SELECT COUNT(*) as count FROM downloads');
-    const [donationTotal] = await pool.execute('SELECT SUM(amount) as total FROM donations');
-    const [pendingStats] = await pool.execute('SELECT COUNT(*) as count FROM firmware WHERE status = "pending"');
-    
-    res.json({
-      success: true,
-      dashboard: {
+    let dashboard;
+    if (getUseMockData()) {
+      const { mockUsers, mockFirmware, mockDonations } = await import('../dboperations.js');
+      dashboard = {
+        totalUsers: mockUsers.length,
+        totalFirmware: mockFirmware.length,
+        totalDownloads: mockFirmware.reduce((sum, f) => sum + f.download_count, 0),
+        totalDonations: mockDonations.reduce((sum, d) => sum + d.amount, 0),
+        pendingFirmware: mockFirmware.filter(f => f.status === 'pending').length
+      };
+    } else {
+      const [userStats] = await pool.execute('SELECT COUNT(*) as count FROM users');
+      const [firmwareStats] = await pool.execute('SELECT COUNT(*) as count FROM firmware');
+      const [downloadStats] = await pool.execute('SELECT COUNT(*) as count FROM downloads');
+      const [donationTotal] = await pool.execute('SELECT SUM(amount) as total FROM donations');
+      const [pendingStats] = await pool.execute('SELECT COUNT(*) as count FROM firmware WHERE status = "pending"');
+      
+      dashboard = {
         totalUsers: (userStats as any[])[0].count,
         totalFirmware: (firmwareStats as any[])[0].count,
         totalDownloads: (downloadStats as any[])[0].count,
         totalDonations: (donationTotal as any[])[0]?.total || 0,
         pendingFirmware: (pendingStats as any[])[0].count
-      }
+      };
+    }
+    
+    res.json({
+      success: true,
+      dashboard
     });
   } catch (error) {
     console.error('获取仪表盘统计错误:', error);
@@ -360,12 +486,22 @@ router.get('/dashboard', async (req: Request, res: Response): Promise<void> => {
  */
 router.get('/config', async (req: Request, res: Response): Promise<void> => {
   try {
-    const [rows] = await pool.execute('SELECT * FROM config');
-    
-    const config: any = {};
-    (rows as any[]).forEach(row => {
-      config[row.key] = JSON.parse(row.value);
-    });
+    let config;
+    if (getUseMockData()) {
+      const { mockConfigs } = await import('../dboperations.js');
+      config = {
+        site_settings: JSON.parse(mockConfigs.site_settings),
+        module_settings: JSON.parse(mockConfigs.module_settings),
+        quota_settings: JSON.parse(mockConfigs.quota_settings)
+      };
+    } else {
+      const [rows] = await pool.execute('SELECT * FROM config');
+      
+      config = {};
+      (rows as any[]).forEach(row => {
+        config[row.key] = JSON.parse(row.value);
+      });
+    }
     
     res.json({ success: true, config });
   } catch (error) {
@@ -382,25 +518,31 @@ router.put('/config', async (req: Request, res: Response): Promise<void> => {
   try {
     const { siteSettings, moduleSettings, quotaSettings } = req.body;
 
-    if (siteSettings) {
-      await pool.execute(
-        'INSERT INTO config (`key`, value) VALUES ("site_settings", ?) ON DUPLICATE KEY UPDATE value = ?',
-        [JSON.stringify(siteSettings), JSON.stringify(siteSettings)]
-      );
-    }
+    if (getUseMockData()) {
+      await configDB.update('site_settings', siteSettings || {});
+      await configDB.update('module_settings', moduleSettings || {});
+      await configDB.update('quota_settings', quotaSettings || {});
+    } else {
+      if (siteSettings) {
+        await pool.execute(
+          'INSERT INTO config (`key`, value) VALUES ("site_settings", ?) ON DUPLICATE KEY UPDATE value = ?',
+          [JSON.stringify(siteSettings), JSON.stringify(siteSettings)]
+        );
+      }
 
-    if (moduleSettings) {
-      await pool.execute(
-        'INSERT INTO config (`key`, value) VALUES ("module_settings", ?) ON DUPLICATE KEY UPDATE value = ?',
-        [JSON.stringify(moduleSettings), JSON.stringify(moduleSettings)]
-      );
-    }
+      if (moduleSettings) {
+        await pool.execute(
+          'INSERT INTO config (`key`, value) VALUES ("module_settings", ?) ON DUPLICATE KEY UPDATE value = ?',
+          [JSON.stringify(moduleSettings), JSON.stringify(moduleSettings)]
+        );
+      }
 
-    if (quotaSettings) {
-      await pool.execute(
-        'INSERT INTO config (`key`, value) VALUES ("quota_settings", ?) ON DUPLICATE KEY UPDATE value = ?',
-        [JSON.stringify(quotaSettings), JSON.stringify(quotaSettings)]
-      );
+      if (quotaSettings) {
+        await pool.execute(
+          'INSERT INTO config (`key`, value) VALUES ("quota_settings", ?) ON DUPLICATE KEY UPDATE value = ?',
+          [JSON.stringify(quotaSettings), JSON.stringify(quotaSettings)]
+        );
+      }
     }
 
     res.json({ success: true, message: '配置更新成功' });
