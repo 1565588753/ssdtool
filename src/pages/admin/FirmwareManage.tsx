@@ -26,10 +26,27 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return;
+    setDeleting(true);
+    try {
+      await adminAPI.deleteFirmware(deleteConfirm);
+      setFirmwareList(prev => prev.filter(f => f.id !== deleteConfirm));
+      showToast('固件已删除', 'success');
+    } catch {
+      showToast('删除失败，请重试', 'error');
+    } finally {
+      setDeleting(false);
+      setDeleteConfirm(null);
+    }
   };
 
   useEffect(() => {
@@ -210,17 +227,7 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
                           </>
                         )}
                         <button
-                          onClick={async () => {
-                            if (confirm('确定要删除这个固件吗？')) {
-                              try {
-                                await adminAPI.deleteFirmware(fw.id);
-                                setFirmwareList(prev => prev.filter(f => f.id !== fw.id));
-                                showToast('固件已删除', 'success');
-                              } catch {
-                                showToast('删除失败，请重试', 'error');
-                              }
-                            }
-                          }}
+                          onClick={() => setDeleteConfirm(fw.id)}
                           className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -397,6 +404,47 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
                 </button>
               </div>
             </form>
+          </motion.div>
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card rounded-xl p-6 w-full max-w-md"
+            style={{ borderColor: 'var(--theme-border)' }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-400" />
+              </div>
+              <h3 className="text-lg font-bold" style={{ color: 'var(--theme-text)' }}>确认删除</h3>
+            </div>
+            <p className="mb-6" style={{ color: 'var(--theme-text-secondary)' }}>
+              确定要删除这个固件吗？此操作不可撤销，固件文件也将被永久删除。
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                disabled={deleting}
+                className="flex-1 px-4 py-3 border rounded-xl hover:bg-white/10 transition-colors disabled:opacity-50"
+                style={{
+                  borderColor: 'var(--theme-border)',
+                  color: 'var(--theme-text-secondary)'
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className="flex-1 px-4 py-3 rounded-xl text-white font-semibold disabled:opacity-50 bg-red-500 hover:bg-red-600 transition-colors"
+              >
+                {deleting ? '删除中...' : '确认删除'}
+              </button>
+            </div>
           </motion.div>
         </div>
       )}

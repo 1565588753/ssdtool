@@ -5,6 +5,12 @@
 import { Router, type Request, type Response } from 'express';
 import pool from '../db.js';
 import { userDB, firmwareDB, configDB, categoryDB } from '../dboperations.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = Router();
 

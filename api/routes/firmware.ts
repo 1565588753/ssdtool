@@ -361,6 +361,9 @@ router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: 
       return;
     }
 
+    // 管理员和维护者上传的固件自动通过审核
+    const autoApproved = user.role === 'admin' || user.role === 'maintainer';
+
     // 创建固件记录
     const firmwareData = {
       title,
@@ -373,7 +376,7 @@ router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: 
       fileSize: req.file.size,
       isPaid: isPaid === 'true' || isPaid === true,
       price: price ? parseFloat(price) : 0,
-      status: 'pending' // 默认待审核
+      status: autoApproved ? 'approved' : 'pending'
     };
 
     const result = await firmwareDB.create(firmwareData);
@@ -381,7 +384,7 @@ router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: 
 
     res.json({
       success: true,
-      message: '固件上传成功，等待审核',
+      message: autoApproved ? '固件上传成功' : '固件上传成功，等待审核',
       id
     });
   } catch (error) {
