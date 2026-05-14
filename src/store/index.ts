@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { User, Category, Firmware, Donation, Contributor, Config, Download, Tag } from '../../shared/types';
-import { mockCategories, mockFirmware, mockDonations, mockContributors, mockConfig, mockTags } from '../lib/mockData';
 import { authAPI, firmwareAPI, categoryAPI, donationAPI } from '../services/api';
 
 // 广告类型定义
@@ -92,54 +91,27 @@ interface AppState {
   error: string | null;
 }
 
-const mockUser: User = {
-  id: 'user-100',
-  email: 'demo@example.com',
-  nickname: '演示用户',
-  avatar: undefined,
-  role: 'user',
-  downloadQuota: 5,
-  downloadsUsed: 2,
-  quotaResetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-  isPremium: false,
-  createdAt: new Date().toISOString()
-};
-
-const adminUser: User = {
-  id: 'user-001',
-  email: 'admin@example.com',
-  nickname: '系统管理员',
-  avatar: undefined,
-  role: 'admin',
-  downloadQuota: 9999,
-  downloadsUsed: 0,
-  quotaResetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-  isPremium: true,
-  createdAt: new Date().toISOString()
-};
-
-// 默认首页模块
-const defaultHomeModules: HomeModule[] = [
-  { id: 'hero', name: '首屏横幅', enabled: true, order: 1, title: '', description: '' },
-  { id: 'stats', name: '统计数据', enabled: true, order: 2, title: '', description: '' },
-  { id: 'hot', name: '热门固件', enabled: true, order: 3, title: '热门固件', description: '下载量最高的开卡工具' },
-  { id: 'donations', name: '爱心捐赠', enabled: true, order: 4, title: '爱心捐赠', description: '感谢支持网站运营的朋友们' },
-  { id: 'contributors', name: '贡献榜', enabled: true, order: 5, title: '贡献榜', description: '感谢分享固件的贡献者们' },
-  { id: 'cta', name: '行动号召', enabled: true, order: 6, title: '', description: '' }
-];
-
-// 默认广告位
-const defaultAdSlots: AdSlot[] = [
-  { id: 'ad-top', name: '顶部横幅', enabled: false, content: '', position: 'top' },
-  { id: 'ad-sidebar', name: '侧边栏', enabled: false, content: '', position: 'sidebar' },
-  { id: 'ad-bottom', name: '底部横幅', enabled: false, content: '', position: 'bottom' }
-];
-
-const extendedConfig: ExtendedConfig = {
-  ...mockConfig,
-  moduleOrder: defaultHomeModules.map(m => m.id),
-  homeModules: defaultHomeModules,
-  adSlots: defaultAdSlots
+const defaultConfig: ExtendedConfig = {
+  siteSettings: {
+    name: 'SSD开卡工具站',
+    description: '专业的固态硬盘开卡工具分享平台'
+  },
+  moduleSettings: {
+    showHero: true,
+    showHot: true,
+    showLatest: true,
+    showDonations: true,
+    showContributors: true
+  },
+  quotaSettings: {
+    freeQuota: 5,
+    premiumQuota: 100,
+    singleDownloadPrice: 1,
+    premiumPrice: 8
+  },
+  moduleOrder: [],
+  adSlots: [],
+  homeModules: []
 };
 
 export const useAppStore = create<AppState>()(
@@ -152,7 +124,7 @@ export const useAppStore = create<AppState>()(
       tags: [],
       donations: [],
       contributors: [],
-      config: extendedConfig,
+      config: defaultConfig,
       downloads: [],
       selectedCategory: null,
       selectedTags: [],
@@ -165,14 +137,6 @@ export const useAppStore = create<AppState>()(
       login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
-          // 管理员账号验证（模拟）
-          if (email === 'admin@example.com' && password === 'admin123') {
-            localStorage.setItem('userId', adminUser.id);
-            set({ user: adminUser, isAuthenticated: true, isLoading: false });
-            return true;
-          }
-
-          // 尝试调用真实 API
           const response = await authAPI.login(email, password);
           if (response.success && response.user) {
             localStorage.setItem('userId', response.user.id);
@@ -191,14 +155,12 @@ export const useAppStore = create<AppState>()(
             set({ user: userData, isAuthenticated: true, isLoading: false });
             return true;
           }
-          set({ isLoading: false });
+          set({ error: '邮箱或密码错误', isLoading: false });
           return false;
         } catch (error: any) {
-          // 如果 API 调用失败，使用模拟数据
-          console.warn('API 调用失败，使用模拟登录:', error.message);
-          localStorage.setItem('userId', mockUser.id);
-          set({ user: mockUser, isAuthenticated: true, isLoading: false });
-          return true;
+          console.error('登录失败:', error);
+          set({ error: error.message || '登录失败，请检查网络连接', isLoading: false });
+          return false;
         }
       },
 
@@ -330,53 +292,17 @@ export const useAppStore = create<AppState>()(
           return false;
         } catch (error: any) {
           console.error('升级 Premium 失败:', error);
-          // 如果 API 调用失败，使用模拟逻辑
-          set({
-            user: {
-              ...state.user,
-              isPremium: true,
-              downloadQuota: state.config.quotaSettings.premiumQuota
-            },
-            donations: [
-              {
-                id: `don-${Date.now()}`,
-                userId: state.user.id,
-                userNickname: state.user.nickname,
-                amount: state.config.quotaSettings.premiumPrice,
-                type: 'premium_upgrade',
-                createdAt: new Date().toISOString()
-              },
-              ...state.donations
-            ]
-          });
-          return true;
+          return false;
         }
       },
 
       singleDownloadPayment: async (firmwareId) => {
-        const state = get();
-        
         try {
           await donationAPI.singleDownload(firmwareId);
           return true;
         } catch (error: any) {
           console.error('单次下载赞助失败:', error);
-          // 如果 API 调用失败，使用模拟逻辑
-          const fw = state.getFirmwareById(firmwareId);
-          set({
-            donations: [
-              {
-                id: `don-${Date.now()}`,
-                userId: state.user?.id,
-                userNickname: state.user?.nickname || '游客用户',
-                amount: state.config.quotaSettings.singleDownloadPrice,
-                type: 'single_download',
-                createdAt: new Date().toISOString()
-              },
-              ...state.donations
-            ]
-          });
-          return true;
+          return false;
         }
       },
 
@@ -552,35 +478,8 @@ export const useAppStore = create<AppState>()(
 
       loadInitialData: async () => {
         set({ isLoading: true, error: null });
-        const state = get();
         
         try {
-          // 检查是否已经有扁平化的分类数据
-          const hasValidCategories = state.categories.length > 0 && 
-            state.categories.some(c => c.parentId === null);
-          
-          // 如果没有有效数据，加载模拟数据并扁平化
-          if (!hasValidCategories) {
-            const flatCategories = mockCategories.flatMap(cat => [
-              { ...cat, children: [] },
-              ...(cat.children || [])
-            ]);
-            set({ categories: flatCategories });
-          }
-          if (state.firmware.length === 0) {
-            set({ firmware: mockFirmware });
-          }
-          if (state.tags.length === 0) {
-            set({ tags: mockTags });
-          }
-          if (state.donations.length === 0) {
-            set({ donations: mockDonations });
-          }
-          if (state.contributors.length === 0) {
-            set({ contributors: mockContributors });
-          }
-
-          // 尝试从 API 加载数据
           const [categoriesRes, firmwareRes, donationsRes] = await Promise.all([
             categoryAPI.getAll().catch(() => ({ success: false, categories: [] })),
             firmwareAPI.getAll().catch(() => ({ success: false, firmware: [] })),
