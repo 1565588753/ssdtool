@@ -159,6 +159,18 @@ export const adminAPI = {
   // 用户管理
   getUsers: () =>
     fetchAPI<{ success: boolean; users: any[] }>('/api/admin/users'),
+
+  createUser: (data: { email: string; password: string; nickname: string; role?: string }) =>
+    fetchAPI<{ success: boolean; user: any }>('/api/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateUser: (id: string, data: { email?: string; password?: string; nickname?: string; role?: string; downloadQuota?: number; isPremium?: boolean }) =>
+    fetchAPI<{ success: boolean }>(`/api/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
   
   updateUserRole: (id: string, role: string) =>
     fetchAPI<{ success: boolean }>(`/api/admin/users/${id}/role`, {

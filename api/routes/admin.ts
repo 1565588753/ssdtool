@@ -66,6 +66,114 @@ router.get('/users', async (req: Request, res: Response): Promise<void> => {
 });
 
 /**
+ * 创建用户
+ * POST /api/admin/users
+ */
+router.post('/users', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, password, nickname, role } = req.body;
+
+    if (!email || !password || !nickname) {
+      res.status(400).json({ success: false, error: '邮箱、密码和昵称为必填项' });
+      return;
+    }
+
+    const bcrypt = await import('bcryptjs');
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const userId = `user-${Date.now()}`;
+
+    await pool.execute(
+      'INSERT INTO users (id, email, password, nickname, role, download_quota, is_premium) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [userId, email, hashedPassword, nickname, role || 'user', 5, 0]
+    );
+
+    res.json({
+      success: true,
+      user: {
+        id: userId,
+        email,
+        nickname,
+        role: role || 'user',
+        avatar: null,
+        downloadQuota: 5,
+        downloadsUsed: 0,
+        quotaResetDate: null,
+        isPremium: false,
+        createdAt: new Date().toISOString()
+      }
+    });
+  } catch (error: any) {
+    if (error.message?.includes('UNIQUE constraint')) {
+      res.status(400).json({ success: false, error: '该邮箱已被注册' });
+      return;
+    }
+    console.error('创建用户错误:', error);
+    res.status(500).json({ success: false, error: '创建用户失败' });
+  }
+});
+
+/**
+ * 更新用户信息
+ * PUT /api/admin/users/:id
+ */
+router.put('/users/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { email, password, nickname, role, downloadQuota, isPremium } = req.body;
+
+    const updates: string[] = [];
+    const params: any[] = [];
+
+    if (email !== undefined) {
+      updates.push('email = ?');
+      params.push(email);
+    }
+    if (password !== undefined && password !== '') {
+      const bcrypt = await import('bcryptjs');
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updates.push('password = ?');
+      params.push(hashedPassword);
+    }
+    if (nickname !== undefined) {
+      updates.push('nickname = ?');
+      params.push(nickname);
+    }
+    if (role !== undefined) {
+      updates.push('role = ?');
+      params.push(role);
+    }
+    if (downloadQuota !== undefined) {
+      updates.push('download_quota = ?');
+      params.push(downloadQuota);
+    }
+    if (isPremium !== undefined) {
+      updates.push('is_premium = ?');
+      params.push(isPremium ? 1 : 0);
+    }
+
+    if (updates.length === 0) {
+      res.status(400).json({ success: false, error: '没有需要更新的字段' });
+      return;
+    }
+
+    params.push(id);
+    await pool.execute(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      params
+    );
+
+    res.json({ success: true, message: '用户信息更新成功' });
+  } catch (error: any) {
+    if (error.message?.includes('UNIQUE constraint')) {
+      res.status(400).json({ success: false, error: '该邮箱已被其他用户使用' });
+      return;
+    }
+    console.error('更新用户错误:', error);
+    res.status(500).json({ success: false, error: '更新用户失败' });
+  }
+});
+
+/**
  * 更新用户角色
  * PUT /api/admin/users/:id/role
  */

@@ -1245,22 +1245,27 @@ function TagManage({ tags, addTag, updateTag, deleteTag }: { tags: any[]; addTag
 function UserManage() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [addForm, setAddForm] = useState({ email: '', password: '', nickname: '', role: 'user' });
+  const [editForm, setEditForm] = useState({ email: '', password: '', nickname: '', role: 'user', downloadQuota: 5, isPremium: false });
+  const [submitting, setSubmitting] = useState(false);
 
-  // 从API获取用户列表
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await adminAPI.getUsers();
-        if (response.success) {
-          setUsers(response.users);
-        }
-      } catch (error) {
-        console.error('获取用户列表失败:', error);
-      } finally {
-        setLoading(false);
+  const fetchUsers = async () => {
+    try {
+      const response = await adminAPI.getUsers();
+      if (response.success) {
+        setUsers(response.users);
       }
-    };
+    } catch (error) {
+      console.error('获取用户列表失败:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchUsers();
   }, []);
 
@@ -1272,7 +1277,6 @@ function UserManage() {
     }
   };
 
-  // 删除用户
   const handleDeleteUser = async (userId: string) => {
     if (confirm('确定要删除这个用户吗？')) {
       try {
@@ -1285,7 +1289,6 @@ function UserManage() {
     }
   };
 
-  // 更新用户角色
   const handleUpdateRole = async (userId: string, newRole: string) => {
     try {
       await adminAPI.updateUserRole(userId, newRole);
@@ -1295,22 +1298,89 @@ function UserManage() {
     }
   };
 
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addForm.email || !addForm.password || !addForm.nickname) {
+      alert('请填写所有必填字段');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const response = await adminAPI.createUser(addForm);
+      if (response.success) {
+        setUsers([response.user, ...users]);
+        setShowAddModal(false);
+        setAddForm({ email: '', password: '', nickname: '', role: 'user' });
+        alert('用户创建成功');
+      }
+    } catch (error: any) {
+      alert(error.message || '创建用户失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editForm.email || !editForm.nickname) {
+      alert('邮箱和昵称为必填项');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const updateData: any = {
+        email: editForm.email,
+        nickname: editForm.nickname,
+        role: editForm.role,
+        downloadQuota: editForm.downloadQuota,
+        isPremium: editForm.isPremium,
+      };
+      if (editForm.password) {
+        updateData.password = editForm.password;
+      }
+      await adminAPI.updateUser(editingUser.id, updateData);
+      setUsers(users.map(u => u.id === editingUser.id ? {
+        ...u,
+        email: editForm.email,
+        nickname: editForm.nickname,
+        role: editForm.role,
+        downloadQuota: editForm.downloadQuota,
+        isPremium: editForm.isPremium,
+      } : u));
+      setShowEditModal(false);
+      setEditingUser(null);
+      alert('用户信息更新成功');
+    } catch (error: any) {
+      alert(error.message || '更新用户失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openEditModal = (u: any) => {
+    setEditingUser(u);
+    setEditForm({
+      email: u.email,
+      password: '',
+      nickname: u.nickname,
+      role: u.role,
+      downloadQuota: u.downloadQuota,
+      isPremium: u.isPremium,
+    });
+    setShowEditModal(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>用户管理</h2>
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="搜索用户..."
-            className="pl-10 pr-4 py-3 rounded-xl focus:outline-none"
-            style={{ 
-              backgroundColor: 'var(--theme-bg-card)',
-              border: '1px solid var(--theme-border)',
-              color: 'var(--theme-text)'
-            }}
-          />
-        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="btn-primary px-4 py-3 rounded-xl text-white font-semibold flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          添加用户
+        </button>
       </div>
 
       <div className="glass-card rounded-xl overflow-hidden" style={{ borderColor: 'var(--theme-border)' }}>
@@ -1325,7 +1395,7 @@ function UserManage() {
                 <tr style={{ backgroundColor: 'var(--theme-bg-card)' }}>
                   <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>用户</th>
                   <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>角色</th>
-                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>下载次数</th>
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>下载额度</th>
                   <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>会员状态</th>
                   <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--theme-text-secondary)' }}>操作</th>
                 </tr>
@@ -1344,6 +1414,7 @@ function UserManage() {
                         <div>
                           <p className="font-medium" style={{ color: 'var(--theme-text)' }}>{u.nickname}</p>
                           <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>{u.email}</p>
+                          <p className="text-xs" style={{ color: 'var(--theme-text-secondary)', opacity: 0.6 }}>UID: {u.id}</p>
                         </div>
                       </div>
                     </td>
@@ -1358,7 +1429,9 @@ function UserManage() {
                         <option value="user">普通用户</option>
                       </select>
                     </td>
-                    <td className="px-6 py-4" style={{ color: 'var(--theme-text-secondary)' }}>{u.downloadsUsed}</td>
+                    <td className="px-6 py-4" style={{ color: 'var(--theme-text-secondary)' }}>
+                      {u.downloadsUsed} / {u.downloadQuota}
+                    </td>
                     <td className="px-6 py-4">
                       {u.isPremium ? (
                         <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium">
@@ -1369,14 +1442,22 @@ function UserManage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      {u.role !== 'admin' && (
+                      <div className="flex gap-2">
                         <button 
-                          onClick={() => handleDeleteUser(u.id)}
-                          className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                          onClick={() => openEditModal(u)}
+                          className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Edit className="w-4 h-4" />
                         </button>
-                      )}
+                        {u.role !== 'admin' && (
+                          <button 
+                            onClick={() => handleDeleteUser(u.id)}
+                            className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1385,6 +1466,214 @@ function UserManage() {
           </div>
         )}
       </div>
+
+      {/* 添加用户模态框 */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card rounded-xl p-6 w-full max-w-md"
+            style={{ borderColor: 'var(--theme-border)' }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold" style={{ color: 'var(--theme-text)' }}>添加用户</h3>
+              <button 
+                onClick={() => setShowAddModal(false)}
+                className="hover:text-white transition-colors"
+                style={{ color: 'var(--theme-text-secondary)' }}
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleAddUser} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>邮箱 *</label>
+                <input
+                  type="email"
+                  required
+                  value={addForm.email}
+                  onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ backgroundColor: 'var(--theme-bg-card)', border: '1px solid var(--theme-border)', color: 'var(--theme-text)' }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>密码 *</label>
+                <input
+                  type="password"
+                  required
+                  value={addForm.password}
+                  onChange={(e) => setAddForm({ ...addForm, password: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ backgroundColor: 'var(--theme-bg-card)', border: '1px solid var(--theme-border)', color: 'var(--theme-text)' }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>昵称 *</label>
+                <input
+                  type="text"
+                  required
+                  value={addForm.nickname}
+                  onChange={(e) => setAddForm({ ...addForm, nickname: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ backgroundColor: 'var(--theme-bg-card)', border: '1px solid var(--theme-border)', color: 'var(--theme-text)' }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>角色</label>
+                <select
+                  value={addForm.role}
+                  onChange={(e) => setAddForm({ ...addForm, role: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ backgroundColor: 'var(--theme-bg-card)', border: '1px solid var(--theme-border)', color: 'var(--theme-text)' }}
+                >
+                  <option value="user">普通用户</option>
+                  <option value="maintainer">维护者</option>
+                  <option value="admin">管理员</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 px-4 py-3 border rounded-xl hover:bg-white/10 transition-colors"
+                  style={{ borderColor: 'var(--theme-border)', color: 'var(--theme-text-secondary)' }}
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="btn-primary flex-1 px-4 py-3 rounded-xl text-white font-semibold disabled:opacity-50"
+                >
+                  {submitting ? '创建中...' : '创建用户'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* 编辑用户模态框 */}
+      {showEditModal && editingUser && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+            style={{ borderColor: 'var(--theme-border)' }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold" style={{ color: 'var(--theme-text)' }}>编辑用户</h3>
+              <button 
+                onClick={() => { setShowEditModal(false); setEditingUser(null); }}
+                className="hover:text-white transition-colors"
+                style={{ color: 'var(--theme-text-secondary)' }}
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleEditUser} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>UID（不可修改）</label>
+                <input
+                  type="text"
+                  disabled
+                  value={editingUser.id}
+                  className="w-full px-4 py-3 rounded-xl cursor-not-allowed opacity-60"
+                  style={{ backgroundColor: 'var(--theme-bg-card)', border: '1px solid var(--theme-border)', color: 'var(--theme-text-secondary)' }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>邮箱 *</label>
+                <input
+                  type="email"
+                  required
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ backgroundColor: 'var(--theme-bg-card)', border: '1px solid var(--theme-border)', color: 'var(--theme-text)' }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>新密码（留空则不修改）</label>
+                <input
+                  type="password"
+                  value={editForm.password}
+                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                  placeholder="留空则不修改密码"
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ backgroundColor: 'var(--theme-bg-card)', border: '1px solid var(--theme-border)', color: 'var(--theme-text)' }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>昵称 *</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.nickname}
+                  onChange={(e) => setEditForm({ ...editForm, nickname: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ backgroundColor: 'var(--theme-bg-card)', border: '1px solid var(--theme-border)', color: 'var(--theme-text)' }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>角色</label>
+                <select
+                  value={editForm.role}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ backgroundColor: 'var(--theme-bg-card)', border: '1px solid var(--theme-border)', color: 'var(--theme-text)' }}
+                >
+                  <option value="user">普通用户</option>
+                  <option value="maintainer">维护者</option>
+                  <option value="admin">管理员</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>下载额度</label>
+                <input
+                  type="number"
+                  value={editForm.downloadQuota}
+                  onChange={(e) => setEditForm({ ...editForm, downloadQuota: Number(e.target.value) })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{ backgroundColor: 'var(--theme-bg-card)', border: '1px solid var(--theme-border)', color: 'var(--theme-text)' }}
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium" style={{ color: 'var(--theme-text-secondary)' }}>Premium 会员</label>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={editForm.isPremium}
+                    onChange={(e) => setEditForm({ ...editForm, isPremium: e.target.checked })}
+                    className="sr-only peer" 
+                  />
+                  <div className="w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600" style={{ backgroundColor: 'var(--theme-bg-card)' }}></div>
+                </label>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => { setShowEditModal(false); setEditingUser(null); }}
+                  className="flex-1 px-4 py-3 border rounded-xl hover:bg-white/10 transition-colors"
+                  style={{ borderColor: 'var(--theme-border)', color: 'var(--theme-text-secondary)' }}
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="btn-primary flex-1 px-4 py-3 rounded-xl text-white font-semibold disabled:opacity-50"
+                >
+                  {submitting ? '保存中...' : '保存修改'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
