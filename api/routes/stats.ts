@@ -4,7 +4,6 @@
  */
 import { Router, type Request, type Response } from 'express';
 import pool from '../db.js';
-import { getUseMockData } from '../dboperations.js';
 
 const router = Router();
 
@@ -14,19 +13,6 @@ const router = Router();
  */
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
-    if (getUseMockData()) {
-      res.json({
-        success: true,
-        stats: {
-          totalUsers: 3,
-          totalFirmware: 4,
-          totalDownloads: 0,
-          totalDonations: 17
-        }
-      });
-      return;
-    }
-    
     const [userStats] = await pool.execute('SELECT COUNT(*) as count FROM users');
     const [firmwareStats] = await pool.execute('SELECT COUNT(*) as count FROM firmware WHERE status = "approved"');
     const [downloadStats] = await pool.execute('SELECT COUNT(*) as count FROM downloads');

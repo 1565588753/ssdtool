@@ -3,7 +3,6 @@
  */
 import app from './app.js';
 import { testConnection } from './db.js';
-import { setUseMockData } from './dboperations.js';
 import dotenv from 'dotenv';
 
 // 加载环境变量
@@ -17,12 +16,15 @@ const PORT = process.env.PORT || 3001;
 const server = app.listen(PORT, async () => {
   console.log(`Server ready on port ${PORT}`);
   
+  // 强制使用MySQL，禁用mock数据模式
+  console.log('🔒  MySQL only mode - mock data disabled');
+  
   // 测试数据库连接
   const connected = await testConnection();
   
   if (!connected) {
-    console.log('⚠️  Database connection failed, switching to mock data mode');
-    setUseMockData(true);
+    console.error('❌  MySQL database connection failed!');
+    console.error('Please ensure MySQL is running and properly configured in .env file');
   }
 });
 
