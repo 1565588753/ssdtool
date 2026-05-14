@@ -34,10 +34,11 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-theme">
+    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-theme relative">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2 mr-auto">
+          {/* Logo区域 */}
+          <Link to="/" className="flex items-center gap-2">
             <div 
               className="w-10 h-10 rounded-xl flex items-center justify-center neon-border"
               style={{ background: 'var(--theme-gradient)' }}
@@ -49,7 +50,8 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-6 justify-center flex-1">
+          {/* 导航按钮 - 居中 */}
+          <div className="hidden md:flex items-center gap-6 absolute left-1/2 transform -translate-x-1/2">
             <Link to="/" className="text-theme-secondary hover:text-theme-main transition-colors flex items-center gap-2">
               <Home className="w-4 h-4" />
               首页
@@ -66,6 +68,7 @@ export default function Navbar() {
             )}
           </div>
 
+          {/* 用户区域 */}
           <div className="hidden md:flex items-center gap-4">
             <ThemeSwitcher />
             
