@@ -108,7 +108,7 @@ export const firmwareDB = {
     return result;
   },
   async findPending() {
-    const [rows] = await pool.execute('SELECT * FROM firmware WHERE status = "pending" ORDER BY created_at DESC');
+    const [rows] = await pool.execute("SELECT * FROM firmware WHERE status = 'pending' ORDER BY created_at DESC");
     return rows as any[];
   },
   async updateStatus(id: string, status: string) {
@@ -194,7 +194,7 @@ export const licenseKeyDB = {
     return (rows as any[])[0];
   },
   async markAsUsed(id: string, userEmail: string) {
-    await pool.execute('UPDATE license_keys SET is_used = TRUE, used_at = NOW(), user_email = ? WHERE id = ?', [userEmail, id]);
+    await pool.execute('UPDATE license_keys SET is_used = 1, used_at = CURRENT_TIMESTAMP, user_email = ? WHERE id = ?', [userEmail, id]);
   },
   async findByUserEmail(email: string) {
     const [rows] = await pool.execute('SELECT * FROM license_keys WHERE user_email = ? ORDER BY created_at DESC', [email]);
@@ -205,7 +205,8 @@ export const licenseKeyDB = {
     return rows as any[];
   },
   async deleteExpired() {
-    const [result] = await pool.execute('DELETE FROM license_keys WHERE expires_at < NOW()');
+    const now = new Date().toISOString();
+    const [result] = await pool.execute('DELETE FROM license_keys WHERE expires_at < ?', [now]);
     return result;
   }
 };
@@ -227,14 +228,19 @@ export const userFirmwareDownloadDB = {
   },
   async incrementDownloadCount(userId: string, firmwareId: string) {
     await pool.execute(
-      'UPDATE user_firmware_downloads SET download_count = download_count + 1, last_download_at = NOW() WHERE user_id = ? AND firmware_id = ?',
+      'UPDATE user_firmware_downloads SET download_count = download_count + 1, last_download_at = CURRENT_TIMESTAMP WHERE user_id = ? AND firmware_id = ?',
       [userId, firmwareId]
     );
   },
   async findRecentDownloads(userId: string, days: number = 30) {
+    // SQLite 兼容的日期计算 - 在JS中计算日期
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffIso = cutoffDate.toISOString();
+    
     const [rows] = await pool.execute(
-      'SELECT * FROM user_firmware_downloads WHERE user_id = ? AND last_download_at > DATE_SUB(NOW(), INTERVAL ? DAY)',
-      [userId, days]
+      'SELECT * FROM user_firmware_downloads WHERE user_id = ? AND last_download_at > ?',
+      [userId, cutoffIso]
     );
     return rows as any[];
   }

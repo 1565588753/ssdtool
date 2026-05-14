@@ -415,9 +415,9 @@ function Profile({ user }: { user: any }) {
 
 // 下载记录组件
 function Downloads({ user, config }: { user: any; config: any }) {
-  const remainingQuota = user.isPremium
-    ? 100
-    : Math.max(0, 5 - 2);
+  const usedCount = 2;
+  const totalQuota = user.isPremium ? 100 : 5;
+  const remainingQuota = Math.max(0, totalQuota - usedCount);
   
   const downloads = [
     { id: 1, title: 'SM2258XT 开卡工具 v1.2', date: '2024-01-15', size: '15 MB' },
@@ -440,13 +440,13 @@ function Downloads({ user, config }: { user: any; config: any }) {
         <div className="mb-4">
           <div className="flex justify-between text-sm mb-2">
             <span style={{ color: 'var(--theme-text-secondary)' }}>已使用</span>
-            <span className="font-semibold" style={{ color: 'var(--theme-text)' }}>{2} / {user.isPremium ? 100 : 5}</span>
+            <span className="font-semibold" style={{ color: 'var(--theme-text)' }}>{usedCount} / {totalQuota}</span>
           </div>
           <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--theme-bg-card)' }}>
             <div
               className="h-full rounded-full transition-all"
               style={{ 
-                width: `${(2 / (user.isPremium ? 100 : 5)) * 100}%`,
+                width: `${(usedCount / totalQuota) * 100}%`,
                 background: 'var(--theme-gradient)'
               }}
             />
@@ -508,9 +508,7 @@ function FirmwareManage({ isAdmin, isMaintainer, firmware: storeFirmware, catego
     title: '',
     description: '',
     version: '1.0',
-    categoryId: '',
-    isPaid: false,
-    price: 0
+    categoryId: ''
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [firmwareList, setFirmwareList] = useState<any[]>([]);
@@ -584,8 +582,6 @@ function FirmwareManage({ isAdmin, isMaintainer, firmware: storeFirmware, catego
       formData.append('description', uploadForm.description);
       formData.append('version', uploadForm.version);
       formData.append('categoryId', uploadForm.categoryId);
-      formData.append('isPaid', String(uploadForm.isPaid));
-      formData.append('price', String(uploadForm.price));
 
       // 调用API上传
       await uploadFirmwareAPI.upload(formData);
@@ -596,9 +592,7 @@ function FirmwareManage({ isAdmin, isMaintainer, firmware: storeFirmware, catego
         title: '',
         description: '',
         version: '1.0',
-        categoryId: '',
-        isPaid: false,
-        price: 0
+        categoryId: ''
       });
       setSelectedFile(null);
 
@@ -866,44 +860,6 @@ function FirmwareManage({ isAdmin, isMaintainer, firmware: storeFirmware, catego
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* 高级收费固件选项 */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <input
-                    id="isPaid"
-                    type="checkbox"
-                    checked={uploadForm.isPaid}
-                    onChange={(e) => setUploadForm({ ...uploadForm, isPaid: e.target.checked })}
-                    className="w-4 h-4"
-                  />
-                  <label htmlFor="isPaid" className="text-sm font-medium" style={{ color: 'var(--theme-text)' }}>
-                    高级收费固件
-                  </label>
-                </div>
-
-                {uploadForm.isPaid && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
-                      价格（元）
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={uploadForm.price}
-                      onChange={(e) => setUploadForm({ ...uploadForm, price: parseFloat(e.target.value) || 0 })}
-                      placeholder="例如：9.99"
-                      className="w-full px-4 py-3 rounded-xl focus:outline-none"
-                      style={{
-                        backgroundColor: 'var(--theme-bg-card)',
-                        border: '1px solid var(--theme-border)',
-                        color: 'var(--theme-text)'
-                      }}
-                    />
-                  </div>
-                )}
               </div>
 
               {/* 提交按钮 */}

@@ -77,69 +77,45 @@ export default function Home() {
     switch (module.id) {
       case 'hero':
         return (
-          <section key="hero" className="relative pt-32 pb-20 overflow-hidden">
+          <section key="hero" className="relative pt-20 pb-12 overflow-hidden">
             <div className="absolute inset-0 gradient-hero"></div>
-
-            <div className="absolute inset-0 overflow-hidden">
-              {[...Array(20)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="particle"
-                  initial={{
-                    x: Math.random() * window.innerWidth,
-                    y: Math.random() * window.innerHeight,
-                    opacity: 0.3
-                  }}
-                  animate={{
-                    y: [null, -50],
-                    opacity: [0.3, 0.6, 0.3]
-                  }}
-                  transition={{
-                    duration: 3 + Math.random() * 2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: Math.random() * 2
-                  }}
-                />
-              ))}
-            </div>
 
             <div className="container mx-auto px-4 relative z-10">
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                className="max-w-4xl mx-auto text-center"
+                transition={{ duration: 0.6 }}
+                className="max-w-3xl mx-auto text-center"
               >
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-6" style={{ borderColor: 'var(--theme-border)' }}>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-card mb-4" style={{ borderColor: 'var(--theme-border)' }}>
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: 'var(--theme-accent-400)' }}></span>
                     <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: 'var(--theme-accent-500)' }}></span>
                   </span>
-                  <span className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>专业的SSD开卡工具分享平台</span>
+                  <span className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>专业的SSD开卡工具分享平台</span>
                 </div>
 
-                <h1 className="font-display text-5xl md:text-7xl font-bold mb-6">
+                <h1 className="font-display text-3xl md:text-5xl font-bold mb-4">
                   <span className="bg-gradient-to-r bg-clip-text text-transparent" style={{ backgroundImage: 'var(--theme-gradient)' }}>
                     {config.siteSettings.name}
                   </span>
                 </h1>
 
-                <p className="text-xl mb-10 max-w-2xl mx-auto" style={{ color: 'var(--theme-text-secondary)' }}>
+                <p className="text-base md:text-lg mb-6 max-w-2xl mx-auto" style={{ color: 'var(--theme-text-secondary)' }}>
                   {config.siteSettings.description}，汇集慧荣、群联、联芸等主流主控开卡工具，助您轻松修复SSD！
                 </p>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <Link
                     to="/categories"
-                    className="btn-primary px-8 py-4 rounded-xl text-white font-semibold text-lg flex items-center gap-2"
+                    className="btn-primary px-6 py-3 rounded-xl text-white font-semibold text-base flex items-center gap-2"
                   >
                     浏览固件
-                    <ArrowRight className="w-5 h-5" />
+                    <ArrowRight className="w-4 h-4" />
                   </Link>
                   <Link
                     to="/register"
-                    className="px-8 py-4 rounded-xl glass-card font-semibold text-lg hover:bg-white/10 transition-colors"
+                    className="px-6 py-3 rounded-xl glass-card font-semibold text-base hover:bg-white/10 transition-colors"
                     style={{ borderColor: 'var(--theme-border)', color: 'var(--theme-text)' }}
                   >
                     免费注册
