@@ -324,7 +324,7 @@ router.get('/dashboard', async (req: Request, res: Response): Promise<void> => {
     const [firmwareStats] = await pool.execute('SELECT COUNT(*) as count FROM firmware');
     const [downloadStats] = await pool.execute('SELECT COUNT(*) as count FROM downloads');
     const [donationTotal] = await pool.execute('SELECT SUM(amount) as total FROM donations');
-    const [pendingStats] = await pool.execute('SELECT COUNT(*) as count FROM firmware WHERE status = "pending"');
+    const [pendingStats] = await pool.execute("SELECT COUNT(*) as count FROM firmware WHERE status = 'pending'");
     
     const dashboard = {
       totalUsers: (userStats as any[])[0].count,
