@@ -14,7 +14,7 @@ const router = Router();
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const [userStats] = await pool.execute('SELECT COUNT(*) as count FROM users');
-    const [firmwareStats] = await pool.execute('SELECT COUNT(*) as count FROM firmware WHERE status = "approved"');
+    const [firmwareStats] = await pool.execute("SELECT COUNT(*) as count FROM firmware WHERE status = 'approved'");
     const [downloadStats] = await pool.execute('SELECT COUNT(*) as count FROM downloads');
     const [donationTotal] = await pool.execute('SELECT SUM(amount) as total FROM donations');
     

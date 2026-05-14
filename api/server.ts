@@ -16,15 +16,14 @@ const PORT = process.env.PORT || 3001;
 const server = app.listen(PORT, async () => {
   console.log(`Server ready on port ${PORT}`);
   
-  // 强制使用MySQL，禁用mock数据模式
-  console.log('🔒  MySQL only mode - mock data disabled');
+  // 使用 SQLite 数据库（真实的文件式数据库）
+  console.log('💾  Using SQLite database - file-based persistent storage');
   
   // 测试数据库连接
   const connected = await testConnection();
   
   if (!connected) {
-    console.error('❌  MySQL database connection failed!');
-    console.error('Please ensure MySQL is running and properly configured in .env file');
+    console.error('❌  Database connection failed!');
   }
 });
 

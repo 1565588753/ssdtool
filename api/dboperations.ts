@@ -62,15 +62,15 @@ export const firmwareDB = {
     return (rows as any[])[0];
   },
   async findByCategory(categoryId: string) {
-    const [rows] = await pool.execute('SELECT * FROM firmware WHERE category_id = ? AND status = "approved" ORDER BY created_at DESC', [categoryId]);
+    const [rows] = await pool.execute("SELECT * FROM firmware WHERE category_id = ? AND status = 'approved' ORDER BY created_at DESC", [categoryId]);
     return rows as any[];
   },
   async findHot(limit: number = 6) {
-    const [rows] = await pool.query(`SELECT * FROM firmware WHERE status = "approved" ORDER BY download_count DESC LIMIT ${Number(limit)}`);
+    const [rows] = await pool.query(`SELECT * FROM firmware WHERE status = 'approved' ORDER BY download_count DESC LIMIT ${Number(limit)}`);
     return rows as any[];
   },
   async findLatest(limit: number = 6) {
-    const [rows] = await pool.query(`SELECT * FROM firmware WHERE status = "approved" ORDER BY created_at DESC LIMIT ${Number(limit)}`);
+    const [rows] = await pool.query(`SELECT * FROM firmware WHERE status = 'approved' ORDER BY created_at DESC LIMIT ${Number(limit)}`);
     return rows as any[];
   },
   async incrementDownloadCount(id: string) {
