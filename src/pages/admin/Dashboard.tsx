@@ -9,9 +9,7 @@ import {
   Plus,
   FolderTree,
   Tag,
-  Settings,
-  XCircle,
-  CheckCircle
+  Settings
 } from 'lucide-react';
 
 export default function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMaintainer: boolean; user: any }) {
@@ -19,11 +17,9 @@ export default function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: bo
     totalUsers: 0,
     totalFirmware: 0,
     totalDownloads: 0,
-    totalDonations: 0,
-    pendingFirmware: 0
+    totalDonations: 0
   });
   const [loading, setLoading] = useState(true);
-  const [pendingFirmware, setPendingFirmware] = useState<any[]>([]);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -37,12 +33,6 @@ export default function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: bo
         const response = await adminAPI.getDashboard();
         if (response.success) {
           setDashboardData(response.dashboard);
-        }
-
-        const firmwareResponse = await adminAPI.getFirmware();
-        if (firmwareResponse.success) {
-          const pending = firmwareResponse.firmware.filter((fw: any) => fw.status === 'pending');
-          setPendingFirmware(pending);
         }
       } catch (error) {
         console.error('获取仪表盘数据失败:', error);
@@ -101,60 +91,6 @@ export default function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: bo
           );
         })}
       </div>
-
-      {isMaintainer && pendingFirmware.length > 0 && (
-        <div className="glass-card rounded-xl" style={{ borderColor: 'var(--theme-border)' }}>
-          <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--theme-border)' }}>
-            <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--theme-text)' }}>
-              <XCircle className="w-5 h-5 text-amber-400" />
-              待审核固件
-            </h3>
-            <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-sm font-medium">
-              {pendingFirmware.length} 个待审核
-            </span>
-          </div>
-          <div className="divide-y" style={{ borderColor: 'var(--theme-border)' }}>
-            {pendingFirmware.map(fw => (
-              <div key={fw.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
-                <div>
-                  <p className="font-medium" style={{ color: 'var(--theme-text)' }}>{fw.title}</p>
-                  <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>由 {fw.uploaderName} 上传 · {new Date(fw.createdAt).toLocaleDateString()}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={async () => {
-                      try {
-                        await adminAPI.updateFirmwareStatus(fw.id, 'approved');
-                        setPendingFirmware(prev => prev.filter(f => f.id !== fw.id));
-                        showToast('审核通过！', 'success');
-                      } catch {
-                        showToast('审核失败，请重试', 'error');
-                      }
-                    }}
-                    className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors"
-                  >
-                    <CheckCircle className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={async () => {
-                      try {
-                        await adminAPI.updateFirmwareStatus(fw.id, 'rejected');
-                        setPendingFirmware(prev => prev.filter(f => f.id !== fw.id));
-                        showToast('已拒绝', 'success');
-                      } catch {
-                        showToast('操作失败，请重试', 'error');
-                      }
-                    }}
-                    className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
-                  >
-                    <XCircle className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="glass-card rounded-xl p-6" style={{ borderColor: 'var(--theme-border)' }}>
         <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--theme-text)' }}>快捷操作</h3>

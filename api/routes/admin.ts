@@ -259,34 +259,24 @@ router.get('/firmware', async (req: Request, res: Response): Promise<void> => {
 });
 
 /**
- * 审核固件
- * PUT /api/admin/firmware/:id/status
- */
-router.put('/firmware/:id/status', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    if (!['pending', 'approved', 'rejected'].includes(status)) {
-      res.status(400).json({ success: false, error: '无效的状态' });
-      return;
-    }
-
-    await pool.execute('UPDATE firmware SET status = ? WHERE id = ?', [status, id]);
-    res.json({ success: true, message: '固件状态更新成功' });
-  } catch (error) {
-    console.error('更新固件状态错误:', error);
-    res.status(500).json({ success: false, error: '更新固件状态失败' });
-  }
-});
-
-/**
  * 删除固件
  * DELETE /api/admin/firmware/:id
  */
 router.delete('/firmware/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
+
+    const [rows] = await pool.execute('SELECT file_path FROM firmware WHERE id = ?', [id]);
+    const firmware = (rows as any[])[0];
+
+    if (firmware && firmware.file_path) {
+      const filePath = firmware.file_path.replace('/uploads/', '');
+      const fullPath = path.join(__dirname, '../../files', filePath);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    }
+
     await pool.execute('DELETE FROM firmware WHERE id = ?', [id]);
     res.json({ success: true, message: '固件删除成功' });
   } catch (error) {
@@ -439,14 +429,12 @@ router.get('/dashboard', async (req: Request, res: Response): Promise<void> => {
     const [firmwareStats] = await pool.execute('SELECT COUNT(*) as count FROM firmware');
     const [downloadStats] = await pool.execute('SELECT COUNT(*) as count FROM downloads');
     const [donationTotal] = await pool.execute('SELECT SUM(amount) as total FROM donations');
-    const [pendingStats] = await pool.execute("SELECT COUNT(*) as count FROM firmware WHERE status = 'pending'");
     
     const dashboard = {
       totalUsers: (userStats as any[])[0].count,
       totalFirmware: (firmwareStats as any[])[0].count,
       totalDownloads: (downloadStats as any[])[0].count,
-      totalDonations: (donationTotal as any[])[0]?.total || 0,
-      pendingFirmware: (pendingStats as any[])[0].count
+      totalDonations: (donationTotal as any[])[0]?.total || 0
     };
     
     res.json({

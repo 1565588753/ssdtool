@@ -6,8 +6,6 @@ import {
   FileText,
   Edit,
   Trash2,
-  CheckCircle,
-  XCircle,
   X,
   UploadCloud
 } from 'lucide-react';
@@ -116,7 +114,7 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
 
       await uploadFirmwareAPI.upload(formData);
 
-      showToast('固件上传成功，等待审核', 'success');
+      showToast('固件上传成功', 'success');
       setShowUploadModal(false);
       setUploadForm({
         title: '',
@@ -194,38 +192,6 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
                         <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors">
                           <Edit className="w-4 h-4" />
                         </button>
-                        {fw.status === 'pending' && isAdmin && (
-                          <>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await adminAPI.updateFirmwareStatus(fw.id, 'approved');
-                                  setFirmwareList(prev => prev.map(f => f.id === fw.id ? { ...f, status: 'approved' } : f));
-                                  showToast('审核通过！', 'success');
-                                } catch {
-                                  showToast('审核失败，请重试', 'error');
-                                }
-                              }}
-                              className="p-2 text-green-400 hover:bg-green-500/20 rounded-lg transition-colors"
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await adminAPI.updateFirmwareStatus(fw.id, 'rejected');
-                                  setFirmwareList(prev => prev.map(f => f.id === fw.id ? { ...f, status: 'rejected' } : f));
-                                  showToast('已拒绝', 'success');
-                                } catch {
-                                  showToast('操作失败，请重试', 'error');
-                                }
-                              }}
-                              className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </button>
-                          </>
-                        )}
                         <button
                           onClick={() => setDeleteConfirm(fw.id)}
                           className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"

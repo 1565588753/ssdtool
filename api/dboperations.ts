@@ -54,8 +54,8 @@ export const categoryDB = {
 };
 
 export const firmwareDB = {
-  async findAll(status: string = 'approved') {
-    const [rows] = await pool.execute('SELECT * FROM firmware WHERE status = ? ORDER BY created_at DESC', [status]);
+  async findAll() {
+    const [rows] = await pool.execute('SELECT * FROM firmware ORDER BY created_at DESC');
     return rows as any[];
   },
   async findById(id: string) {
@@ -63,15 +63,15 @@ export const firmwareDB = {
     return (rows as any[])[0];
   },
   async findByCategory(categoryId: string) {
-    const [rows] = await pool.execute("SELECT * FROM firmware WHERE category_id = ? AND status = 'approved' ORDER BY created_at DESC", [categoryId]);
+    const [rows] = await pool.execute('SELECT * FROM firmware WHERE category_id = ? ORDER BY created_at DESC', [categoryId]);
     return rows as any[];
   },
   async findHot(limit: number = 6) {
-    const [rows] = await pool.query(`SELECT * FROM firmware WHERE status = 'approved' ORDER BY download_count DESC LIMIT ${Number(limit)}`);
+    const [rows] = await pool.query(`SELECT * FROM firmware ORDER BY download_count DESC LIMIT ${Number(limit)}`);
     return rows as any[];
   },
   async findLatest(limit: number = 6) {
-    const [rows] = await pool.query(`SELECT * FROM firmware WHERE status = 'approved' ORDER BY created_at DESC LIMIT ${Number(limit)}`);
+    const [rows] = await pool.query(`SELECT * FROM firmware ORDER BY created_at DESC LIMIT ${Number(limit)}`);
     return rows as any[];
   },
   async incrementDownloadCount(id: string) {
@@ -105,17 +105,10 @@ export const firmwareDB = {
         firmware.fileSize,
         firmware.isPaid || false,
         firmware.price || null,
-        firmware.status || 'pending'
+        firmware.status || 'approved'
       ]
     );
     return { insertId: id };
-  },
-  async findPending() {
-    const [rows] = await pool.execute("SELECT * FROM firmware WHERE status = 'pending' ORDER BY created_at DESC");
-    return rows as any[];
-  },
-  async updateStatus(id: string, status: string) {
-    await pool.execute('UPDATE firmware SET status = ? WHERE id = ?', [status, id]);
   },
   async delete(id: string) {
     const [result] = await pool.execute('DELETE FROM firmware WHERE id = ?', [id]);
