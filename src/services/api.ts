@@ -3,7 +3,7 @@
  * 封装所有与后端的 API 通信
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 // 通用的 fetch 包装器
 async function fetchAPI<T>(
