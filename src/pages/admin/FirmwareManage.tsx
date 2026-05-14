@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { adminAPI, uploadFirmwareAPI } from '../../services/api';
+import { useAppStore } from '../../store';
 import {
   Plus,
   FileText,
-  Edit,
+  SquarePen,
   Trash2,
   X,
   UploadCloud
 } from 'lucide-react';
 
 export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeFirmware, categories, updateFirmware, deleteFirmware }: { isAdmin: boolean; isMaintainer: boolean; firmware: any[]; categories: any[]; updateFirmware: (id: string, data: any) => void; deleteFirmware: (id: string) => void }) {
+  const loadInitialData = useAppStore(s => s.loadInitialData);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadForm, setUploadForm] = useState({
@@ -26,6 +28,15 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [editingFirmware, setEditingFirmware] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    version: '',
+    categoryId: ''
+  });
+  const [saving, setSaving] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -125,11 +136,44 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
       setSelectedFile(null);
 
       setRefreshKey(prev => prev + 1);
+      loadInitialData();
     } catch (error) {
       console.error('上传固件失败:', error);
       showToast('上传失败，请重试', 'error');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleEditOpen = (fw: any) => {
+    setEditingFirmware(fw);
+    setEditForm({
+      title: fw.title || '',
+      description: fw.description || '',
+      version: fw.version || '',
+      categoryId: fw.categoryId || ''
+    });
+  };
+
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingFirmware) return;
+    if (!editForm.title || !editForm.categoryId) {
+      showToast('请填写完整的固件信息', 'error');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await adminAPI.updateFirmware(editingFirmware.id, editForm);
+      showToast('固件更新成功', 'success');
+      setEditingFirmware(null);
+      setRefreshKey(prev => prev + 1);
+      loadInitialData();
+    } catch {
+      showToast('更新失败，请重试', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -189,8 +233,11 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
                     <td className="px-6 py-4" style={{ color: 'var(--theme-text-secondary)' }}>{fw.downloadCount}</td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
-                        <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors">
-                          <Edit className="w-4 h-4" />
+                        <button
+                          onClick={() => handleEditOpen(fw)}
+                          className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-colors"
+                        >
+                          <SquarePen className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setDeleteConfirm(fw.id)}
@@ -367,6 +414,132 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
                   className="btn-primary flex-1 px-4 py-3 rounded-xl text-white font-semibold disabled:opacity-50"
                 >
                   {uploading ? '上传中...' : '上传固件'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {editingFirmware && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            style={{ borderColor: 'var(--theme-border)' }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold" style={{ color: 'var(--theme-text)' }}>编辑固件</h3>
+              <button
+                onClick={() => setEditingFirmware(null)}
+                className="hover:text-white transition-colors"
+                style={{ color: 'var(--theme-text-secondary)' }}
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSave} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
+                  固件标题 *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
+                  分类 *
+                </label>
+                <select
+                  required
+                  value={editForm.categoryId}
+                  onChange={(e) => setEditForm({ ...editForm, categoryId: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                >
+                  <option value="">请选择分类</option>
+                  {categories.filter(c => !c.parentId).map(cat => (
+                    <optgroup key={cat.id} label={cat.name}>
+                      <option value={cat.id}>{cat.name}</option>
+                      {categories.filter(c => c.parentId === cat.id).map(subCat => (
+                        <option key={subCat.id} value={subCat.id}>
+                          └ {subCat.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
+                  版本号
+                </label>
+                <input
+                  type="text"
+                  value={editForm.version}
+                  onChange={(e) => setEditForm({ ...editForm, version: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
+                  固件描述
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none resize-none"
+                  style={{
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditingFirmware(null)}
+                  className="flex-1 px-4 py-3 border rounded-xl hover:bg-white/10 transition-colors"
+                  style={{
+                    borderColor: 'var(--theme-border)',
+                    color: 'var(--theme-text-secondary)'
+                  }}
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="btn-primary flex-1 px-4 py-3 rounded-xl text-white font-semibold disabled:opacity-50"
+                >
+                  {saving ? '保存中...' : '保存修改'}
                 </button>
               </div>
             </form>

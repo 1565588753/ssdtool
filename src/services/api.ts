@@ -187,6 +187,12 @@ export const adminAPI = {
   getFirmware: () =>
     fetchAPI<{ success: boolean; firmware: any[] }>('/api/admin/firmware'),
   
+  updateFirmware: (id: string, data: { title?: string; description?: string; version?: string; categoryId?: string; isPaid?: boolean; price?: number }) =>
+    fetchAPI<{ success: boolean }>(`/api/admin/firmware/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
   deleteFirmware: (id: string) =>
     fetchAPI<{ success: boolean }>(`/api/admin/firmware/${id}`, {
       method: 'DELETE',

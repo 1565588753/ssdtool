@@ -259,6 +259,61 @@ router.get('/firmware', async (req: Request, res: Response): Promise<void> => {
 });
 
 /**
+ * 更新固件
+ * PUT /api/admin/firmware/:id
+ */
+router.put('/firmware/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { title, description, version, categoryId, isPaid, price } = req.body;
+
+    const updates: string[] = [];
+    const params: any[] = [];
+
+    if (title !== undefined) {
+      updates.push('title = ?');
+      params.push(title);
+    }
+    if (description !== undefined) {
+      updates.push('description = ?');
+      params.push(description);
+    }
+    if (version !== undefined) {
+      updates.push('version = ?');
+      params.push(version);
+    }
+    if (categoryId !== undefined) {
+      updates.push('category_id = ?');
+      params.push(categoryId);
+    }
+    if (isPaid !== undefined) {
+      updates.push('is_paid = ?');
+      params.push(isPaid ? 1 : 0);
+    }
+    if (price !== undefined) {
+      updates.push('price = ?');
+      params.push(price);
+    }
+
+    if (updates.length === 0) {
+      res.status(400).json({ success: false, error: '没有需要更新的字段' });
+      return;
+    }
+
+    params.push(id);
+    await pool.execute(
+      `UPDATE firmware SET ${updates.join(', ')} WHERE id = ?`,
+      params
+    );
+
+    res.json({ success: true, message: '固件更新成功' });
+  } catch (error) {
+    console.error('更新固件错误:', error);
+    res.status(500).json({ success: false, error: '更新固件失败' });
+  }
+});
+
+/**
  * 删除固件
  * DELETE /api/admin/firmware/:id
  */
