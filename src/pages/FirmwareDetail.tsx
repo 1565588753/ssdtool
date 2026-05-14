@@ -21,6 +21,7 @@ export default function FirmwareDetail() {
   const [downloading, setDownloading] = useState(false);
   const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
 
   const firmware = getFirmwareById(id || '');
 
@@ -38,7 +39,8 @@ export default function FirmwareDetail() {
   }
 
   const handleDownload = async () => {
-    // 管理员无下载限制
+    setDownloadError('');
+
     if (user?.role === 'admin') {
       setDownloading(true);
       try {
@@ -46,30 +48,29 @@ export default function FirmwareDetail() {
         if (success) {
           setDownloadSuccess(true);
           setTimeout(() => setDownloadSuccess(false), 3000);
+        } else {
+          setDownloadError('下载失败，请稍后重试');
         }
       } catch (err) {
         console.error('Download failed:', err);
+        setDownloadError('下载失败，请稍后重试');
       } finally {
         setDownloading(false);
       }
       return;
     }
 
-    // 游客需要登录或购买
     if (!user) {
       if (firmware.isPaid) {
-        // 付费固件跳转到卡密查询页面
         navigate('/license-query');
       } else {
-        // 免费固件提示登录
         setShowSponsorModal(true);
       }
       return;
     }
 
-    // 登录用户检查下载次数限制
     if (quotaInfo && quotaInfo.remaining <= 0) {
-      // 下载次数已用完
+      setDownloadError('本月下载额度已用完');
       return;
     }
 
@@ -79,9 +80,12 @@ export default function FirmwareDetail() {
       if (success) {
         setDownloadSuccess(true);
         setTimeout(() => setDownloadSuccess(false), 3000);
+      } else {
+        setDownloadError('下载失败，请稍后重试');
       }
     } catch (err) {
       console.error('Download failed:', err);
+      setDownloadError('下载失败，请稍后重试');
     } finally {
       setDownloading(false);
     }
@@ -285,6 +289,11 @@ export default function FirmwareDetail() {
                 </div>
               ) : (
                 <div className="space-y-3">
+                  {downloadError && (
+                    <div className="p-3 rounded-lg text-sm text-center bg-red-500/10 text-red-400 border border-red-500/20">
+                      {downloadError}
+                    </div>
+                  )}
                   {!user ? (
                     <>
                       <Link

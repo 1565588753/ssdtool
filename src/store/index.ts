@@ -261,7 +261,6 @@ export const useAppStore = create<AppState>()(
         try {
           const response = await firmwareAPI.download(firmwareId);
           if (response.success) {
-            // 更新本地状态
             const fw = state.getFirmwareById(firmwareId);
             set({
               user: {
@@ -282,36 +281,22 @@ export const useAppStore = create<AppState>()(
                 fw.id === firmwareId ? { ...fw, downloadCount: fw.downloadCount + 1 } : fw
               )
             });
+
+            if (response.downloadUrl) {
+              const link = document.createElement('a');
+              link.href = response.downloadUrl;
+              link.download = '';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }
+
             return true;
           }
           return false;
         } catch (error: any) {
           console.error('下载失败:', error);
-          // 如果 API 调用失败，使用模拟逻辑
-          const quota = state.user.isPremium ? state.config.quotaSettings.premiumQuota : state.config.quotaSettings.freeQuota;
-          if (state.user.downloadsUsed >= quota) return false;
-
-          const fw = state.getFirmwareById(firmwareId);
-          set({
-            user: {
-              ...state.user,
-              downloadsUsed: state.user.downloadsUsed + 1
-            },
-            downloads: [
-              ...state.downloads,
-              {
-                id: `dl-${Date.now()}`,
-                userId: state.user.id,
-                firmwareId,
-                firmwareTitle: fw?.title,
-                createdAt: new Date().toISOString()
-              }
-            ],
-            firmware: state.firmware.map(fw =>
-              fw.id === firmwareId ? { ...fw, downloadCount: fw.downloadCount + 1 } : fw
-            )
-          });
-          return true;
+          return false;
         }
       },
 

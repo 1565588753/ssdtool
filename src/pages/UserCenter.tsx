@@ -244,14 +244,29 @@ function Profile({ user }: { user: any }) {
 }
 
 function Downloads({ user, config }: { user: any; config: any }) {
-  const usedCount = 2;
-  const totalQuota = user.isPremium ? 100 : 5;
-  const remainingQuota = Math.max(0, totalQuota - usedCount);
+  const [downloadRecords, setDownloadRecords] = useState<any[]>([]);
+  const [loadingDownloads, setLoadingDownloads] = useState(true);
 
-  const downloads = [
-    { id: 1, title: 'SM2258XT 开卡工具 v1.2', date: '2024-01-15', size: '15 MB' },
-    { id: 2, title: 'PS3111 量产工具 v2.5', date: '2024-01-14', size: '22 MB' }
-  ];
+  useEffect(() => {
+    const fetchDownloads = async () => {
+      try {
+        const { donationAPI } = await import('../services/api');
+        const res = await donationAPI.getUserDownloads();
+        if (res.success) {
+          setDownloadRecords(res.downloads);
+        }
+      } catch (err) {
+        console.error('获取下载记录失败:', err);
+      } finally {
+        setLoadingDownloads(false);
+      }
+    };
+    fetchDownloads();
+  }, []);
+
+  const usedCount = user.downloadsUsed || 0;
+  const totalQuota = user.isPremium ? config.quotaSettings.premiumQuota : config.quotaSettings.freeQuota;
+  const remainingQuota = Math.max(0, totalQuota - usedCount);
 
   return (
     <div className="space-y-6">
@@ -275,7 +290,7 @@ function Downloads({ user, config }: { user: any; config: any }) {
             <div
               className="h-full rounded-full transition-all"
               style={{
-                width: `${(usedCount / totalQuota) * 100}%`,
+                width: `${totalQuota > 0 ? (usedCount / totalQuota) * 100 : 0}%`,
                 background: 'var(--theme-gradient)'
               }}
             />
@@ -290,9 +305,13 @@ function Downloads({ user, config }: { user: any; config: any }) {
         <div className="p-6 border-b" style={{ borderColor: 'var(--theme-border)' }}>
           <h3 className="text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>下载历史</h3>
         </div>
-        {downloads.length > 0 ? (
+        {loadingDownloads ? (
+          <div className="p-12 text-center" style={{ color: 'var(--theme-text-secondary)' }}>
+            <p>加载中...</p>
+          </div>
+        ) : downloadRecords.length > 0 ? (
           <div className="divide-y" style={{ borderColor: 'var(--theme-border)' }}>
-            {downloads.map(dl => (
+            {downloadRecords.map(dl => (
               <div key={dl.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
                 <div className="flex items-center gap-4">
                   <div
@@ -302,19 +321,10 @@ function Downloads({ user, config }: { user: any; config: any }) {
                     <FileText className="w-5 h-5" style={{ color: 'var(--theme-primary-400)' }} />
                   </div>
                   <div>
-                    <p className="font-medium" style={{ color: 'var(--theme-text)' }}>{dl.title}</p>
-                    <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>{dl.date} · {dl.size}</p>
+                    <p className="font-medium" style={{ color: 'var(--theme-text)' }}>{dl.firmwareTitle || '未知固件'}</p>
+                    <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>{new Date(dl.createdAt).toLocaleDateString('zh-CN')}</p>
                   </div>
                 </div>
-                <button
-                  className="px-4 py-2 rounded-lg transition-colors"
-                  style={{
-                    color: 'var(--theme-primary-400)',
-                    backgroundColor: 'var(--theme-primary-900)'
-                  }}
-                >
-                  重新下载
-                </button>
               </div>
             ))}
           </div>
