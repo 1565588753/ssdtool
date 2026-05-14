@@ -41,6 +41,10 @@ export default defineConfig({
             console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
           });
         },
+      },
+      '/uploads': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
       }
     }
   }

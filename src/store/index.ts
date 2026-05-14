@@ -244,14 +244,12 @@ export const useAppStore = create<AppState>()(
               )
             });
 
-            if (response.downloadUrl) {
-              const link = document.createElement('a');
-              link.href = response.downloadUrl;
-              link.download = '';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }
+            const link = document.createElement('a');
+            link.href = `/api/firmware/${firmwareId}/file`;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
             return true;
           }

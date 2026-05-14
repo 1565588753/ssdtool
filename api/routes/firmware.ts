@@ -6,6 +6,7 @@ import { Router, type Request, type Response } from 'express';
 import { firmwareDB, categoryDB, downloadDB, userDB, configDB } from '../dboperations.js';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -390,6 +391,40 @@ router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: 
       success: false,
       error: '上传失败'
     });
+  }
+});
+
+/**
+ * 获取固件实际文件（用于浏览器下载，带正确文件名）
+ * GET /api/firmware/:id/file
+ */
+router.get('/:id/file', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    const filePath = firmware.file_path;
+    const fileName = path.basename(filePath);
+    const fullPath = path.join(__dirname, '../../files', fileName);
+
+    if (!fs.existsSync(fullPath)) {
+      res.status(404).json({ success: false, error: '文件不存在' });
+      return;
+    }
+
+    const ext = path.extname(fileName);
+    const downloadName = encodeURIComponent(firmware.title + ext);
+
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${downloadName}`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.sendFile(fullPath);
+  } catch (error) {
+    console.error('获取固件文件错误:', error);
+    res.status(500).json({ success: false, error: '获取文件失败' });
   }
 });
 
