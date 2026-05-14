@@ -90,9 +90,11 @@ export const firmwareDB = {
     price?: number;
     status?: string;
   }) {
+    const id = `fw-${Date.now()}`;
     const [result] = await pool.execute(
-      'INSERT INTO firmware (title, description, version, category_id, uploader_id, uploader_name, file_path, file_size, is_paid, price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO firmware (id, title, description, version, category_id, uploader_id, uploader_name, file_path, file_size, is_paid, price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
+        id,
         firmware.title,
         firmware.description,
         firmware.version,
@@ -106,7 +108,7 @@ export const firmwareDB = {
         firmware.status || 'pending'
       ]
     );
-    return result;
+    return { insertId: id };
   },
   async findPending() {
     const [rows] = await pool.execute("SELECT * FROM firmware WHERE status = 'pending' ORDER BY created_at DESC");
@@ -127,9 +129,10 @@ export const downloadDB = {
     firmwareId: string;
     firmwareTitle?: string;
   }) {
+    const id = `dl-${Date.now()}`;
     const [result] = await pool.execute(
-      'INSERT INTO downloads (user_id, firmware_id, firmware_title) VALUES (?, ?, ?)',
-      [download.userId, download.firmwareId, download.firmwareTitle || null]
+      'INSERT INTO downloads (id, user_id, firmware_id, firmware_title) VALUES (?, ?, ?, ?)',
+      [id, download.userId, download.firmwareId, download.firmwareTitle || null]
     );
     return result;
   },
@@ -146,9 +149,10 @@ export const donationDB = {
     amount: number;
     type: string;
   }) {
+    const id = `don-${Date.now()}`;
     const [result] = await pool.execute(
-      'INSERT INTO donations (user_id, user_nickname, amount, type) VALUES (?, ?, ?, ?)',
-      [donation.userId || null, donation.userNickname, donation.amount, donation.type]
+      'INSERT INTO donations (id, user_id, user_nickname, amount, type) VALUES (?, ?, ?, ?, ?)',
+      [id, donation.userId || null, donation.userNickname, donation.amount, donation.type]
     );
     return result;
   },
@@ -184,9 +188,10 @@ export const licenseKeyDB = {
     userEmail?: string;
     expiresAt: Date;
   }) {
+    const id = `lic-${Date.now()}`;
     const [result] = await pool.execute(
-      'INSERT INTO license_keys (`key`, firmware_id, firmware_title, user_email, expires_at) VALUES (?, ?, ?, ?, ?)',
-      [data.key, data.firmwareId, data.firmwareTitle, data.userEmail || null, data.expiresAt]
+      'INSERT INTO license_keys (id, `key`, firmware_id, firmware_title, user_email, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, data.key, data.firmwareId, data.firmwareTitle, data.userEmail || null, data.expiresAt]
     );
     return result;
   },
@@ -221,9 +226,10 @@ export const userFirmwareDownloadDB = {
     userId: string;
     firmwareId: string;
   }) {
+    const id = `ufd-${Date.now()}`;
     const [result] = await pool.execute(
-      'INSERT INTO user_firmware_downloads (user_id, firmware_id, download_count) VALUES (?, ?, 1)',
-      [data.userId, data.firmwareId]
+      'INSERT INTO user_firmware_downloads (id, user_id, firmware_id, download_count) VALUES (?, ?, ?, 1)',
+      [id, data.userId, data.firmwareId]
     );
     return result;
   },

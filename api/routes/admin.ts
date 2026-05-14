@@ -302,12 +302,13 @@ router.post('/categories', async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+    const id = `cat-${Date.now()}`;
     const [result] = await pool.execute(
-      'INSERT INTO categories (name, parent_id, order_index) VALUES (?, ?, ?)',
-      [name, parentId || null, orderIndex || 0]
+      'INSERT INTO categories (id, name, parent_id, order_index) VALUES (?, ?, ?, ?)',
+      [id, name, parentId || null, orderIndex || 0]
     );
     
-    res.json({ success: true, message: '分类创建成功', id: (result as any).insertId });
+    res.json({ success: true, message: '分类创建成功', id });
   } catch (error) {
     console.error('创建分类错误:', error);
     res.status(500).json({ success: false, error: '创建分类失败' });
