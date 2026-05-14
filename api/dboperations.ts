@@ -15,9 +15,10 @@ export const userDB = {
     nickname: string;
     role?: string;
   }) {
+    const userId = `user-${Date.now()}`;
     const [result] = await pool.execute(
-      'INSERT INTO users (email, password, nickname, role, download_quota, is_premium) VALUES (?, ?, ?, ?, 5, FALSE)',
-      [user.email, user.password, user.nickname, user.role || 'user']
+      'INSERT INTO users (id, email, password, nickname, role, download_quota, is_premium) VALUES (?, ?, ?, ?, ?, 5, 0)',
+      [userId, user.email, user.password, user.nickname, user.role || 'user']
     );
     return result;
   },
@@ -25,7 +26,7 @@ export const userDB = {
     await pool.execute('UPDATE users SET downloads_used = ? WHERE id = ?', [downloadsUsed, id]);
   },
   async upgradeToPremium(id: string, quota: number) {
-    await pool.execute('UPDATE users SET is_premium = TRUE, download_quota = ? WHERE id = ?', [quota, id]);
+    await pool.execute('UPDATE users SET is_premium = 1, download_quota = ? WHERE id = ?', [quota, id]);
   },
   async findAll() {
     const [rows] = await pool.execute('SELECT * FROM users ORDER BY created_at DESC');

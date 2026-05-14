@@ -103,7 +103,7 @@ router.post('/users', async (req: Request, res: Response): Promise<void> => {
       }
     });
   } catch (error: any) {
-    if (error.message?.includes('UNIQUE constraint')) {
+    if (error.code === 'ER_DUP_ENTRY' || error.message?.includes('UNIQUE constraint') || error.message?.includes('Duplicate entry')) {
       res.status(400).json({ success: false, error: '该邮箱已被注册' });
       return;
     }
@@ -164,7 +164,7 @@ router.put('/users/:id', async (req: Request, res: Response): Promise<void> => {
 
     res.json({ success: true, message: '用户信息更新成功' });
   } catch (error: any) {
-    if (error.message?.includes('UNIQUE constraint')) {
+    if (error.code === 'ER_DUP_ENTRY' || error.message?.includes('UNIQUE constraint') || error.message?.includes('Duplicate entry')) {
       res.status(400).json({ success: false, error: '该邮箱已被其他用户使用' });
       return;
     }
@@ -482,21 +482,21 @@ router.put('/config', async (req: Request, res: Response): Promise<void> => {
 
     if (siteSettings) {
       await pool.execute(
-        'INSERT INTO config (`key`, value) VALUES ("site_settings", ?) ON DUPLICATE KEY UPDATE value = ?',
+        "INSERT INTO config (`key`, value) VALUES ('site_settings', ?) ON DUPLICATE KEY UPDATE value = ?",
         [JSON.stringify(siteSettings), JSON.stringify(siteSettings)]
       );
     }
 
     if (moduleSettings) {
       await pool.execute(
-        'INSERT INTO config (`key`, value) VALUES ("module_settings", ?) ON DUPLICATE KEY UPDATE value = ?',
+        "INSERT INTO config (`key`, value) VALUES ('module_settings', ?) ON DUPLICATE KEY UPDATE value = ?",
         [JSON.stringify(moduleSettings), JSON.stringify(moduleSettings)]
       );
     }
 
     if (quotaSettings) {
       await pool.execute(
-        'INSERT INTO config (`key`, value) VALUES ("quota_settings", ?) ON DUPLICATE KEY UPDATE value = ?',
+        "INSERT INTO config (`key`, value) VALUES ('quota_settings', ?) ON DUPLICATE KEY UPDATE value = ?",
         [JSON.stringify(quotaSettings), JSON.stringify(quotaSettings)]
       );
     }

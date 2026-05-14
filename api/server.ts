@@ -16,8 +16,8 @@ const PORT = process.env.PORT || 3001;
 const server = app.listen(PORT, async () => {
   console.log(`Server ready on port ${PORT}`);
   
-  // 使用 SQLite 数据库（真实的文件式数据库）
-  console.log('💾  Using SQLite database - file-based persistent storage');
+  // 使用 MySQL 数据库
+  console.log('💾  Using MySQL database');
   
   // 测试数据库连接
   const connected = await testConnection();
