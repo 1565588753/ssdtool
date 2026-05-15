@@ -109,9 +109,17 @@ const defaultConfig: ExtendedConfig = {
     singleDownloadPrice: 1,
     premiumPrice: 8
   },
-  moduleOrder: [],
+  moduleOrder: ['hero', 'stats', 'hot', 'latest', 'donations', 'contributors', 'cta'],
   adSlots: [],
-  homeModules: []
+  homeModules: [
+    { id: 'hero', name: '首页横幅', enabled: true, order: 1, title: '首页横幅', description: '网站标题和描述' },
+    { id: 'stats', name: '数据统计', enabled: true, order: 2, title: '数据统计', description: '展示网站数据' },
+    { id: 'hot', name: '热门固件', enabled: true, order: 3, title: '热门固件', description: '下载量最高的开卡工具' },
+    { id: 'latest', name: '最新上传', enabled: true, order: 4, title: '最新上传', description: '最新更新的开卡工具' },
+    { id: 'donations', name: '爱心捐赠', enabled: true, order: 5, title: '爱心捐赠', description: '感谢支持网站运营的朋友们' },
+    { id: 'contributors', name: '贡献榜', enabled: true, order: 6, title: '贡献榜', description: '感谢分享固件的贡献者们' },
+    { id: 'cta', name: '行动号召', enabled: true, order: 7, title: '加入社区', description: '注册账号即可下载固件' },
+  ]
 };
 
 export const useAppStore = create<AppState>()(
@@ -550,7 +558,23 @@ export const useAppStore = create<AppState>()(
         donations: state.donations,
         contributors: state.contributors,
         config: state.config
-      })
+      }),
+      merge: (persistedState: unknown, currentState: AppState) => {
+        const typed = persistedState as Partial<AppState> | null;
+        if (typed?.config?.homeModules && typed.config.homeModules.length === 0) {
+          return {
+            ...currentState,
+            ...(typed || {}),
+            config: {
+              ...currentState.config,
+              ...(typed?.config || {}),
+              homeModules: currentState.config.homeModules,
+              moduleOrder: currentState.config.moduleOrder,
+            },
+          };
+        }
+        return { ...currentState, ...(typed || {}) };
+      },
     }
   )
 );
