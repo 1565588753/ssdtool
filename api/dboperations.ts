@@ -173,43 +173,6 @@ export const configDB = {
   }
 };
 
-export const licenseKeyDB = {
-  async create(data: {
-    key: string;
-    firmwareId: string;
-    firmwareTitle: string;
-    userEmail?: string;
-    expiresAt: Date;
-  }) {
-    const id = `lic-${Date.now()}`;
-    const [result] = await pool.execute(
-      'INSERT INTO license_keys (id, `key`, firmware_id, firmware_title, user_email, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, data.key, data.firmwareId, data.firmwareTitle, data.userEmail || null, data.expiresAt]
-    );
-    return result;
-  },
-  async findByKey(key: string) {
-    const [rows] = await pool.execute('SELECT * FROM license_keys WHERE `key` = ?', [key]);
-    return (rows as any[])[0];
-  },
-  async markAsUsed(id: string, userEmail: string) {
-    await pool.execute('UPDATE license_keys SET is_used = 1, used_at = CURRENT_TIMESTAMP, user_email = ? WHERE id = ?', [userEmail, id]);
-  },
-  async findByUserEmail(email: string) {
-    const [rows] = await pool.execute('SELECT * FROM license_keys WHERE user_email = ? ORDER BY created_at DESC', [email]);
-    return rows as any[];
-  },
-  async findByFirmwareId(firmwareId: string) {
-    const [rows] = await pool.execute('SELECT * FROM license_keys WHERE firmware_id = ? ORDER BY created_at DESC', [firmwareId]);
-    return rows as any[];
-  },
-  async deleteExpired() {
-    const now = new Date().toISOString();
-    const [result] = await pool.execute('DELETE FROM license_keys WHERE expires_at < ?', [now]);
-    return result;
-  }
-};
-
 export const userFirmwareDownloadDB = {
   async findByUserAndFirmware(userId: string, firmwareId: string) {
     const [rows] = await pool.execute('SELECT * FROM user_firmware_downloads WHERE user_id = ? AND firmware_id = ?', [userId, firmwareId]);
@@ -246,6 +209,36 @@ export const userFirmwareDownloadDB = {
   }
 };
 
+export const verificationCodeDB = {
+  async create(data: { email: string; code: string; type: string; expiresAt: Date }) {
+    const [result] = await pool.execute(
+      'INSERT INTO verification_codes (email, code, type, expires_at) VALUES (?, ?, ?, ?)',
+      [data.email, data.code, data.type, data.expiresAt]
+    );
+    return result;
+  },
+  async findByEmailAndCode(email: string, code: string, type: string) {
+    const [rows] = await pool.execute(
+      'SELECT * FROM verification_codes WHERE email = ? AND code = ? AND type = ? AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1',
+      [email, code, type]
+    );
+    return (rows as any[])[0];
+  },
+  async findLatestByEmail(email: string, type: string) {
+    const [rows] = await pool.execute(
+      'SELECT * FROM verification_codes WHERE email = ? AND type = ? ORDER BY created_at DESC LIMIT 1',
+      [email, type]
+    );
+    return (rows as any[])[0];
+  },
+  async deleteByEmail(email: string, type: string) {
+    await pool.execute('DELETE FROM verification_codes WHERE email = ? AND type = ?', [email, type]);
+  },
+  async deleteExpired() {
+    await pool.execute('DELETE FROM verification_codes WHERE expires_at < NOW()');
+  }
+};
+
 export default {
   userDB,
   categoryDB,
@@ -253,6 +246,6 @@ export default {
   downloadDB,
   donationDB,
   configDB,
-  licenseKeyDB,
+  verificationCodeDB,
   userFirmwareDownloadDB
 };

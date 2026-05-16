@@ -34,7 +34,7 @@ interface AppState {
   isAuthenticated: boolean;
   setUser: (user: User | null) => void;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, nickname: string) => Promise<boolean>;
+  register: (email: string, password: string, nickname: string, code: string) => Promise<boolean>;
   logout: () => void;
 
   categories: Category[];
@@ -51,8 +51,6 @@ interface AppState {
   getHotFirmware: () => Firmware[];
   getLatestFirmware: () => Firmware[];
   downloadFirmware: (firmwareId: string) => Promise<boolean>;
-  upgradeToPremium: () => Promise<boolean>;
-  singleDownloadPayment: (firmwareId: string) => Promise<boolean>;
 
   // 分类管理
   addCategory: (category: Omit<Category, 'id' | 'createdAt' | 'children'>) => void;
@@ -106,7 +104,6 @@ const defaultConfig: ExtendedConfig = {
   quotaSettings: {
     freeQuota: 5,
     premiumQuota: 100,
-    singleDownloadPrice: 1,
     premiumPrice: 8
   },
   moduleOrder: ['hero', 'stats', 'hot', 'latest', 'donations', 'contributors', 'cta'],
@@ -172,10 +169,10 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      register: async (email, password, nickname) => {
+      register: async (email, password, nickname, code) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await authAPI.register(email, password, nickname);
+          const response = await authAPI.register(email, password, nickname, code);
           set({ isLoading: false });
           return response.success;
         } catch (error: any) {
@@ -264,50 +261,6 @@ export const useAppStore = create<AppState>()(
           return false;
         } catch (error: any) {
           console.error('下载失败:', error);
-          return false;
-        }
-      },
-
-      upgradeToPremium: async () => {
-        const state = get();
-        if (!state.user) return false;
-
-        try {
-          const response = await donationAPI.upgradePremium();
-          if (response.success) {
-            set({
-              user: {
-                ...state.user,
-                isPremium: true,
-                downloadQuota: state.config.quotaSettings.premiumQuota
-              },
-              donations: [
-                {
-                  id: `don-${Date.now()}`,
-                  userId: state.user.id,
-                  userNickname: state.user.nickname,
-                  amount: state.config.quotaSettings.premiumPrice,
-                  type: 'premium_upgrade',
-                  createdAt: new Date().toISOString()
-                },
-                ...state.donations
-              ]
-            });
-            return true;
-          }
-          return false;
-        } catch (error: any) {
-          console.error('升级 Premium 失败:', error);
-          return false;
-        }
-      },
-
-      singleDownloadPayment: async (firmwareId) => {
-        try {
-          await donationAPI.singleDownload(firmwareId);
-          return true;
-        } catch (error: any) {
-          console.error('单次下载赞助失败:', error);
           return false;
         }
       },
@@ -520,8 +473,6 @@ export const useAppStore = create<AppState>()(
               filePath: f.filePath,
               fileSize: f.fileSize,
               downloadCount: f.downloadCount,
-              isPaid: f.isPaid,
-              price: f.price,
               status: f.status,
               createdAt: f.createdAt,
               updatedAt: f.updatedAt

@@ -60,55 +60,6 @@ router.get('/stats', async (req: Request, res: Response): Promise<void> => {
 });
 
 /**
- * 创建捐赠记录（单次下载赞助）
- * POST /api/donations/single-download
- */
-router.post('/single-download', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const userId = req.headers['x-user-id'] as string;
-    const { firmwareId } = req.body;
-
-    if (!userId) {
-      res.status(401).json({
-        success: false,
-        error: '请先登录'
-      });
-      return;
-    }
-
-    const user = await userDB.findById(userId);
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: '用户不存在'
-      });
-      return;
-    }
-
-    const config = await configDB.get('quota_settings');
-    
-    // 创建捐赠记录
-    await donationDB.create({
-      userId,
-      userNickname: user.nickname,
-      amount: config.singleDownloadPrice,
-      type: 'single_download'
-    });
-
-    res.json({
-      success: true,
-      message: '赞助成功'
-    });
-  } catch (error) {
-    console.error('创建单次下载赞助错误:', error);
-    res.status(500).json({
-      success: false,
-      error: '赞助失败'
-    });
-  }
-});
-
-/**
  * 升级为 Premium 会员
  * POST /api/donations/premium-upgrade
  */

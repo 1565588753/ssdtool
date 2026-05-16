@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAppStore } from '../store';
+import { authAPI } from '../services/api';
 import {
   Mail,
   Lock,
@@ -9,7 +10,8 @@ import {
   CheckCircle,
   HardDrive,
   Eye,
-  EyeOff
+  EyeOff,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function Register() {
@@ -21,10 +23,45 @@ export default function Register() {
     email: '',
     nickname: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    code: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [countdown, setCountdown] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval>>();
+
+  const startCountdown = useCallback(() => {
+    setCountdown(60);
+    timerRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  const handleSendCode = async () => {
+    if (!formData.email) {
+      setError('请先输入邮箱地址');
+      return;
+    }
+    if (countdown > 0) return;
+    setError('');
+    try {
+      const res = await authAPI.sendCode(formData.email, 'register');
+      if (res.success) {
+        startCountdown();
+      } else {
+        setError(res.message || '发送验证码失败');
+      }
+    } catch (err: any) {
+      setError(err.message || '发送验证码失败');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +77,18 @@ export default function Register() {
       return;
     }
 
+    if (!formData.code) {
+      setError('请输入验证码');
+      return;
+    }
+
     setLoading(true);
     try {
       const success = await register(
         formData.email,
         formData.password,
-        formData.nickname
+        formData.nickname,
+        formData.code
       );
       if (success) {
         setStep('success');
@@ -116,15 +159,43 @@ export default function Register() {
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 邮箱地址
               </label>
+              <div className="relative flex gap-2">
+                <div className="relative flex-1">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:border-accent-500/50 transition-all"
+                    placeholder="请输入您的邮箱"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  disabled={countdown > 0}
+                  className="px-4 py-3 rounded-xl text-white font-semibold text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: 'var(--theme-gradient)' }}
+                >
+                  {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                验证码
+              </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
-                  type="email"
+                  type="text"
                   required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent-500/50 focus:border-accent-500/50 transition-all"
-                  placeholder="请输入您的邮箱"
+                  placeholder="请输入验证码"
                 />
               </div>
             </div>

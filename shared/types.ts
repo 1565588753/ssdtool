@@ -50,8 +50,6 @@ export interface Firmware {
   filePath: string;
   fileSize: number;
   downloadCount: number;
-  isPaid: boolean;
-  price?: number;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   updatedAt: string;
@@ -63,7 +61,7 @@ export interface Donation {
   userId?: string;
   userNickname: string;
   amount: number;
-  type: 'single_download' | 'premium_upgrade';
+  type: 'premium_upgrade';
   createdAt: string;
 }
 
@@ -101,7 +99,6 @@ export interface ModuleSettings {
 export interface QuotaSettings {
   freeQuota: number;
   premiumQuota: number;
-  singleDownloadPrice: number;
   premiumPrice: number;
 }
 
@@ -109,4 +106,13 @@ export interface Config {
   siteSettings: SiteSettings;
   moduleSettings: ModuleSettings;
   quotaSettings: QuotaSettings;
+}
+
+export interface SmtpConfig {
+  host: string;
+  port: number;
+  user: string;
+  pass: string;
+  fromEmail: string;
+  fromName: string;
 }

@@ -7,7 +7,8 @@ import Register from "@/pages/Register";
 import Categories from "@/pages/Categories";
 import FirmwareDetail from "@/pages/FirmwareDetail";
 import UserCenter from "@/pages/UserCenter";
-import LicenseQuery from "@/pages/LicenseQuery";
+import Donate from "@/pages/Donate";
+import ForgotPassword from "@/pages/ForgotPassword";
 import { useAppStore } from "@/store";
 
 export default function App() {
@@ -27,7 +28,8 @@ export default function App() {
         <Route path="/categories" element={<Categories />} />
         <Route path="/firmware/:id" element={<FirmwareDetail />} />
         <Route path="/user" element={<UserCenter />} />
-        <Route path="/license-query" element={<LicenseQuery />} />
+        <Route path="/donate" element={<Donate />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
     </Router>
   );

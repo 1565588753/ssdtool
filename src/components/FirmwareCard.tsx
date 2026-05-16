@@ -44,13 +44,6 @@ export default function FirmwareCard({ firmware, index }: FirmwareCardProps) {
             <h3 className="font-semibold text-lg mb-1 truncate" style={{ color: 'var(--theme-text)' }}>{firmware.title}</h3>
             <p className="text-sm line-clamp-2" style={{ color: 'var(--theme-text-secondary)' }}>{firmware.description}</p>
           </div>
-          {firmware.isPaid && (
-            <div className="flex-shrink-0">
-              <div className="px-2 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">
-                ¥{firmware.price}
-              </div>
-            </div>
-          )}
         </div>
 
         {firmwareTags.length > 0 && (

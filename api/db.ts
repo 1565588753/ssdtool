@@ -95,20 +95,6 @@ async function initDatabase() {
     `);
 
     await conn.execute(`
-      CREATE TABLE IF NOT EXISTS license_keys (
-        id VARCHAR(50) PRIMARY KEY,
-        \`key\` VARCHAR(100) UNIQUE NOT NULL,
-        firmware_id VARCHAR(50) NOT NULL,
-        firmware_title VARCHAR(255) NOT NULL,
-        user_email VARCHAR(255),
-        is_used TINYINT(1) DEFAULT 0,
-        used_at DATETIME,
-        expires_at DATETIME NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-
-    await conn.execute(`
       CREATE TABLE IF NOT EXISTS user_firmware_downloads (
         id VARCHAR(50) PRIMARY KEY,
         user_id VARCHAR(50) NOT NULL,
@@ -117,6 +103,18 @@ async function initDatabase() {
         first_download_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_download_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY unique_user_firmware (user_id, firmware_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS verification_codes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(255) NOT NULL,
+        code VARCHAR(6) NOT NULL,
+        type VARCHAR(20) NOT NULL DEFAULT 'register',
+        expires_at DATETIME NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_email_type (email, type)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
@@ -148,7 +146,7 @@ async function seedData(conn: any) {
     );
     await conn.execute(
       'INSERT IGNORE INTO config (`key`, value) VALUES (?, ?)',
-      ['quota_settings', JSON.stringify({ freeQuota: 5, premiumQuota: 100, singleDownloadPrice: 1, premiumPrice: 8 })]
+      ['quota_settings', JSON.stringify({ freeQuota: 5, premiumQuota: 100, premiumPrice: 8 })]
     );
 
     const categories = [
@@ -172,30 +170,16 @@ async function seedData(conn: any) {
     }
 
     const firmware = [
-      ['fw-1', 'SM2258XT 开卡工具 v1.2', '慧荣SM2258XT主控固态硬盘开卡工具，支持多种闪存颗粒，修复SSD无法识别问题。', '1.2', 'cat-1-1', 'user-001', '系统管理员', '/files/sm2258xt-v1.2.zip', 15728640, 2580, 0, null, 'approved'],
-      ['fw-2', 'PS3111 量产工具 v2.5', '群联PS3111主控SSD开卡工具，支持最新固件版本，提供完整的开卡教程。', '2.5', 'cat-2-1', 'user-001', '系统管理员', '/files/ps3111-v2.5.zip', 23068672, 1845, 0, null, 'approved'],
-      ['fw-3', 'SM2259XT 高级工具 v3.0', '专业版SM2259XT开卡工具，支持高级设置和调试功能，适合专业维修人员使用。', '3.0', 'cat-1-2', 'user-001', '系统管理员', '/files/sm2259xt-pro-v3.0.zip', 36700160, 890, 1, 19.9, 'approved'],
-      ['fw-4', 'MAP1202 开卡程序 v1.0', '联芸MAP1202主控专用开卡工具，操作简单，支持自动检测颗粒。', '1.0', 'cat-3-1', 'user-001', '系统管理员', '/files/map1202-v1.0.zip', 12582912, 654, 0, null, 'approved']
+      ['fw-1', 'SM2258XT 开卡工具 v1.2', '慧荣SM2258XT主控固态硬盘开卡工具，支持多种闪存颗粒，修复SSD无法识别问题。', '1.2', 'cat-1-1', 'user-001', '系统管理员', '/files/sm2258xt-v1.2.zip', 15728640, 2580, 'approved'],
+      ['fw-2', 'PS3111 量产工具 v2.5', '群联PS3111主控SSD开卡工具，支持最新固件版本，提供完整的开卡教程。', '2.5', 'cat-2-1', 'user-001', '系统管理员', '/files/ps3111-v2.5.zip', 23068672, 1845, 'approved'],
+      ['fw-3', 'SM2259XT 高级工具 v3.0', '专业版SM2259XT开卡工具，支持高级设置和调试功能，适合专业维修人员使用。', '3.0', 'cat-1-2', 'user-001', '系统管理员', '/files/sm2259xt-pro-v3.0.zip', 36700160, 890, 'approved'],
+      ['fw-4', 'MAP1202 开卡程序 v1.0', '联芸MAP1202主控专用开卡工具，操作简单，支持自动检测颗粒。', '1.0', 'cat-3-1', 'user-001', '系统管理员', '/files/map1202-v1.0.zip', 12582912, 654, 'approved']
     ];
 
     for (const fw of firmware) {
       await conn.execute(
-        'INSERT IGNORE INTO firmware (id, title, description, version, category_id, uploader_id, uploader_name, file_path, file_size, download_count, is_paid, price, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [fw[0], fw[1], fw[2], fw[3], fw[4], fw[5], fw[6], fw[7], fw[8], fw[9], fw[10], fw[11], fw[12]]
-      );
-    }
-
-    const now = new Date();
-    const donations = [
-      ['don-1', null, '张*明', 8, 'premium_upgrade', new Date(now.getTime() - 60000)],
-      ['don-2', null, '李*华', 1, 'single_download', new Date(now.getTime() - 180000)],
-      ['don-3', null, '王*强', 8, 'premium_upgrade', new Date(now.getTime() - 300000)]
-    ];
-
-    for (const don of donations) {
-      await conn.execute(
-        'INSERT IGNORE INTO donations (id, user_id, user_nickname, amount, type, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-        [don[0], don[1], don[2], don[3], don[4], don[5]]
+        'INSERT IGNORE INTO firmware (id, title, description, version, category_id, uploader_id, uploader_name, file_path, file_size, download_count, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [fw[0], fw[1], fw[2], fw[3], fw[4], fw[5], fw[6], fw[7], fw[8], fw[9], fw[10]]
       );
     }
 

@@ -117,9 +117,9 @@ export default function Login() {
                 />
                 <span className="text-sm text-slate-400">记住我</span>
               </label>
-              <a href="#" className="text-sm text-accent-400 hover:text-accent-300">
+              <Link to="/forgot-password" className="text-sm text-accent-400 hover:text-accent-300">
                 忘记密码？
-              </a>
+              </Link>
             </div>
 
             <button

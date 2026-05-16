@@ -16,7 +16,6 @@ import firmwareRoutes from './routes/firmware.js'
 import categoryRoutes from './routes/categories.js'
 import donationRoutes from './routes/donations.js'
 import adminRoutes from './routes/admin.js'
-import licenseRoutes from './routes/license.js'
 import statsRoutes from './routes/stats.js'
 
 // for esm mode
@@ -43,7 +42,6 @@ app.use('/api/firmware', firmwareRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/donations', donationRoutes)
 app.use('/api/admin', adminRoutes)
-app.use('/api/license', licenseRoutes)
 app.use('/api/stats', statsRoutes)
 
 /**

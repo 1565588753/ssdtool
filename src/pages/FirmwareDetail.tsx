@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAppStore } from '../store';
@@ -17,13 +17,22 @@ import {
 export default function FirmwareDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getFirmwareById, user, downloadFirmware, singleDownloadPayment, config } = useAppStore();
+  const { getFirmwareById, user, downloadFirmware, config } = useAppStore();
   const [downloading, setDownloading] = useState(false);
-  const [showSponsorModal, setShowSponsorModal] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [downloadError, setDownloadError] = useState('');
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const loginTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const firmware = getFirmwareById(id || '');
+
+  useEffect(() => {
+    return () => {
+      if (loginTimerRef.current) {
+        clearTimeout(loginTimerRef.current);
+      }
+    };
+  }, []);
 
   if (!firmware) {
     return (
@@ -41,7 +50,15 @@ export default function FirmwareDetail() {
   const handleDownload = async () => {
     setDownloadError('');
 
-    if (user?.role === 'admin') {
+    if (!user) {
+      setShowLoginModal(true);
+      loginTimerRef.current = setTimeout(() => {
+        navigate('/login');
+      }, 3000);
+      return;
+    }
+
+    if (user.role === 'admin') {
       setDownloading(true);
       try {
         const success = await downloadFirmware(firmware.id);
@@ -56,15 +73,6 @@ export default function FirmwareDetail() {
         setDownloadError('下载失败，请稍后重试');
       } finally {
         setDownloading(false);
-      }
-      return;
-    }
-
-    if (!user) {
-      if (firmware.isPaid) {
-        navigate('/license-query');
-      } else {
-        setShowSponsorModal(true);
       }
       return;
     }
@@ -91,24 +99,6 @@ export default function FirmwareDetail() {
     }
   };
 
-  const handleSponsorDownload = async () => {
-    setDownloading(true);
-    try {
-      const success = await singleDownloadPayment(firmware.id);
-      if (success) {
-        setShowSponsorModal(false);
-        setDownloadSuccess(true);
-        setTimeout(() => {
-          setDownloadSuccess(false);
-        }, 3000);
-      }
-    } catch (err) {
-      console.error('Sponsor download failed:', err);
-    } finally {
-      setDownloading(false);
-    }
-  };
-
   const getQuotaInfo = () => {
     if (!user) return null;
     const maxQuota = user.isPremium ? config.quotaSettings.premiumQuota : config.quotaSettings.freeQuota;
@@ -129,7 +119,6 @@ export default function FirmwareDetail() {
       return {
         text: '登录后免费下载',
         disabled: false,
-        showSponsor: !firmware.isPaid
       };
     }
     
@@ -137,7 +126,6 @@ export default function FirmwareDetail() {
       return {
         text: '管理员下载（无限制）',
         disabled: false,
-        showSponsor: false
       };
     }
     
@@ -145,14 +133,12 @@ export default function FirmwareDetail() {
       return {
         text: '本月额度已用完',
         disabled: true,
-        showSponsor: !firmware.isPaid
       };
     }
     
     return {
-      text: firmware.isPaid ? `购买并下载 ¥${firmware.price}` : '免费下载',
+      text: '免费下载',
       disabled: false,
-      showSponsor: false
     };
   };
 
@@ -190,11 +176,6 @@ export default function FirmwareDetail() {
                   <h1 className="font-display text-2xl font-bold mb-2" style={{ color: 'var(--theme-text)' }}>{firmware.title}</h1>
                   <p style={{ color: 'var(--theme-text-secondary)' }}>{firmware.description}</p>
                 </div>
-                {firmware.isPaid && (
-                  <div className="px-3 py-1 rounded-full text-sm font-medium" style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24' }}>
-                    ¥{firmware.price}
-                  </div>
-                )}
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -294,113 +275,41 @@ export default function FirmwareDetail() {
                       {downloadError}
                     </div>
                   )}
-                  {!user ? (
-                    <>
-                      <Link
-                        to="/login"
-                        className="w-full py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2"
-                        style={{ background: 'var(--theme-gradient)' }}
-                      >
-                        <User className="w-5 h-5" />
-                        登录后免费下载
-                      </Link>
-                      {downloadInfo.showSponsor && (
-                        <div className="pt-4 border-t" style={{ borderColor: 'var(--theme-border)' }}>
-                          <p className="text-sm text-center mb-4" style={{ color: 'var(--theme-text-secondary)' }}>
-                            或赞助 1 元立即下载
-                          </p>
-                          <button
-                            onClick={() => setShowSponsorModal(true)}
-                            className="w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors"
-                            style={{ 
-                              backgroundColor: 'var(--theme-bg-card)', 
-                              color: 'var(--theme-text)',
-                              borderWidth: '1px',
-                              borderColor: 'var(--theme-border)'
-                            }}
-                          >
-                            <Heart className="w-5 h-5" />
-                            赞助下载 ¥1
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  ) : user.role === 'admin' ? (
-                    <button
-                      onClick={handleDownload}
-                      disabled={downloading}
-                      className="btn-primary w-full py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
-                      style={{ background: 'var(--theme-gradient)' }}
-                    >
-                      {downloading ? (
-                        '下载中...'
-                      ) : (
-                        <>
-                          <Download className="w-5 h-5" />
-                          管理员下载（无限制）
-                        </>
-                      )}
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={handleDownload}
-                        disabled={downloading || (user && quotaInfo?.remaining === 0)}
-                        className="w-full py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{ 
-                          background: quotaInfo?.remaining === 0 ? 'var(--theme-bg-hover)' : 'var(--theme-gradient)',
-                          color: quotaInfo?.remaining === 0 ? 'var(--theme-text-secondary)' : 'white'
-                        }}
-                      >
-                        {downloading ? (
-                          '下载中...'
-                        ) : (
-                          <>
-                            <Download className="w-5 h-5" />
-                            {downloadInfo.text}
-                          </>
-                        )}
-                      </button>
+                  <button
+                    onClick={handleDownload}
+                    disabled={downloading || (!!user && quotaInfo?.remaining === 0)}
+                    className="w-full py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ 
+                      background: (user && quotaInfo?.remaining === 0) ? 'var(--theme-bg-hover)' : 'var(--theme-gradient)',
+                      color: (user && quotaInfo?.remaining === 0) ? 'var(--theme-text-secondary)' : 'white'
+                    }}
+                  >
+                    {downloading ? (
+                      '下载中...'
+                    ) : (
+                      <>
+                        <Download className="w-5 h-5" />
+                        {downloadInfo.text}
+                      </>
+                    )}
+                  </button>
 
-                      {user && quotaInfo?.remaining === 0 && (
-                        <div className="p-4 rounded-xl text-sm" style={{ 
-                          backgroundColor: 'rgba(245, 158, 11, 0.1)', 
-                          borderWidth: '1px',
-                          borderColor: 'rgba(245, 158, 11, 0.2)' 
-                        }}>
-                          <div className="flex items-start gap-2">
-                            <Zap className="w-5 h-5 flex-shrink-0" style={{ color: '#fbbf24' }} />
-                            <div>
-                              <div className="font-medium mb-1" style={{ color: '#fbbf24' }}>本月额度已用完</div>
-                              <p className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>
-                                升级 Premium 可获得更多下载次数
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {downloadInfo.showSponsor && (
-                        <div className="pt-4 border-t" style={{ borderColor: 'var(--theme-border)' }}>
-                          <p className="text-sm text-center mb-4" style={{ color: 'var(--theme-text-secondary)' }}>
-                            或赞助 1 元立即下载
+                  {user && quotaInfo?.remaining === 0 && (
+                    <div className="p-4 rounded-xl text-sm" style={{ 
+                      backgroundColor: 'rgba(245, 158, 11, 0.1)', 
+                      borderWidth: '1px',
+                      borderColor: 'rgba(245, 158, 11, 0.2)' 
+                    }}>
+                      <div className="flex items-start gap-2">
+                        <Zap className="w-5 h-5 flex-shrink-0" style={{ color: '#fbbf24' }} />
+                        <div>
+                          <div className="font-medium mb-1" style={{ color: '#fbbf24' }}>本月额度已用完</div>
+                          <p className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>
+                            升级 Premium 可获得更多下载次数
                           </p>
-                          <button
-                            onClick={() => setShowSponsorModal(true)}
-                            className="w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors"
-                            style={{ 
-                              backgroundColor: 'var(--theme-bg-card)', 
-                              color: 'var(--theme-text)',
-                              borderWidth: '1px',
-                              borderColor: 'var(--theme-border)'
-                            }}
-                          >
-                            <Heart className="w-5 h-5" />
-                            赞助下载 ¥1
-                          </button>
                         </div>
-                      )}
-                    </>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
@@ -416,12 +325,15 @@ export default function FirmwareDetail() {
         </div>
       </div>
 
-      {showSponsorModal && (
+      {showLoginModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 backdrop-blur-sm"
             style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
-            onClick={() => setShowSponsorModal(false)}
+            onClick={() => {
+              setShowLoginModal(false);
+              if (loginTimerRef.current) clearTimeout(loginTimerRef.current);
+            }}
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -435,27 +347,20 @@ export default function FirmwareDetail() {
           >
             <div className="text-center mb-6">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: 'var(--theme-gradient)' }}>
-                <Heart className="w-8 h-8 text-white" />
+                <User className="w-8 h-8 text-white" />
               </div>
-              <h3 className="font-display text-xl font-bold mb-2" style={{ color: 'var(--theme-text)' }}>赞助下载</h3>
+              <h3 className="font-display text-xl font-bold mb-2" style={{ color: 'var(--theme-text)' }}>需要登录</h3>
               <p style={{ color: 'var(--theme-text-secondary)' }}>
-                感谢您的支持，您的赞助将帮助我们持续维护和更新固件资源
+                请先登录后再下载固件
               </p>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              <div className="p-4 rounded-xl flex items-center justify-between" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
-                <div>
-                  <div className="font-semibold" style={{ color: 'var(--theme-text)' }}>单次下载</div>
-                  <div className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>可下载当前固件</div>
-                </div>
-                <div className="text-2xl font-bold" style={{ color: 'var(--theme-accent-400)' }}>¥{config.quotaSettings.singleDownloadPrice}</div>
-              </div>
             </div>
 
             <div className="flex gap-3">
               <button
-                onClick={() => setShowSponsorModal(false)}
+                onClick={() => {
+                  setShowLoginModal(false);
+                  if (loginTimerRef.current) clearTimeout(loginTimerRef.current);
+                }}
                 className="flex-1 py-3 rounded-xl font-semibold hover:opacity-80 transition-colors"
                 style={{ 
                   backgroundColor: 'var(--theme-bg-hover)', 
@@ -465,14 +370,17 @@ export default function FirmwareDetail() {
                 取消
               </button>
               <button
-                onClick={handleSponsorDownload}
-                disabled={downloading}
-                className="flex-1 py-3 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                onClick={() => navigate('/login')}
+                className="flex-1 py-3 rounded-xl text-white font-semibold transition-colors"
                 style={{ background: 'var(--theme-gradient)' }}
               >
-                {downloading ? '处理中...' : '确认赞助'}
+                去登录
               </button>
             </div>
+
+            <p className="text-center text-sm mt-4" style={{ color: 'var(--theme-text-muted)' }}>
+              3秒后将自动跳转到登录页面
+            </p>
           </motion.div>
         </div>
       )}

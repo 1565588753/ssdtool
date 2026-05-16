@@ -12,7 +12,6 @@ import {
   LogOut,
   UploadCloud,
   Zap,
-  Key,
   Home,
   FolderOpen
 } from 'lucide-react';
@@ -62,12 +61,6 @@ export default function Navbar() {
                 <FolderOpen className="w-4 h-4" />
                 分类浏览
               </Link>
-              {!isAuthenticated && (
-                <Link to="/license-query" className="text-theme-secondary hover:text-theme-main transition-colors flex items-center gap-2">
-                  <Key className="w-4 h-4" />
-                  卡密查询
-                </Link>
-              )}
             </div>
 
             {/* 用户区域 */}
@@ -218,18 +211,6 @@ export default function Navbar() {
                 <FolderOpen className="w-5 h-5" />
                 分类浏览
               </Link>
-              
-              {!isAuthenticated && (
-                <Link
-                  to="/license-query"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
-                  style={{ backgroundColor: 'transparent' }}
-                >
-                  <Key className="w-5 h-5" />
-                  卡密查询
-                </Link>
-              )}
               
               <div className="h-px my-2" style={{ backgroundColor: 'var(--theme-border)' }}></div>
               

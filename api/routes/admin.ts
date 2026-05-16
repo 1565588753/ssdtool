@@ -558,4 +558,25 @@ router.put('/config', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+// 获取SMTP配置
+router.get('/smtp-config', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const config = await configDB.get('smtp_settings');
+    res.json({ success: true, config: config || { host: '', port: 587, user: '', pass: '', fromEmail: '', fromName: '' } });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 更新SMTP配置
+router.put('/smtp-config', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { host, port, user, pass, fromEmail, fromName } = req.body;
+    await configDB.set('smtp_settings', { host, port, user, pass, fromEmail, fromName });
+    res.json({ success: true, message: 'SMTP配置已更新' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;

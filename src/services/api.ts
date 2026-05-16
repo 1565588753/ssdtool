@@ -55,10 +55,10 @@ export const authAPI = {
       body: JSON.stringify({ email, password }),
     }),
 
-  register: (email: string, password: string, nickname: string) =>
+  register: (email: string, password: string, nickname: string, code: string) =>
     fetchAPI<{ success: boolean }>('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, nickname }),
+      body: JSON.stringify({ email, password, nickname, code }),
     }),
 
   logout: () =>
@@ -68,6 +68,18 @@ export const authAPI = {
 
   getUser: () =>
     fetchAPI<{ success: boolean; user: any }>('/api/auth/user'),
+
+  sendCode: (email: string, type: string) =>
+    fetchAPI<{ success: boolean; message: string }>('/api/auth/send-code', {
+      method: 'POST',
+      body: JSON.stringify({ email, type }),
+    }),
+
+  resetPassword: (email: string, password: string, code: string) =>
+    fetchAPI<{ success: boolean; message: string }>('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, code }),
+    }),
 };
 
 // 固件 API
@@ -125,12 +137,6 @@ export const donationAPI = {
 
   getStats: () =>
     fetchAPI<{ success: boolean; total: number }>('/api/donations/stats'),
-
-  singleDownload: (firmwareId: string) =>
-    fetchAPI<{ success: boolean }>('/api/donations/single-download', {
-      method: 'POST',
-      body: JSON.stringify({ firmwareId }),
-    }),
 
   upgradePremium: () =>
     fetchAPI<{ success: boolean }>('/api/donations/premium-upgrade', {
@@ -231,6 +237,15 @@ export const adminAPI = {
     fetchAPI<{ success: boolean }>('/api/admin/config', {
       method: 'PUT',
       body: JSON.stringify(data),
+    }),
+
+  getSmtpConfig: () =>
+    fetchAPI<{ success: boolean; config: any }>('/api/admin/smtp-config'),
+
+  updateSmtpConfig: (config: any) =>
+    fetchAPI<{ success: boolean }>('/api/admin/smtp-config', {
+      method: 'PUT',
+      body: JSON.stringify(config),
     }),
 };
 

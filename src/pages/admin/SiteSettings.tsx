@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAppStore } from '../../store';
+import { adminAPI } from '../../services/api';
 import { themes } from '../../hooks/useTheme';
 import {
   Globe,
@@ -10,12 +11,13 @@ import {
   Palette,
   Plus,
   Trash2,
-  CheckCircle
+  CheckCircle,
+  Mail
 } from 'lucide-react';
 
 export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (themeId: string) => void; currentTheme: string }) {
   const { config, updateSiteSettings, updateHomeModule, updateModuleOrder, updateAdSlot, addAdSlot, deleteAdSlot, updateQuotaSettings } = useAppStore();
-  const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' | 'homeText' | 'quota' | 'theme'>('basic');
+  const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' | 'homeText' | 'quota' | 'theme' | 'smtp'>('basic');
 
   const sections = [
     { id: 'basic', icon: Globe, label: '基本设置' },
@@ -23,10 +25,45 @@ export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (th
     { id: 'ads', icon: Settings, label: '广告位管理' },
     { id: 'homeText', icon: FileText, label: '首页文本' },
     { id: 'quota', icon: Users, label: '下载配额' },
+    { id: 'smtp', icon: Mail, label: 'SMTP设置' },
     { id: 'theme', icon: Palette, label: '主题配色' }
   ];
 
   const [draggedModuleId, setDraggedModuleId] = useState<string | null>(null);
+  const [smtpConfig, setSmtpConfig] = useState({
+    host: '',
+    port: '',
+    user: '',
+    pass: '',
+    fromEmail: '',
+    fromName: ''
+  });
+  const [smtpSaving, setSmtpSaving] = useState(false);
+  const [smtpMessage, setSmtpMessage] = useState('');
+  const [smtpLoaded, setSmtpLoaded] = useState(false);
+
+  const loadSmtpConfig = async () => {
+    try {
+      const res = await adminAPI.getSmtpConfig();
+      if (res.success && res.config) {
+        setSmtpConfig({
+          host: res.config.host || '',
+          port: res.config.port?.toString() || '',
+          user: res.config.user || '',
+          pass: res.config.pass || '',
+          fromEmail: res.config.fromEmail || '',
+          fromName: res.config.fromName || ''
+        });
+      }
+    } catch (err) {
+      console.error('加载SMTP配置失败:', err);
+    }
+  };
+
+  if (activeSection === 'smtp' && !smtpLoaded) {
+    setSmtpLoaded(true);
+    loadSmtpConfig();
+  }
 
   const sortedModules = [...config.homeModules].sort((a, b) => a.order - b.order);
 
@@ -371,6 +408,139 @@ export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (th
                     }}
                   />
                 </div>
+              </div>
+            )}
+
+            {activeSection === 'smtp' && (
+              <div className="space-y-6">
+                <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>配置邮件服务器用于发送验证码等系统邮件</p>
+                {smtpMessage && (
+                  <div className={`p-4 rounded-xl text-sm ${
+                    smtpMessage.startsWith('保存成功') ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                  }`}>
+                    {smtpMessage}
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>SMTP 服务器</label>
+                  <input
+                    type="text"
+                    value={smtpConfig.host}
+                    onChange={(e) => setSmtpConfig({ ...smtpConfig, host: e.target.value })}
+                    placeholder="smtp.example.com"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--theme-bg-card)',
+                      border: '1px solid var(--theme-border)',
+                      color: 'var(--theme-text)'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>端口</label>
+                  <input
+                    type="number"
+                    value={smtpConfig.port}
+                    onChange={(e) => setSmtpConfig({ ...smtpConfig, port: e.target.value })}
+                    placeholder="465"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--theme-bg-card)',
+                      border: '1px solid var(--theme-border)',
+                      color: 'var(--theme-text)'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>用户名</label>
+                  <input
+                    type="text"
+                    value={smtpConfig.user}
+                    onChange={(e) => setSmtpConfig({ ...smtpConfig, user: e.target.value })}
+                    placeholder="user@example.com"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--theme-bg-card)',
+                      border: '1px solid var(--theme-border)',
+                      color: 'var(--theme-text)'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>密码</label>
+                  <input
+                    type="password"
+                    value={smtpConfig.pass}
+                    onChange={(e) => setSmtpConfig({ ...smtpConfig, pass: e.target.value })}
+                    placeholder="请输入密码"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--theme-bg-card)',
+                      border: '1px solid var(--theme-border)',
+                      color: 'var(--theme-text)'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>发件人邮箱</label>
+                  <input
+                    type="email"
+                    value={smtpConfig.fromEmail}
+                    onChange={(e) => setSmtpConfig({ ...smtpConfig, fromEmail: e.target.value })}
+                    placeholder="noreply@example.com"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--theme-bg-card)',
+                      border: '1px solid var(--theme-border)',
+                      color: 'var(--theme-text)'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>发件人名称</label>
+                  <input
+                    type="text"
+                    value={smtpConfig.fromName}
+                    onChange={(e) => setSmtpConfig({ ...smtpConfig, fromName: e.target.value })}
+                    placeholder="SSD开卡工具站"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--theme-bg-card)',
+                      border: '1px solid var(--theme-border)',
+                      color: 'var(--theme-text)'
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={async () => {
+                    setSmtpSaving(true);
+                    setSmtpMessage('');
+                    try {
+                      const res = await adminAPI.updateSmtpConfig({
+                        host: smtpConfig.host,
+                        port: Number(smtpConfig.port),
+                        user: smtpConfig.user,
+                        pass: smtpConfig.pass,
+                        fromEmail: smtpConfig.fromEmail,
+                        fromName: smtpConfig.fromName
+                      });
+                      if (res.success) {
+                        setSmtpMessage('保存成功');
+                      } else {
+                        setSmtpMessage('保存失败');
+                      }
+                    } catch (err: any) {
+                      setSmtpMessage(err.message || '保存失败');
+                    } finally {
+                      setSmtpSaving(false);
+                    }
+                  }}
+                  disabled={smtpSaving}
+                  className="px-6 py-3 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: 'var(--theme-gradient)' }}
+                >
+                  {smtpSaving ? '保存中...' : '保存配置'}
+                </button>
               </div>
             )}
 
