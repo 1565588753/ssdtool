@@ -1,0 +1,196 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* 默认主题 - 赛博蓝(深色) */
+  --theme-primary-50: #eff6ff;
+  --theme-primary-100: #dbeafe;
+  --theme-primary-200: #bfdbfe;
+  --theme-primary-300: #93c5fd;
+  --theme-primary-400: #60a5fa;
+  --theme-primary-500: #3b82f6;
+  --theme-primary-600: #2563eb;
+  --theme-primary-700: #1d4ed8;
+  --theme-primary-800: #1e40af;
+  --theme-primary-900: #1e3a8a;
+  
+  --theme-accent-50: #ecfeff;
+  --theme-accent-100: #cffafe;
+  --theme-accent-200: #a5f3fc;
+  --theme-accent-300: #67e8f9;
+  --theme-accent-400: #22d3ee;
+  --theme-accent-500: #06b6d4;
+  --theme-accent-600: #0891b2;
+  --theme-accent-700: #0e7490;
+  --theme-accent-800: #155e75;
+  --theme-accent-900: #164e63;
+  
+  --theme-gradient: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  --theme-glow-color: rgba(6, 182, 212, 0.4);
+  --theme-bg-base: #0f172a;
+  --theme-bg-card: #1e293b;
+  --theme-bg-hover: #334155;
+  --theme-text: #f8fafc;
+  --theme-text-secondary: #94a3b8;
+  --theme-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 防止导航栏遮挡内容 */
+body {
+  padding-top: 64px;
+  background-color: var(--theme-bg-base);
+  color: var(--theme-text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* 渐变背景 - 使用主题色 */
+.gradient-bg {
+  background: linear-gradient(135deg, var(--theme-bg-base) 0%, var(--theme-bg-card) 50%, var(--theme-bg-base) 100%);
+}
+
+.gradient-hero {
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.2) 0%, transparent 100%);
+}
+
+/* 毛玻璃效果 - 使用主题色 */
+.glass {
+  background: color-mix(in srgb, var(--theme-bg-base) 80%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--theme-border);
+}
+
+.glass-card {
+  background: color-mix(in srgb, var(--theme-bg-card) 70%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--theme-border);
+}
+
+/* 霓虹边框 - 使用主题色 */
+.neon-border {
+  box-shadow: 0 0 20px var(--theme-glow-color), inset 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+.neon-border:hover {
+  box-shadow: 0 0 30px var(--theme-glow-color), inset 0 0 30px rgba(255, 255, 255, 0.08);
+}
+
+/* 按钮样式 - 使用主题色 */
+.btn-primary {
+  background: var(--theme-gradient);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 40px var(--theme-glow-color);
+}
+
+/* 滚动条样式 - 使用主题色 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--theme-bg-card);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--theme-primary-600);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-primary-700);
+}
+
+/* 粒子动画 */
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--theme-accent-500);
+  opacity: 0.6;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* 文本颜色类 */
+.text-theme-primary {
+  color: var(--theme-primary-500);
+}
+
+.text-theme-secondary {
+  color: var(--theme-text-secondary);
+}
+
+.text-theme-main {
+  color: var(--theme-text);
+}
+
+/* 背景色类 */
+.bg-theme-base {
+  background-color: var(--theme-bg-base);
+}
+
+.bg-theme-card {
+  background-color: var(--theme-bg-card);
+}
+
+.bg-theme-hover {
+  background-color: var(--theme-bg-hover);
+}
+
+/* 边框类 */
+.border-theme {
+  border-color: var(--theme-border);
+}
+
+/* 通用输入框样式 - 确保所有主题下输入框文字可见 */
+input,
+textarea,
+select {
+  color: var(--theme-text) !important;
+  background-color: var(--theme-bg-card) !important;
+  border: 1px solid var(--theme-border) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--theme-text-secondary) !important;
+  opacity: 0.7;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--theme-primary-500) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 下拉框箭头颜色 */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
