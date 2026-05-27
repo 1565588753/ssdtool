@@ -11,9 +11,7 @@ import {
   X,
   LogOut,
   UploadCloud,
-  Zap,
-  Home,
-  FolderOpen
+  Zap
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -53,14 +51,6 @@ export default function Navbar() {
 
             {/* 导航按钮 */}
             <div className="flex-1 flex items-center justify-center gap-6">
-              <Link to="/" className="text-theme-secondary hover:text-theme-main transition-colors flex items-center gap-2">
-                <Home className="w-4 h-4" />
-                首页
-              </Link>
-              <Link to="/categories" className="text-theme-secondary hover:text-theme-main transition-colors flex items-center gap-2">
-                <FolderOpen className="w-4 h-4" />
-                分类浏览
-              </Link>
             </div>
 
             {/* 用户区域 */}
@@ -189,28 +179,6 @@ export default function Navbar() {
               <div className="flex justify-center py-2">
                 <ThemeSwitcher />
               </div>
-              
-              <div className="h-px my-2" style={{ backgroundColor: 'var(--theme-border)' }}></div>
-              
-              <Link
-                to="/"
-                onClick={() => setIsMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
-                style={{ backgroundColor: 'transparent' }}
-              >
-                <Home className="w-5 h-5" />
-                首页
-              </Link>
-              
-              <Link
-                to="/categories"
-                onClick={() => setIsMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
-                style={{ backgroundColor: 'transparent' }}
-              >
-                <FolderOpen className="w-5 h-5" />
-                分类浏览
-              </Link>
               
               <div className="h-px my-2" style={{ backgroundColor: 'var(--theme-border)' }}></div>
               
