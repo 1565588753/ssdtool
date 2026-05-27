@@ -4,17 +4,7 @@ import { motion } from 'framer-motion';
 import { useAppStore } from '../store';
 import { useThemeStore } from '../hooks/useTheme';
 import ThemeSwitcher from './ThemeSwitcher';
-import {
-  HardDrive,
-  User,
-  Menu,
-  X,
-  LogOut,
-  UploadCloud,
-  Zap,
-  Home,
-  FolderOpen
-} from 'lucide-react';
+import { Search, Menu, X, LogIn, UserPlus, User, LogOut, Settings, Sun, Moon, Home, FolderOpen, HardDrive, Zap } from 'lucide-react';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -53,11 +43,11 @@ export default function Navbar() {
 
             {/* 导航按钮 */}
             <div className="flex-1 flex items-center justify-center gap-6">
-              <Link to="/" className="text-theme-secondary hover:text-theme-main transition-colors flex items-center gap-2">
+              <Link to="/" className="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-theme-hover transition-colors text-theme-secondary hover:text-theme-main text-sm font-medium">
                 <Home className="w-4 h-4" />
                 首页
               </Link>
-              <Link to="/categories" className="text-theme-secondary hover:text-theme-main transition-colors flex items-center gap-2">
+              <Link to="/categories" className="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-theme-hover transition-colors text-theme-secondary hover:text-theme-main text-sm font-medium">
                 <FolderOpen className="w-4 h-4" />
                 分类浏览
               </Link>
@@ -190,24 +180,11 @@ export default function Navbar() {
                 <ThemeSwitcher />
               </div>
               
-              <div className="h-px my-2" style={{ backgroundColor: 'var(--theme-border)' }}></div>
-              
-              <Link
-                to="/"
-                onClick={() => setIsMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
-                style={{ backgroundColor: 'transparent' }}
-              >
+              <Link to="/" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main">
                 <Home className="w-5 h-5" />
                 首页
               </Link>
-              
-              <Link
-                to="/categories"
-                onClick={() => setIsMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main"
-                style={{ backgroundColor: 'transparent' }}
-              >
+              <Link to="/categories" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main">
                 <FolderOpen className="w-5 h-5" />
                 分类浏览
               </Link>

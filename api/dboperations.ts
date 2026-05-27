@@ -166,7 +166,11 @@ export const configDB = {
     return row ? JSON.parse(row.value) : null;
   },
   async set(key: string, value: object) {
-    await pool.execute('UPDATE config SET value = ? WHERE `key` = ?', [JSON.stringify(value), key]);
+    const jsonValue = JSON.stringify(value);
+    await pool.execute(
+      "INSERT INTO config (`key`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?",
+      [key, jsonValue, jsonValue]
+    );
   },
   async update(key: string, value: object) {
     await pool.execute('UPDATE config SET value = ? WHERE `key` = ?', [JSON.stringify(value), key]);

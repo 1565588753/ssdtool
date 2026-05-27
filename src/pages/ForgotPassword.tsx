@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../store';
-import { Mail, Lock, ShieldCheck, ArrowLeft, Loader2 } from 'lucide-react';
+import { authAPI } from '../services/api';
+import SliderCaptcha from '../components/SliderCaptcha';
+import { Mail, Lock, ShieldCheck, ArrowLeft, Loader2, X } from 'lucide-react';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
-  const { error, isLoading } = useAppStore();
+  const { error } = useAppStore();
   const [step, setStep] = useState<'email' | 'code' | 'success'>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -16,13 +18,15 @@ export default function ForgotPassword() {
   const [countdown, setCountdown] = useState(0);
   const [localError, setLocalError] = useState('');
   const [sendingCode, setSendingCode] = useState(false);
+  const [sliderVerified, setSliderVerified] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [countdown]);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
   const handleSendCode = async () => {
     if (!email) {
@@ -33,14 +37,27 @@ export default function ForgotPassword() {
       setLocalError('请输入有效的邮箱地址');
       return;
     }
+    if (!sliderVerified) {
+      setLocalError('请先完成滑块验证');
+      return;
+    }
 
     setSendingCode(true);
     setLocalError('');
     try {
-      const { authAPI } = await import('../services/api');
       const res = await authAPI.sendCode(email, 'reset_password');
       if (res.success) {
         setCountdown(60);
+        setShowCodeModal(true);
+        timerRef.current = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timerRef.current);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
         setStep('code');
       }
     } catch (err: any) {
@@ -70,7 +87,6 @@ export default function ForgotPassword() {
 
     setLocalError('');
     try {
-      const { authAPI } = await import('../services/api');
       const res = await authAPI.resetPassword(email, password, code);
       if (res.success) {
         setStep('success');
@@ -138,9 +154,10 @@ export default function ForgotPassword() {
                   />
                 </div>
               </div>
+              <SliderCaptcha onVerified={() => setSliderVerified(true)} />
               <button
                 onClick={handleSendCode}
-                disabled={sendingCode}
+                disabled={sendingCode || !sliderVerified}
                 className="w-full btn-primary px-6 py-3 rounded-xl text-white font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {sendingCode ? (
@@ -241,16 +258,18 @@ export default function ForgotPassword() {
               </div>
               <div className="flex gap-3">
                 <button
-                  onClick={handleSendCode}
-                  disabled={countdown > 0 || sendingCode}
-                  className="flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+                  onClick={() => {
+                    setSliderVerified(false);
+                    setStep('email');
+                  }}
+                  className="flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
                   style={{
                     backgroundColor: 'var(--theme-bg-card)',
                     border: '1px solid var(--theme-border)',
                     color: 'var(--theme-text)',
                   }}
                 >
-                  {countdown > 0 ? `${countdown}s 后重发` : '重新发送'}
+                  返回修改
                 </button>
                 <button
                   onClick={handleResetPassword}
@@ -282,6 +301,56 @@ export default function ForgotPassword() {
           )}
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        {showCodeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowCodeModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="glass-card rounded-2xl p-8 max-w-sm w-full relative"
+              style={{ borderColor: 'var(--theme-border)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setShowCodeModal(false)}
+                className="absolute top-4 right-4"
+                style={{ color: 'var(--theme-text-muted)' }}
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="text-center">
+                <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center"
+                  style={{ background: 'var(--theme-gradient)', opacity: 0.2 }}
+                >
+                  <Mail className="w-7 h-7" style={{ color: 'var(--theme-primary-400)' }} />
+                </div>
+                <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--theme-text)' }}>
+                  验证码已发送
+                </h3>
+                <p className="text-sm mb-1" style={{ color: 'var(--theme-text-secondary)' }}>
+                  验证码已发送至
+                </p>
+                <p className="font-medium text-sm mb-4" style={{ color: 'var(--theme-primary-400)' }}>
+                  {email}
+                </p>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--theme-text-muted)' }}>
+                  有效期30分钟，如果没有收到请检查垃圾信箱
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

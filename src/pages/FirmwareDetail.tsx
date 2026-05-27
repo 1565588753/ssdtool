@@ -65,6 +65,7 @@ export default function FirmwareDetail() {
         if (success) {
           setDownloadSuccess(true);
           setTimeout(() => setDownloadSuccess(false), 3000);
+          window.open(`/api/firmware/${firmware.id}/file`, '_blank');
         } else {
           setDownloadError('下载失败，请稍后重试');
         }
@@ -88,6 +89,7 @@ export default function FirmwareDetail() {
       if (success) {
         setDownloadSuccess(true);
         setTimeout(() => setDownloadSuccess(false), 3000);
+        window.open(`/api/firmware/${firmware.id}/file`, '_blank');
       } else {
         setDownloadError('下载失败，请稍后重试');
       }

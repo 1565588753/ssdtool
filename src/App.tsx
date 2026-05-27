@@ -10,13 +10,36 @@ import UserCenter from "@/pages/UserCenter";
 import Donate from "@/pages/Donate";
 import ForgotPassword from "@/pages/ForgotPassword";
 import { useAppStore } from "@/store";
+import { authAPI } from "@/services/api";
 
 export default function App() {
-  const { loadInitialData } = useAppStore();
+  const { loadInitialData, setUser, setAuthReady } = useAppStore();
 
   useEffect(() => {
     loadInitialData();
-  }, [loadInitialData]);
+
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      const user = useAppStore.getState().user;
+      if (!user) {
+        authAPI.verifyToken().then(res => {
+          if (res.success && res.user) {
+            setUser(res.user);
+          } else {
+            localStorage.removeItem('authToken');
+          }
+          setAuthReady();
+        }).catch(() => {
+          localStorage.removeItem('authToken');
+          setAuthReady();
+        });
+      } else {
+        setAuthReady();
+      }
+    } else {
+      setAuthReady();
+    }
+  }, [loadInitialData, setUser, setAuthReady]);
 
   return (
     <Router>

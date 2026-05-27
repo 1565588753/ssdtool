@@ -148,6 +148,10 @@ async function seedData(conn: any) {
       'INSERT IGNORE INTO config (`key`, value) VALUES (?, ?)',
       ['quota_settings', JSON.stringify({ freeQuota: 5, premiumQuota: 100, premiumPrice: 8 })]
     );
+    await conn.execute(
+      'INSERT IGNORE INTO config (`key`, value) VALUES (?, ?)',
+      ['storage_settings', JSON.stringify({ mountDomain: '' })]
+    );
 
     const categories = [
       ['cat-1', '慧荣 (SMI)', null, 1],

@@ -393,7 +393,7 @@ export default function Home() {
               <span className="font-display font-bold text-base" style={{ color: 'var(--theme-text)' }}>{config.siteSettings.name}</span>
             </div>
             <p className="text-xs" style={{ color: 'var(--theme-text-secondary)' }}>
-              © 2024 {config.siteSettings.name}. All rights reserved.
+              {config.siteSettings.copyright || `© 2024 ${config.siteSettings.name}. All rights reserved.`}
             </p>
           </div>
         </div>

@@ -1,8 +1,9 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../store';
 import { authAPI } from '../services/api';
+import SliderCaptcha from '../components/SliderCaptcha';
 import {
   Mail,
   Lock,
@@ -12,45 +13,26 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
-  Shield,
-  ShieldAlert,
+  X
 } from 'lucide-react';
 
-type PasswordStrength = 'weak' | 'medium' | 'strong' | 'very-strong';
+const CODE_COOLDOWN = 120;
+const CODE_TIMER_KEY = 'registerCodeTimerEnd';
 
-const getPasswordStrength = (password: string): PasswordStrength | null => {
-  if (!password) return null;
-  
-  let score = 0;
-  
-  if (password.length >= 6) score += 1;
-  if (password.length >= 8) score += 1;
-  if (password.length >= 12) score += 1;
-  if (password.length >= 16) score += 1;
-  
-  if (/[a-z]/.test(password)) score += 1;
-  if (/[A-Z]/.test(password)) score += 1;
-  if (/\d/.test(password)) score += 1;
-  if (/[^a-zA-Z0-9]/.test(password)) score += 1;
-  
-  if (score <= 3) return 'weak';
-  if (score <= 5) return 'medium';
-  if (score <= 7) return 'strong';
-  return 'very-strong';
-};
-
-const getStrengthConfig = (strength: PasswordStrength) => {
-  switch (strength) {
-    case 'weak':
-      return { label: '弱', color: '#ef4444', icon: ShieldAlert, textColor: 'text-red-400' };
-    case 'medium':
-      return { label: '中', color: '#eab308', icon: Shield, textColor: 'text-yellow-400' };
-    case 'strong':
-      return { label: '强', color: '#22c55e', icon: ShieldCheck, textColor: 'text-green-400' };
-    case 'very-strong':
-      return { label: '很强', color: '#10b981', icon: ShieldCheck, textColor: 'text-emerald-400' };
+function getRemainingSeconds(): number {
+  try {
+    const end = parseInt(localStorage.getItem(CODE_TIMER_KEY) || '0', 10);
+    if (!end) return 0;
+    const remaining = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+    if (remaining <= 0) {
+      localStorage.removeItem(CODE_TIMER_KEY);
+      return 0;
+    }
+    return remaining;
+  } catch {
+    return 0;
   }
-};
+}
 
 export default function Register() {
   const navigate = useNavigate();
@@ -66,18 +48,48 @@ export default function Register() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [countdown, setCountdown] = useState(0);
+  const [countdown, setCountdown] = useState(getRemainingSeconds);
+  const [sliderVerified, setSliderVerified] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [sentEmail, setSentEmail] = useState('');
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
+  useEffect(() => {
+    const remaining = getRemainingSeconds();
+    if (remaining > 0) {
+      setCountdown(remaining);
+      timerRef.current = setInterval(() => {
+        setCountdown((prev) => {
+          const next = prev - 1;
+          if (next <= 0) {
+            clearInterval(timerRef.current);
+            localStorage.removeItem(CODE_TIMER_KEY);
+            return 0;
+          }
+          localStorage.setItem(CODE_TIMER_KEY, String(Date.now() + next * 1000));
+          return next;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
   const startCountdown = useCallback(() => {
-    setCountdown(60);
+    const end = Date.now() + CODE_COOLDOWN * 1000;
+    localStorage.setItem(CODE_TIMER_KEY, String(end));
+    setCountdown(CODE_COOLDOWN);
     timerRef.current = setInterval(() => {
       setCountdown((prev) => {
-        if (prev <= 1) {
+        const next = prev - 1;
+        if (next <= 0) {
           clearInterval(timerRef.current);
+          localStorage.removeItem(CODE_TIMER_KEY);
           return 0;
         }
-        return prev - 1;
+        localStorage.setItem(CODE_TIMER_KEY, String(Date.now() + next * 1000));
+        return next;
       });
     }, 1000);
   }, []);
@@ -88,13 +100,19 @@ export default function Register() {
       return;
     }
     if (countdown > 0) return;
+    if (!sliderVerified) {
+      setError('请先完成滑块验证');
+      return;
+    }
     setError('');
     try {
       const res = await authAPI.sendCode(formData.email, 'register');
       if (res.success) {
         startCountdown();
+        setSentEmail(formData.email);
+        setShowCodeModal(true);
       } else {
-        setError(res.message || '发送验证码失败');
+        setError((res as any).error || '发送验证码失败');
       }
     } catch (err: any) {
       setError(err.message || '发送验证码失败');
@@ -129,6 +147,7 @@ export default function Register() {
         formData.code
       );
       if (success) {
+        localStorage.removeItem(CODE_TIMER_KEY);
         setStep('success');
       } else {
         setError('注册失败，请稍后重试');
@@ -165,10 +184,6 @@ export default function Register() {
       </div>
     );
   }
-
-  const strength = getPasswordStrength(formData.password);
-  const strengthConfig = strength ? getStrengthConfig(strength) : null;
-  const strengthLevel = strength === 'weak' ? 0 : strength === 'medium' ? 1 : strength === 'strong' ? 2 : strength === 'very-strong' ? 3 : -1;
 
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center px-4 py-20">
@@ -216,13 +231,17 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={handleSendCode}
-                  disabled={countdown > 0}
+                  disabled={countdown > 0 || !sliderVerified}
                   className="px-4 py-3 rounded-xl text-white font-semibold text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ background: 'var(--theme-gradient)' }}
                 >
                   {countdown > 0 ? `${countdown}s` : '获取验证码'}
                 </button>
               </div>
+            </div>
+
+            <div className="mb-2">
+              <SliderCaptcha onVerified={() => setSliderVerified(true)} />
             </div>
 
             <div>
@@ -281,45 +300,6 @@ export default function Register() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-
-              {strength && strengthConfig && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="mt-3"
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    {[0, 1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className="h-1.5 flex-1 rounded-full overflow-hidden"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
-                      >
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: i <= strengthLevel ? '100%' : '0%' }}
-                          transition={{ duration: 0.3 }}
-                          className="h-full rounded-full"
-                          style={{ backgroundColor: strengthConfig.color }}
-                        />
-                      </div>
-                    ))}
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex items-center gap-1 ml-2"
-                    >
-                      <strengthConfig.icon className={`w-3.5 h-3.5 ${strengthConfig.textColor}`} />
-                      <span className={`text-xs font-medium ${strengthConfig.textColor}`}>
-                        {strengthConfig.label}
-                      </span>
-                    </motion.div>
-                  </div>
-                  <p className="text-xs" style={{ color: 'rgba(148, 163, 184, 0.5)' }}>
-                    建议：使用8个以上字符，包含大小写字母、数字和特殊字符
-                  </p>
-                </motion.div>
-              )}
             </div>
 
             <div>
@@ -364,6 +344,56 @@ export default function Register() {
           </Link>
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        {showCodeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowCodeModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="glass-card rounded-2xl p-8 max-w-sm w-full relative"
+              style={{ borderColor: 'var(--theme-border)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setShowCodeModal(false)}
+                className="absolute top-4 right-4"
+                style={{ color: 'var(--theme-text-muted)' }}
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="text-center">
+                <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center"
+                  style={{ background: 'var(--theme-gradient)', opacity: 0.2 }}
+                >
+                  <Mail className="w-7 h-7" style={{ color: 'var(--theme-primary-400)' }} />
+                </div>
+                <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--theme-text)' }}>
+                  验证码已发送
+                </h3>
+                <p className="text-sm mb-1" style={{ color: 'var(--theme-text-secondary)' }}>
+                  验证码已发送至
+                </p>
+                <p className="font-medium text-sm mb-4" style={{ color: 'var(--theme-primary-400)' }}>
+                  {sentEmail}
+                </p>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--theme-text-muted)' }}>
+                  有效期30分钟，如果没有收到请检查垃圾信箱
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

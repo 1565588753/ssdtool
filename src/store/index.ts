@@ -32,7 +32,10 @@ export interface ExtendedConfig extends Config {
 interface AppState {
   user: User | null;
   isAuthenticated: boolean;
+isAuthReady: boolean;
+  token?: string;
   setUser: (user: User | null) => void;
+  setAuthReady: () => void;
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string, nickname: string, code: string) => Promise<boolean>;
   logout: () => void;
@@ -92,7 +95,8 @@ interface AppState {
 const defaultConfig: ExtendedConfig = {
   siteSettings: {
     name: 'SSD开卡工具站',
-    description: '专业的固态硬盘开卡工具分享平台'
+description: '专业的固态硬盘开卡工具分享平台',
+    copyright: ''
   },
   moduleSettings: {
     showHero: true,
@@ -124,6 +128,8 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       user: null,
       isAuthenticated: false,
+isAuthReady: false,
+      token: undefined,
       categories: [],
       firmware: [],
       tags: [],
@@ -139,12 +145,17 @@ export const useAppStore = create<AppState>()(
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
 
+setAuthReady: () => set({ isAuthReady: true }),
+
       login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
           const response = await authAPI.login(email, password);
           if (response.success && response.user) {
             localStorage.setItem('userId', response.user.id);
+            if (response.token) {
+              localStorage.setItem('authToken', response.token);
+            }
             const userData: User = {
               id: response.user.id,
               email: response.user.email,
@@ -157,7 +168,7 @@ export const useAppStore = create<AppState>()(
               isPremium: response.user.isPremium,
               createdAt: response.user.createdAt
             };
-            set({ user: userData, isAuthenticated: true, isLoading: false });
+set({ user: userData, isAuthenticated: true, isAuthReady: true, token: response.token, isLoading: false });
             return true;
           }
           set({ error: '邮箱或密码错误', isLoading: false });
@@ -184,7 +195,26 @@ export const useAppStore = create<AppState>()(
 
       logout: () => {
         localStorage.removeItem('userId');
-        set({ user: null, isAuthenticated: false });
+        localStorage.removeItem('authToken');
+        // Clear persisted storage and reset all state
+        useAppStore.persist.clearStorage();
+        set({
+          user: null,
+          isAuthenticated: false,
+          token: undefined,
+          categories: [],
+          firmware: [],
+          tags: [],
+          donations: [],
+          contributors: [],
+          config: defaultConfig,
+          downloads: [],
+          selectedCategory: null,
+          selectedTags: [],
+          searchQuery: '',
+          isLoading: false,
+          error: null,
+        });
       },
 
       getFirmwareById: (id) => get().firmware.find(fw => fw.id === id),
@@ -503,6 +533,9 @@ export const useAppStore = create<AppState>()(
       name: 'ssd-tool-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+        token: state.token,
         categories: state.categories,
         firmware: state.firmware,
         tags: state.tags,

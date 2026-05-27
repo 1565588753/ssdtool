@@ -8,23 +8,41 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = Router();
 
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
 // 配置文件上传
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, '../../files'));
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
   }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
 
 /**
  * 获取所有固件
@@ -189,8 +207,8 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const userId = req.headers['x-user-id'] as string;
-
+    const userId = extractUserId(req);
+    
     if (!userId) {
       res.status(401).json({
         success: false,
@@ -323,12 +341,23 @@ router.get('/category/:categoryId', async (req: Request, res: Response): Promise
  */
 router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.headers['x-user-id'] as string;
+const userId = extractUserId(req);
     
     if (!userId) {
       res.status(401).json({
         success: false,
         error: '请先登录'
+      });
+      return;
+    }
+
+    // 验证上传者角色（仅限管理员和维护者）
+    const [userRows] = await pool.execute('SELECT role, nickname FROM users WHERE id = ?', [userId]);
+    const user = (userRows as any[])[0];
+    if (!user || (user.role !== 'admin' && user.role !== 'maintainer')) {
+      res.status(403).json({
+        success: false,
+        error: '权限不足，仅管理员和维护者可上传固件'
       });
       return;
     }
@@ -347,16 +376,6 @@ router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: 
       res.status(400).json({
         success: false,
         error: '请填写完整的固件信息'
-      });
-      return;
-    }
-
-    // 获取上传者信息
-    const user = await userDB.findById(userId);
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: '用户不存在'
       });
       return;
     }
@@ -394,7 +413,7 @@ router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: 
 });
 
 /**
- * 获取固件实际文件（用于浏览器下载，带正确文件名）
+ * 获取固件实际文件 - 支持挂载站重定向
  * GET /api/firmware/:id/file
  */
 router.get('/:id/file', async (req: Request, res: Response): Promise<void> => {
@@ -406,6 +425,16 @@ router.get('/:id/file', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // 检查是否配置了挂载站域名
+    const storageSettings = await configDB.get('storage_settings');
+    if (storageSettings && storageSettings.mountDomain) {
+      const fileName = path.basename(firmware.file_path);
+      const redirectUrl = `${storageSettings.mountDomain.replace(/\/$/, '')}/${fileName}`;
+      res.redirect(302, redirectUrl);
+      return;
+    }
+
+    // 兜底：直接从服务器提供文件
     const filePath = firmware.file_path;
     const fileName = path.basename(filePath);
     const fullPath = path.join(__dirname, '../../files', fileName);

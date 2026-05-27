@@ -86,6 +86,7 @@ export interface Contributor {
 export interface SiteSettings {
   name: string;
   description: string;
+  copyright?: string;
 }
 
 export interface ModuleSettings {
@@ -115,4 +116,8 @@ export interface SmtpConfig {
   pass: string;
   fromEmail: string;
   fromName: string;
+}
+
+export interface StorageConfig {
+  mountDomain: string;
 }

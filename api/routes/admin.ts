@@ -8,6 +8,7 @@ import { userDB, firmwareDB, configDB, categoryDB } from '../dboperations.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,8 +17,18 @@ const router = Router();
 
 // 中间件：检查管理员权限
 async function adminMiddleware(req: Request, res: Response, next: Function) {
-  const userId = req.headers['x-user-id'] as string;
-  
+  const authHeader = req.headers.authorization;
+  let userId = req.headers['x-user-id'] as string;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const payload = verifyToken(token);
+    if (payload) {
+      userId = payload.userId;
+      (req as any).userId = payload.userId;
+    }
+  }
+
   if (!userId) {
     res.status(401).json({ success: false, error: '请先登录' });
     return;
@@ -26,7 +37,7 @@ async function adminMiddleware(req: Request, res: Response, next: Function) {
   try {
     const [rows] = await pool.execute('SELECT role FROM users WHERE id = ?', [userId]);
     const user = (rows as any[])[0];
-    
+
     if (!user || user.role !== 'admin') {
       res.status(403).json({ success: false, error: '权限不足，需要管理员权限' });
       return;
@@ -60,7 +71,6 @@ router.get('/users', async (req: Request, res: Response): Promise<void> => {
         avatar: user.avatar_url,
         downloadQuota: user.download_quota,
         downloadsUsed: user.downloads_used,
-        quotaResetDate: user.quota_reset_date,
         isPremium: Boolean(user.is_premium),
         createdAt: user.created_at
       }))
@@ -155,6 +165,12 @@ router.put('/users/:id', async (req: Request, res: Response): Promise<void> => {
     if (isPremium !== undefined) {
       updates.push('is_premium = ?');
       params.push(isPremium ? 1 : 0);
+      if (downloadQuota === undefined) {
+        const qConfig = await configDB.get('quota_settings');
+        const defaultQuota = isPremium ? (qConfig?.premiumQuota || 100) : (qConfig?.freeQuota || 5);
+        updates.push('download_quota = ?');
+        params.push(defaultQuota);
+      }
     }
 
     if (updates.length === 0) {
@@ -208,7 +224,7 @@ router.put('/users/:id/role', async (req: Request, res: Response): Promise<void>
 router.delete('/users/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const userId = req.headers['x-user-id'] as string;
+    const userId = extractUserId(req);
 
     if (id === userId) {
       res.status(400).json({ success: false, error: '不能删除自己' });
@@ -294,7 +310,6 @@ router.put('/firmware/:id', async (req: Request, res: Response): Promise<void> =
       updates.push('price = ?');
       params.push(price);
     }
-
     if (updates.length === 0) {
       res.status(400).json({ success: false, error: '没有需要更新的字段' });
       return;
@@ -574,6 +589,27 @@ router.put('/smtp-config', async (req: Request, res: Response): Promise<void> =>
     const { host, port, user, pass, fromEmail, fromName } = req.body;
     await configDB.set('smtp_settings', { host, port, user, pass, fromEmail, fromName });
     res.json({ success: true, message: 'SMTP配置已更新' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 获取文件存储配置
+router.get('/storage-config', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const config = await configDB.get('storage_settings');
+    res.json({ success: true, config: config || { mountDomain: '' } });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 更新文件存储配置
+router.put('/storage-config', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { mountDomain } = req.body;
+    await configDB.set('storage_settings', { mountDomain });
+    res.json({ success: true, message: '文件存储配置已更新' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }

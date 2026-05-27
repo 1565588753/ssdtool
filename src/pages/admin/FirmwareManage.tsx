@@ -34,7 +34,7 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
     title: '',
     description: '',
     version: '',
-    categoryId: ''
+    categoryId: '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -151,7 +151,7 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
       title: fw.title || '',
       description: fw.description || '',
       version: fw.version || '',
-      categoryId: fw.categoryId || ''
+      categoryId: fw.categoryId || '',
     });
   };
 
@@ -165,7 +165,12 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
 
     setSaving(true);
     try {
-      await adminAPI.updateFirmware(editingFirmware.id, editForm);
+      await adminAPI.updateFirmware(editingFirmware.id, {
+        title: editForm.title,
+        categoryId: editForm.categoryId,
+        version: editForm.version,
+        description: editForm.description,
+      });
       showToast('固件更新成功', 'success');
       setEditingFirmware(null);
       setRefreshKey(prev => prev + 1);
