@@ -11,8 +11,46 @@ import {
   HardDrive,
   Eye,
   EyeOff,
-  ShieldCheck
+  ShieldCheck,
+  Shield,
+  ShieldAlert,
 } from 'lucide-react';
+
+type PasswordStrength = 'weak' | 'medium' | 'strong' | 'very-strong';
+
+const getPasswordStrength = (password: string): PasswordStrength | null => {
+  if (!password) return null;
+  
+  let score = 0;
+  
+  if (password.length >= 6) score += 1;
+  if (password.length >= 8) score += 1;
+  if (password.length >= 12) score += 1;
+  if (password.length >= 16) score += 1;
+  
+  if (/[a-z]/.test(password)) score += 1;
+  if (/[A-Z]/.test(password)) score += 1;
+  if (/\d/.test(password)) score += 1;
+  if (/[^a-zA-Z0-9]/.test(password)) score += 1;
+  
+  if (score <= 3) return 'weak';
+  if (score <= 5) return 'medium';
+  if (score <= 7) return 'strong';
+  return 'very-strong';
+};
+
+const getStrengthConfig = (strength: PasswordStrength) => {
+  switch (strength) {
+    case 'weak':
+      return { label: '弱', color: '#ef4444', icon: ShieldAlert, textColor: 'text-red-400' };
+    case 'medium':
+      return { label: '中', color: '#eab308', icon: Shield, textColor: 'text-yellow-400' };
+    case 'strong':
+      return { label: '强', color: '#22c55e', icon: ShieldCheck, textColor: 'text-green-400' };
+    case 'very-strong':
+      return { label: '很强', color: '#10b981', icon: ShieldCheck, textColor: 'text-emerald-400' };
+  }
+};
 
 export default function Register() {
   const navigate = useNavigate();
@@ -128,6 +166,10 @@ export default function Register() {
     );
   }
 
+  const strength = getPasswordStrength(formData.password);
+  const strengthConfig = strength ? getStrengthConfig(strength) : null;
+  const strengthLevel = strength === 'weak' ? 0 : strength === 'medium' ? 1 : strength === 'strong' ? 2 : strength === 'very-strong' ? 3 : -1;
+
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center px-4 py-20">
       <motion.div
@@ -239,6 +281,45 @@ export default function Register() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+
+              {strength && strengthConfig && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="mt-3"
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="h-1.5 flex-1 rounded-full overflow-hidden"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                      >
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: i <= strengthLevel ? '100%' : '0%' }}
+                          transition={{ duration: 0.3 }}
+                          className="h-full rounded-full"
+                          style={{ backgroundColor: strengthConfig.color }}
+                        />
+                      </div>
+                    ))}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex items-center gap-1 ml-2"
+                    >
+                      <strengthConfig.icon className={`w-3.5 h-3.5 ${strengthConfig.textColor}`} />
+                      <span className={`text-xs font-medium ${strengthConfig.textColor}`}>
+                        {strengthConfig.label}
+                      </span>
+                    </motion.div>
+                  </div>
+                  <p className="text-xs" style={{ color: 'rgba(148, 163, 184, 0.5)' }}>
+                    建议：使用8个以上字符，包含大小写字母、数字和特殊字符
+                  </p>
+                </motion.div>
+              )}
             </div>
 
             <div>
