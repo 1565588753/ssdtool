@@ -177,6 +177,24 @@ export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (th
                     }}
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>版权信息</label>
+                  <input
+                    type="text"
+                    value={config.siteSettings.copyright || ''}
+                    onChange={(e) => updateSiteSettings({ copyright: e.target.value })}
+                    placeholder="例如 © 2024 我的网站. All rights reserved."
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--theme-bg-card)',
+                      border: '1px solid var(--theme-border)',
+                      color: 'var(--theme-text)'
+                    }}
+                  />
+                  <p className="text-xs mt-1.5" style={{ color: 'var(--theme-text-muted)' }}>
+                    留空则显示默认版权文字
+                  </p>
+                </div>
               </div>
             )}
 

@@ -86,6 +86,7 @@ export interface Contributor {
 export interface SiteSettings {
   name: string;
   description: string;
+  copyright?: string;
 }
 
 export interface ModuleSettings {

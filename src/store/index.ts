@@ -93,7 +93,8 @@ interface AppState {
 const defaultConfig: ExtendedConfig = {
   siteSettings: {
     name: 'SSD开卡工具站',
-    description: '专业的固态硬盘开卡工具分享平台'
+    description: '专业的固态硬盘开卡工具分享平台',
+    copyright: ''
   },
   moduleSettings: {
     showHero: true,
