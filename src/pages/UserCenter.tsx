@@ -27,7 +27,7 @@ type TabType = 'dashboard' | 'profile' | 'downloads' | 'firmware' | 'categories'
 
 export default function UserCenter() {
   const navigate = useNavigate();
-const { user, isAuthReady, logout, config, categories, firmware, tags, addCategory, updateCategory, deleteCategory, addTag, updateTag, deleteTag, updateFirmware, deleteFirmware, fetchWithAuth } = useAppStore();
+const { user, isAuthReady, logout, config, categories, firmware, tags, addCategory, updateCategory, deleteCategory, addTag, updateTag, deleteTag, updateFirmware, deleteFirmware } = useAppStore();
   const { setTheme, currentTheme } = useThemeStore();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
 
@@ -51,15 +51,15 @@ const { user, isAuthReady, logout, config, categories, firmware, tags, addCatego
   const isAdmin = user.role === 'admin';
   const isMaintainer = user.role === 'maintainer' || isAdmin;
 
-  const tabs: { key: TabType; label: string; roles: ('all' | 'maintainer' | 'admin')[] }[] = [
-    { id: 'dashboard', icon: BarChart3, label: '仪表盘', roles: ['maintainer', 'admin'] },
-    { id: 'profile', icon: User, label: '账户信息', roles: ['all'] },
-    { id: 'downloads', icon: Download, label: '下载记录', roles: ['all'] },
-    { id: 'firmware', icon: FileText, label: '固件管理', roles: ['maintainer', 'admin'] },
-    { id: 'categories', icon: FolderTree, label: '分类管理', roles: ['admin'] },
-    { id: 'tags', icon: Tag, label: '标签管理', roles: ['admin'] },
-    { id: 'users', icon: Users, label: '用户管理', roles: ['admin'] },
-    { id: 'settings', icon: Settings, label: '网站设置', roles: ['admin'] }
+  const tabs = [
+    { key: 'dashboard' as TabType, icon: BarChart3, label: '仪表盘', roles: ['maintainer', 'admin'] as const },
+    { key: 'profile' as TabType, icon: User, label: '账户信息', roles: ['all'] as const },
+    { key: 'downloads' as TabType, icon: Download, label: '下载记录', roles: ['all'] as const },
+    { key: 'firmware' as TabType, icon: FileText, label: '固件管理', roles: ['maintainer', 'admin'] as const },
+    { key: 'categories' as TabType, icon: FolderTree, label: '分类管理', roles: ['admin'] as const },
+    { key: 'tags' as TabType, icon: Tag, label: '标签管理', roles: ['admin'] as const },
+    { key: 'users' as TabType, icon: Users, label: '用户管理', roles: ['admin'] as const },
+    { key: 'settings' as TabType, icon: Settings, label: '网站设置', roles: ['admin'] as const }
   ].filter(item => {
     if (item.roles.includes('all')) return true;
     if (isAdmin) return true;
@@ -115,13 +115,13 @@ const { user, isAuthReady, logout, config, categories, firmware, tags, addCatego
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {menuItems.map(item => {
+          {tabs.map(item => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const isActive = activeTab === item.key;
             return (
               <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id as TabType)}
+                key={item.key}
+                onClick={() => setActiveTab(item.key as TabType)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                   isActive
                     ? 'text-white border-l-2'
