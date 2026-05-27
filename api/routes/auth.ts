@@ -43,13 +43,13 @@ router.post('/send-code', async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // 检查60秒内是否已发送
+    const cooldown = type === 'register' ? 120000 : 60000;
     const lastCode = await verificationCodeDB.findLatestByEmail(email, type);
     if (lastCode) {
       const lastTime = new Date(lastCode.created_at).getTime();
       const now = Date.now();
-      if (now - lastTime < 60000) {
-        const remaining = Math.ceil((60000 - (now - lastTime)) / 1000);
+      if (now - lastTime < cooldown) {
+        const remaining = Math.ceil((cooldown - (now - lastTime)) / 1000);
         res.status(429).json({ success: false, error: `请${remaining}秒后再试` });
         return;
       }

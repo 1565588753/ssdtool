@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAppStore } from '../store';
+import SliderCaptcha from '../components/SliderCaptcha';
 import {
   Mail,
   Lock,
@@ -21,12 +22,18 @@ export default function Login() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [sliderVerified, setSliderVerified] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
 
+    if (!sliderVerified) {
+      setError('请先完成滑块验证');
+      return;
+    }
+
+    setLoading(true);
     try {
       const success = await login(formData.email, formData.password);
       if (success) {
@@ -121,6 +128,8 @@ export default function Login() {
                 忘记密码？
               </Link>
             </div>
+
+            <SliderCaptcha onVerified={() => setSliderVerified(true)} />
 
             <button
               type="submit"

@@ -1,8 +1,9 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../store';
 import { authAPI } from '../services/api';
+import SliderCaptcha from '../components/SliderCaptcha';
 import {
   Mail,
   Lock,
@@ -11,8 +12,27 @@ import {
   HardDrive,
   Eye,
   EyeOff,
-  ShieldCheck
+  ShieldCheck,
+  X
 } from 'lucide-react';
+
+const CODE_COOLDOWN = 120;
+const CODE_TIMER_KEY = 'registerCodeTimerEnd';
+
+function getRemainingSeconds(): number {
+  try {
+    const end = parseInt(localStorage.getItem(CODE_TIMER_KEY) || '0', 10);
+    if (!end) return 0;
+    const remaining = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+    if (remaining <= 0) {
+      localStorage.removeItem(CODE_TIMER_KEY);
+      return 0;
+    }
+    return remaining;
+  } catch {
+    return 0;
+  }
+}
 
 export default function Register() {
   const navigate = useNavigate();
@@ -28,18 +48,48 @@ export default function Register() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [countdown, setCountdown] = useState(0);
+  const [countdown, setCountdown] = useState(getRemainingSeconds);
+  const [sliderVerified, setSliderVerified] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [sentEmail, setSentEmail] = useState('');
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
+  useEffect(() => {
+    const remaining = getRemainingSeconds();
+    if (remaining > 0) {
+      setCountdown(remaining);
+      timerRef.current = setInterval(() => {
+        setCountdown((prev) => {
+          const next = prev - 1;
+          if (next <= 0) {
+            clearInterval(timerRef.current);
+            localStorage.removeItem(CODE_TIMER_KEY);
+            return 0;
+          }
+          localStorage.setItem(CODE_TIMER_KEY, String(Date.now() + next * 1000));
+          return next;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
   const startCountdown = useCallback(() => {
-    setCountdown(60);
+    const end = Date.now() + CODE_COOLDOWN * 1000;
+    localStorage.setItem(CODE_TIMER_KEY, String(end));
+    setCountdown(CODE_COOLDOWN);
     timerRef.current = setInterval(() => {
       setCountdown((prev) => {
-        if (prev <= 1) {
+        const next = prev - 1;
+        if (next <= 0) {
           clearInterval(timerRef.current);
+          localStorage.removeItem(CODE_TIMER_KEY);
           return 0;
         }
-        return prev - 1;
+        localStorage.setItem(CODE_TIMER_KEY, String(Date.now() + next * 1000));
+        return next;
       });
     }, 1000);
   }, []);
@@ -55,8 +105,10 @@ export default function Register() {
       const res = await authAPI.sendCode(formData.email, 'register');
       if (res.success) {
         startCountdown();
+        setSentEmail(formData.email);
+        setShowCodeModal(true);
       } else {
-        setError(res.message || '发送验证码失败');
+        setError((res as any).error || '发送验证码失败');
       }
     } catch (err: any) {
       setError(err.message || '发送验证码失败');
@@ -66,6 +118,11 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!sliderVerified) {
+      setError('请先完成滑块验证');
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('两次输入的密码不一致');
@@ -91,6 +148,7 @@ export default function Register() {
         formData.code
       );
       if (success) {
+        localStorage.removeItem(CODE_TIMER_KEY);
         setStep('success');
       } else {
         setError('注册失败，请稍后重试');
@@ -258,6 +316,8 @@ export default function Register() {
               </div>
             </div>
 
+            <SliderCaptcha onVerified={() => setSliderVerified(true)} />
+
             <button
               type="submit"
               disabled={loading}
@@ -283,6 +343,52 @@ export default function Register() {
           </Link>
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        {showCodeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowCodeModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="glass-card rounded-2xl p-8 max-w-sm w-full relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setShowCodeModal(false)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="text-center">
+                <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-accent-500/20 flex items-center justify-center">
+                  <Mail className="w-7 h-7 text-accent-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  验证码已发送
+                </h3>
+                <p className="text-slate-300 text-sm mb-1">
+                  验证码已发送至
+                </p>
+                <p className="text-accent-400 font-medium text-sm mb-4">
+                  {sentEmail}
+                </p>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  有效期30分钟，如果没有收到请检查垃圾信箱
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
