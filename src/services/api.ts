@@ -179,7 +179,7 @@ export const adminAPI = {
   getFirmware: () =>
     fetchAPI<{ success: boolean; firmware: any[] }>('/api/admin/firmware'),
   
-  updateFirmware: (id: string, data: { title?: string; description?: string; version?: string; categoryId?: string; isPaid?: boolean; price?: number; alistFilePath?: string }) =>
+  updateFirmware: (id: string, data: { title?: string; description?: string; version?: string; categoryId?: string; isPaid?: boolean; price?: number }) =>
     fetchAPI<{ success: boolean }>(`/api/admin/firmware/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -234,10 +234,10 @@ export const adminAPI = {
       body: JSON.stringify(config),
     }),
 
-  getAlistConfig: () =>
-    fetchAPI<{ success: boolean; config: { baseUrl: string } }>('/api/admin/alist-config'),
-  updateAlistConfig: (config: { baseUrl: string }) =>
-    fetchAPI<{ success: boolean; message: string }>('/api/admin/alist-config', {
+  getStorageConfig: () =>
+    fetchAPI<{ success: boolean; config: { mountDomain: string } }>('/api/admin/storage-config'),
+  updateStorageConfig: (config: { mountDomain: string }) =>
+    fetchAPI<{ success: boolean; message: string }>('/api/admin/storage-config', {
       method: 'PUT',
       body: JSON.stringify(config),
     }),

@@ -17,7 +17,7 @@ import {
 
 export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (themeId: string) => void; currentTheme: string }) {
   const { config, updateSiteSettings, updateHomeModule, updateModuleOrder, updateAdSlot, addAdSlot, deleteAdSlot, updateQuotaSettings } = useAppStore();
-  const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' | 'homeText' | 'quota' | 'theme' | 'smtp' | 'alist'>('basic');
+  const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' | 'homeText' | 'quota' | 'theme' | 'smtp' | 'storage'>('basic');
 
   const sections = [
     { id: 'basic', icon: Globe, label: '基本设置' },
@@ -26,7 +26,7 @@ export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (th
     { id: 'homeText', icon: FileText, label: '首页文本' },
     { id: 'quota', icon: Users, label: '下载配额' },
     { id: 'smtp', icon: Mail, label: 'SMTP设置' },
-    { id: 'alist', icon: Globe, label: 'Alist设置' },
+    { id: 'storage', icon: Globe, label: '文件存储' },
     { id: 'theme', icon: Palette, label: '主题配色' }
   ];
 
@@ -43,10 +43,10 @@ export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (th
   const [smtpMessage, setSmtpMessage] = useState('');
   const [smtpLoaded, setSmtpLoaded] = useState(false);
 
-  const [alistConfig, setAlistConfig] = useState({ baseUrl: '' });
-  const [alistSaving, setAlistSaving] = useState(false);
-  const [alistMessage, setAlistMessage] = useState('');
-  const [alistLoaded, setAlistLoaded] = useState(false);
+  const [storageConfig, setStorageConfig] = useState({ mountDomain: '' });
+  const [storageSaving, setStorageSaving] = useState(false);
+  const [storageMessage, setStorageMessage] = useState('');
+  const [storageLoaded, setStorageLoaded] = useState(false);
 
   const loadSmtpConfig = async () => {
     try {
@@ -71,20 +71,20 @@ export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (th
     loadSmtpConfig();
   }
 
-  const loadAlistConfig = async () => {
+  const loadStorageConfig = async () => {
     try {
-      const res = await adminAPI.getAlistConfig();
+      const res = await adminAPI.getStorageConfig();
       if (res.success && res.config) {
-        setAlistConfig({ baseUrl: res.config.baseUrl || '' });
+        setStorageConfig({ mountDomain: res.config.mountDomain || '' });
       }
     } catch (err) {
-      console.error('加载Alist配置失败:', err);
+      console.error('加载文件存储配置失败:', err);
     }
   };
 
-  if (activeSection === 'alist' && !alistLoaded) {
-    setAlistLoaded(true);
-    loadAlistConfig();
+  if (activeSection === 'storage' && !storageLoaded) {
+    setStorageLoaded(true);
+    loadStorageConfig();
   }
 
   const sortedModules = [...config.homeModules].sort((a, b) => a.order - b.order);
@@ -566,25 +566,25 @@ export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (th
               </div>
             )}
 
-            {activeSection === 'alist' && (
+            {activeSection === 'storage' && (
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--theme-gradient)' }}>
                     <Globe className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-display text-lg font-bold" style={{ color: 'var(--theme-text)' }}>Alist 下载站配置</h3>
-                    <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>配置 Alist 下载站域名，文件下载将重定向到 Alist 地址</p>
+                    <h3 className="font-display text-lg font-bold" style={{ color: 'var(--theme-text)' }}>文件存储设置</h3>
+                    <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>配置挂载站域名，文件下载将重定向到此地址</p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>Alist 域名</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>挂载站域名</label>
                   <input
                     type="text"
-                    value={alistConfig.baseUrl}
-                    onChange={(e) => setAlistConfig({ ...alistConfig, baseUrl: e.target.value })}
-                    placeholder="https://alist.example.com/d/ssdtool"
+                    value={storageConfig.mountDomain}
+                    onChange={(e) => setStorageConfig({ ...storageConfig, mountDomain: e.target.value })}
+                    placeholder="https://your-domain.example.com/files"
                     className="w-full px-4 py-3 rounded-xl focus:outline-none"
                     style={{
                       backgroundColor: 'var(--theme-bg-card)',
@@ -593,38 +593,38 @@ export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (th
                     }}
                   />
                   <p className="text-xs mt-1.5" style={{ color: 'var(--theme-text-muted)' }}>
-                    填写 Alist 下载站的根域名，例如 https://alist.example.com/d/ssdtool。配置后文件下载将自动跳转到 Alist 地址。
+                    将阿里云盘通过 WebDAV 挂载到服务器的 /files 目录后，在此填写对应的公网访问域名。例如 https://your-domain.example.com/files。配置后固件下载将自动重定向到此地址。
                   </p>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <button
                     onClick={async () => {
-                      setAlistSaving(true);
-                      setAlistMessage('');
+                      setStorageSaving(true);
+                      setStorageMessage('');
                       try {
-                        const res = await adminAPI.updateAlistConfig(alistConfig);
+                        const res = await adminAPI.updateStorageConfig(storageConfig);
                         if (res.success) {
-                          setAlistMessage('配置保存成功');
+                          setStorageMessage('配置保存成功');
                         } else {
-                          setAlistMessage('保存失败');
+                          setStorageMessage('保存失败');
                         }
                       } catch (err: any) {
-                        setAlistMessage(err.message || '保存失败');
+                        setStorageMessage(err.message || '保存失败');
                       } finally {
-                        setAlistSaving(false);
-                        setTimeout(() => setAlistMessage(''), 3000);
+                        setStorageSaving(false);
+                        setTimeout(() => setStorageMessage(''), 3000);
                       }
                     }}
-                    disabled={alistSaving}
+                    disabled={storageSaving}
                     className="px-6 py-3 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ background: 'var(--theme-gradient)' }}
                   >
-                    {alistSaving ? '保存中...' : '保存配置'}
+                    {storageSaving ? '保存中...' : '保存配置'}
                   </button>
-                  {alistMessage && (
-                    <span className="text-sm font-medium" style={{ color: alistMessage.includes('成功') ? '#22c55e' : '#ef4444' }}>
-                      {alistMessage}
+                  {storageMessage && (
+                    <span className="text-sm font-medium" style={{ color: storageMessage.includes('成功') ? '#22c55e' : '#ef4444' }}>
+                      {storageMessage}
                     </span>
                   )}
                 </div>

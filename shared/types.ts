@@ -48,7 +48,6 @@ export interface Firmware {
   uploaderId: string;
   uploaderName?: string;
   filePath: string;
-  alistFilePath?: string;
   fileSize: number;
   downloadCount: number;
   status: 'pending' | 'approved' | 'rejected';
@@ -118,6 +117,6 @@ export interface SmtpConfig {
   fromName: string;
 }
 
-export interface AlistConfig {
-  baseUrl: string;
+export interface StorageConfig {
+  mountDomain: string;
 }

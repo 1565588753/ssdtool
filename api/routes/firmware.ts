@@ -404,7 +404,7 @@ router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: 
 });
 
 /**
- * 获取固件实际文件 - 支持Alist重定向
+ * 获取固件实际文件 - 支持挂载站重定向
  * GET /api/firmware/:id/file
  */
 router.get('/:id/file', async (req: Request, res: Response): Promise<void> => {
@@ -416,12 +416,11 @@ router.get('/:id/file', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // 检查是否配置了Alist下载站
-    const alistSettings = await configDB.get('alist_settings');
-    if (alistSettings && alistSettings.baseUrl) {
-      // 如果有alist_file_path，使用它；否则用文件名
-      const alistFilePath = firmware.alist_file_path || '/' + path.basename(firmware.file_path);
-      const redirectUrl = `${alistSettings.baseUrl.replace(/\/$/, '')}/${alistFilePath.replace(/^\//, '')}`;
+    // 检查是否配置了挂载站域名
+    const storageSettings = await configDB.get('storage_settings');
+    if (storageSettings && storageSettings.mountDomain) {
+      const fileName = path.basename(firmware.file_path);
+      const redirectUrl = `${storageSettings.mountDomain.replace(/\/$/, '')}/${fileName}`;
       res.redirect(302, redirectUrl);
       return;
     }
