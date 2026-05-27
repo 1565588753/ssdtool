@@ -34,7 +34,8 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
     title: '',
     description: '',
     version: '',
-    categoryId: ''
+    categoryId: '',
+    alistFilePath: '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -151,7 +152,8 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
       title: fw.title || '',
       description: fw.description || '',
       version: fw.version || '',
-      categoryId: fw.categoryId || ''
+      categoryId: fw.categoryId || '',
+      alistFilePath: (fw as any).alistFilePath || '',
     });
   };
 
@@ -165,7 +167,13 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
 
     setSaving(true);
     try {
-      await adminAPI.updateFirmware(editingFirmware.id, editForm);
+      await adminAPI.updateFirmware(editingFirmware.id, {
+        title: editForm.title,
+        categoryId: editForm.categoryId,
+        version: editForm.version,
+        description: editForm.description,
+        alistFilePath: editForm.alistFilePath,
+      });
       showToast('固件更新成功', 'success');
       setEditingFirmware(null);
       setRefreshKey(prev => prev + 1);
@@ -520,6 +528,25 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
                     color: 'var(--theme-text)'
                   }}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>Alist 文件路径</label>
+                <input
+                  type="text"
+                  value={editForm.alistFilePath || ''}
+                  onChange={(e) => setEditForm({ ...editForm, alistFilePath: e.target.value })}
+                  placeholder="例如 /SM2258XT/sm2258xt-v1.2.zip"
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)',
+                  }}
+                />
+                <p className="text-xs mt-1.5" style={{ color: 'var(--theme-text-muted)' }}>
+                  配置 Alist 后使用此路径拼接下载地址，不填则使用文件名
+                </p>
               </div>
 
               <div className="flex gap-3 pt-4">

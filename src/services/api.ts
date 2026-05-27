@@ -6,51 +6,34 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 // 通用的 fetch 包装器
-async function fetchAPI<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
-  const defaultHeaders: HeadersInit = {
+async function fetchAPI<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const token = localStorage.getItem('authToken');
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
   };
 
-  // 如果有用户 ID，从 localStorage 获取
-  const userId = localStorage.getItem('userId');
-  if (userId) {
-    (defaultHeaders as Record<string, string>)['x-user-id'] = userId;
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-    });
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
 
-    if (!response.ok) {
-      try {
-        const error = await response.json();
-        throw new Error(error.error || '请求失败');
-      } catch {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error(`API Error [${endpoint}]:`, error);
-    throw error;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `请求失败 (${response.status})`);
   }
+
+  return response.json();
 }
 
 // 认证 API
 export const authAPI = {
   login: (email: string, password: string) =>
-    fetchAPI<{ success: boolean; user: any }>('/api/auth/login', {
+    fetchAPI<{ success: boolean; user: any; token?: string }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
@@ -80,6 +63,9 @@ export const authAPI = {
       method: 'POST',
       body: JSON.stringify({ email, password, code }),
     }),
+
+  verifyToken: () =>
+    fetchAPI<{ success: boolean; user: any }>('/api/auth/verify'),
 };
 
 // 固件 API
@@ -193,7 +179,7 @@ export const adminAPI = {
   getFirmware: () =>
     fetchAPI<{ success: boolean; firmware: any[] }>('/api/admin/firmware'),
   
-  updateFirmware: (id: string, data: { title?: string; description?: string; version?: string; categoryId?: string; isPaid?: boolean; price?: number }) =>
+  updateFirmware: (id: string, data: { title?: string; description?: string; version?: string; categoryId?: string; isPaid?: boolean; price?: number; alistFilePath?: string }) =>
     fetchAPI<{ success: boolean }>(`/api/admin/firmware/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -244,6 +230,14 @@ export const adminAPI = {
 
   updateSmtpConfig: (config: any) =>
     fetchAPI<{ success: boolean }>('/api/admin/smtp-config', {
+      method: 'PUT',
+      body: JSON.stringify(config),
+    }),
+
+  getAlistConfig: () =>
+    fetchAPI<{ success: boolean; config: { baseUrl: string } }>('/api/admin/alist-config'),
+  updateAlistConfig: (config: { baseUrl: string }) =>
+    fetchAPI<{ success: boolean; message: string }>('/api/admin/alist-config', {
       method: 'PUT',
       body: JSON.stringify(config),
     }),

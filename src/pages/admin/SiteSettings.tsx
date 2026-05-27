@@ -17,7 +17,7 @@ import {
 
 export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (themeId: string) => void; currentTheme: string }) {
   const { config, updateSiteSettings, updateHomeModule, updateModuleOrder, updateAdSlot, addAdSlot, deleteAdSlot, updateQuotaSettings } = useAppStore();
-  const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' | 'homeText' | 'quota' | 'theme' | 'smtp'>('basic');
+  const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' | 'homeText' | 'quota' | 'theme' | 'smtp' | 'alist'>('basic');
 
   const sections = [
     { id: 'basic', icon: Globe, label: '基本设置' },
@@ -26,6 +26,7 @@ export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (th
     { id: 'homeText', icon: FileText, label: '首页文本' },
     { id: 'quota', icon: Users, label: '下载配额' },
     { id: 'smtp', icon: Mail, label: 'SMTP设置' },
+    { id: 'alist', icon: Globe, label: 'Alist设置' },
     { id: 'theme', icon: Palette, label: '主题配色' }
   ];
 
@@ -41,6 +42,11 @@ export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (th
   const [smtpSaving, setSmtpSaving] = useState(false);
   const [smtpMessage, setSmtpMessage] = useState('');
   const [smtpLoaded, setSmtpLoaded] = useState(false);
+
+  const [alistConfig, setAlistConfig] = useState({ baseUrl: '' });
+  const [alistSaving, setAlistSaving] = useState(false);
+  const [alistMessage, setAlistMessage] = useState('');
+  const [alistLoaded, setAlistLoaded] = useState(false);
 
   const loadSmtpConfig = async () => {
     try {
@@ -63,6 +69,22 @@ export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (th
   if (activeSection === 'smtp' && !smtpLoaded) {
     setSmtpLoaded(true);
     loadSmtpConfig();
+  }
+
+  const loadAlistConfig = async () => {
+    try {
+      const res = await adminAPI.getAlistConfig();
+      if (res.success && res.config) {
+        setAlistConfig({ baseUrl: res.config.baseUrl || '' });
+      }
+    } catch (err) {
+      console.error('加载Alist配置失败:', err);
+    }
+  };
+
+  if (activeSection === 'alist' && !alistLoaded) {
+    setAlistLoaded(true);
+    loadAlistConfig();
   }
 
   const sortedModules = [...config.homeModules].sort((a, b) => a.order - b.order);
@@ -541,6 +563,71 @@ export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (th
                 >
                   {smtpSaving ? '保存中...' : '保存配置'}
                 </button>
+              </div>
+            )}
+
+            {activeSection === 'alist' && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--theme-gradient)' }}>
+                    <Globe className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-lg font-bold" style={{ color: 'var(--theme-text)' }}>Alist 下载站配置</h3>
+                    <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>配置 Alist 下载站域名，文件下载将重定向到 Alist 地址</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>Alist 域名</label>
+                  <input
+                    type="text"
+                    value={alistConfig.baseUrl}
+                    onChange={(e) => setAlistConfig({ ...alistConfig, baseUrl: e.target.value })}
+                    placeholder="https://alist.example.com/d/ssdtool"
+                    className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                    style={{
+                      backgroundColor: 'var(--theme-bg-card)',
+                      border: '1px solid var(--theme-border)',
+                      color: 'var(--theme-text)',
+                    }}
+                  />
+                  <p className="text-xs mt-1.5" style={{ color: 'var(--theme-text-muted)' }}>
+                    填写 Alist 下载站的根域名，例如 https://alist.example.com/d/ssdtool。配置后文件下载将自动跳转到 Alist 地址。
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={async () => {
+                      setAlistSaving(true);
+                      setAlistMessage('');
+                      try {
+                        const res = await adminAPI.updateAlistConfig(alistConfig);
+                        if (res.success) {
+                          setAlistMessage('配置保存成功');
+                        } else {
+                          setAlistMessage('保存失败');
+                        }
+                      } catch (err: any) {
+                        setAlistMessage(err.message || '保存失败');
+                      } finally {
+                        setAlistSaving(false);
+                        setTimeout(() => setAlistMessage(''), 3000);
+                      }
+                    }}
+                    disabled={alistSaving}
+                    className="px-6 py-3 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: 'var(--theme-gradient)' }}
+                  >
+                    {alistSaving ? '保存中...' : '保存配置'}
+                  </button>
+                  {alistMessage && (
+                    <span className="text-sm font-medium" style={{ color: alistMessage.includes('成功') ? '#22c55e' : '#ef4444' }}>
+                      {alistMessage}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 

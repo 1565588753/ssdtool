@@ -294,6 +294,10 @@ router.put('/firmware/:id', async (req: Request, res: Response): Promise<void> =
       updates.push('price = ?');
       params.push(price);
     }
+    if (req.body.alistFilePath !== undefined) {
+      updates.push('alist_file_path = ?');
+      params.push(req.body.alistFilePath);
+    }
 
     if (updates.length === 0) {
       res.status(400).json({ success: false, error: '没有需要更新的字段' });
@@ -574,6 +578,27 @@ router.put('/smtp-config', async (req: Request, res: Response): Promise<void> =>
     const { host, port, user, pass, fromEmail, fromName } = req.body;
     await configDB.set('smtp_settings', { host, port, user, pass, fromEmail, fromName });
     res.json({ success: true, message: 'SMTP配置已更新' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 获取Alist配置
+router.get('/alist-config', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const config = await configDB.get('alist_settings');
+    res.json({ success: true, config: config || { baseUrl: '' } });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 更新Alist配置
+router.put('/alist-config', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { baseUrl } = req.body;
+    await configDB.set('alist_settings', { baseUrl });
+    res.json({ success: true, message: 'Alist配置已更新' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }

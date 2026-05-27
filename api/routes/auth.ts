@@ -5,8 +5,10 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
+import jwt from 'jsonwebtoken';
 import pool from '../db.js';
 import { userDB, verificationCodeDB, configDB } from '../dboperations.js';
+import { generateToken, verifyToken } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -140,8 +142,15 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    const token = generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    });
+
     res.json({
       success: true,
+      token,
       user: {
         id: user.id,
         email: user.email,
@@ -166,10 +175,25 @@ router.post('/logout', (_req: Request, res: Response) => {
   res.json({ success: true });
 });
 
-// 获取当前用户信息
+// 获取当前用户信息（通过Authorization头）
 router.get('/user', async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.headers['x-user-id'] as string;
+    const authHeader = req.headers.authorization;
+    let userId: string | null = null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const payload = verifyToken(token);
+      if (payload) {
+        userId = payload.userId;
+      }
+    }
+
+    // Fallback to x-user-id for backward compatibility
+    if (!userId) {
+      userId = req.headers['x-user-id'] as string;
+    }
+
     if (!userId) {
       res.status(401).json({ success: false, error: '未登录' });
       return;
@@ -238,6 +262,49 @@ router.post('/reset-password', async (req: Request, res: Response): Promise<void
   } catch (error: any) {
     console.error('重置密码失败:', error);
     res.status(500).json({ success: false, error: error.message || '重置密码失败' });
+  }
+});
+
+// 验证Token并获取用户信息
+router.get('/verify', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      res.status(401).json({ success: false, error: '未登录' });
+      return;
+    }
+
+    const token = authHeader.split(' ')[1];
+    const payload = verifyToken(token);
+    if (!payload) {
+      res.status(401).json({ success: false, error: '登录已过期' });
+      return;
+    }
+
+    const user = await userDB.findById(payload.userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        nickname: user.nickname,
+        avatar: user.avatar_url,
+        role: user.role,
+        downloadQuota: user.download_quota,
+        downloadsUsed: user.downloads_used,
+        quotaResetDate: user.quota_reset_date,
+        isPremium: !!user.is_premium,
+        createdAt: user.created_at
+      }
+    });
+  } catch (error: any) {
+    console.error('验证Token失败:', error);
+    res.status(500).json({ success: false, error: '验证失败' });
   }
 });
 

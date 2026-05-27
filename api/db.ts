@@ -55,6 +55,7 @@ async function initDatabase() {
         uploader_id VARCHAR(50),
         uploader_name VARCHAR(100),
         file_path VARCHAR(500) NOT NULL,
+        alist_file_path VARCHAR(500) DEFAULT '',
         file_size BIGINT,
         download_count INT DEFAULT 0,
         is_paid TINYINT(1) DEFAULT 0,
@@ -147,6 +148,10 @@ async function seedData(conn: any) {
     await conn.execute(
       'INSERT IGNORE INTO config (`key`, value) VALUES (?, ?)',
       ['quota_settings', JSON.stringify({ freeQuota: 5, premiumQuota: 100, premiumPrice: 8 })]
+    );
+    await conn.execute(
+      'INSERT IGNORE INTO config (`key`, value) VALUES (?, ?)',
+      ['alist_settings', JSON.stringify({ baseUrl: '' })]
     );
 
     const categories = [

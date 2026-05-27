@@ -32,6 +32,7 @@ export interface ExtendedConfig extends Config {
 interface AppState {
   user: User | null;
   isAuthenticated: boolean;
+  token?: string;
   setUser: (user: User | null) => void;
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string, nickname: string, code: string) => Promise<boolean>;
@@ -124,6 +125,7 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       user: null,
       isAuthenticated: false,
+      token: localStorage.getItem('authToken') || undefined,
       categories: [],
       firmware: [],
       tags: [],
@@ -145,6 +147,9 @@ export const useAppStore = create<AppState>()(
           const response = await authAPI.login(email, password);
           if (response.success && response.user) {
             localStorage.setItem('userId', response.user.id);
+            if (response.token) {
+              localStorage.setItem('authToken', response.token);
+            }
             const userData: User = {
               id: response.user.id,
               email: response.user.email,
@@ -157,7 +162,7 @@ export const useAppStore = create<AppState>()(
               isPremium: response.user.isPremium,
               createdAt: response.user.createdAt
             };
-            set({ user: userData, isAuthenticated: true, isLoading: false });
+            set({ user: userData, isAuthenticated: true, token: response.token, isLoading: false });
             return true;
           }
           set({ error: '邮箱或密码错误', isLoading: false });
@@ -184,7 +189,8 @@ export const useAppStore = create<AppState>()(
 
       logout: () => {
         localStorage.removeItem('userId');
-        set({ user: null, isAuthenticated: false });
+        localStorage.removeItem('authToken');
+        set({ user: null, isAuthenticated: false, token: undefined });
       },
 
       getFirmwareById: (id) => get().firmware.find(fw => fw.id === id),

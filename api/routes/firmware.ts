@@ -8,6 +8,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { verifyToken } from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -189,7 +190,16 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const userId = req.headers['x-user-id'] as string;
+    const authHeader = req.headers.authorization;
+    let userId = req.headers['x-user-id'] as string;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const payload = verifyToken(token);
+      if (payload) {
+        userId = payload.userId;
+      }
+    }
 
     if (!userId) {
       res.status(401).json({
@@ -394,7 +404,7 @@ router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: 
 });
 
 /**
- * 获取固件实际文件（用于浏览器下载，带正确文件名）
+ * 获取固件实际文件 - 支持Alist重定向
  * GET /api/firmware/:id/file
  */
 router.get('/:id/file', async (req: Request, res: Response): Promise<void> => {
@@ -406,6 +416,17 @@ router.get('/:id/file', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // 检查是否配置了Alist下载站
+    const alistSettings = await configDB.get('alist_settings');
+    if (alistSettings && alistSettings.baseUrl) {
+      // 如果有alist_file_path，使用它；否则用文件名
+      const alistFilePath = firmware.alist_file_path || '/' + path.basename(firmware.file_path);
+      const redirectUrl = `${alistSettings.baseUrl.replace(/\/$/, '')}/${alistFilePath.replace(/^\//, '')}`;
+      res.redirect(302, redirectUrl);
+      return;
+    }
+
+    // 兜底：直接从服务器提供文件
     const filePath = firmware.file_path;
     const fileName = path.basename(filePath);
     const fullPath = path.join(__dirname, '../../files', fileName);
