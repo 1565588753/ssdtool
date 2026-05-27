@@ -13,11 +13,29 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
-  X
+  X,
+  Shield
 } from 'lucide-react';
 
 const CODE_COOLDOWN = 120;
 const CODE_TIMER_KEY = 'registerCodeTimerEnd';
+
+function getPasswordStrength(password: string): { score: number; label: string; color: string; width: string } {
+  if (!password) return { score: 0, label: '', color: '', width: '0%' };
+
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/\d/.test(password)) score++;
+  if (/[^a-zA-Z0-9]/.test(password)) score++;
+
+  if (score <= 1) return { score, label: '弱', color: 'bg-red-500', width: '20%' };
+  if (score === 2) return { score, label: '一般', color: 'bg-orange-500', width: '40%' };
+  if (score === 3) return { score, label: '良好', color: 'bg-yellow-500', width: '60%' };
+  if (score === 4) return { score, label: '强', color: 'bg-lime-500', width: '80%' };
+  return { score, label: '非常强', color: 'bg-green-500', width: '100%' };
+}
 
 function getRemainingSeconds(): number {
   try {
@@ -238,6 +256,34 @@ export default function Register() {
                   {countdown > 0 ? `${countdown}s` : '获取验证码'}
                 </button>
               </div>
+              {formData.password && (
+                <div className="mt-3">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Shield className="w-4 h-4 text-slate-400" />
+                    <span className="text-xs text-slate-400">密码强度</span>
+                    <span className={`text-xs font-medium ml-auto ${
+                      getPasswordStrength(formData.password).score <= 1 ? 'text-red-400' :
+                      getPasswordStrength(formData.password).score === 2 ? 'text-orange-400' :
+                      getPasswordStrength(formData.password).score === 3 ? 'text-yellow-400' :
+                      getPasswordStrength(formData.password).score === 4 ? 'text-lime-400' :
+                      'text-green-400'
+                    }`}>
+                      {getPasswordStrength(formData.password).label}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: getPasswordStrength(formData.password).width }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                      className={`h-full rounded-full ${getPasswordStrength(formData.password).color}`}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-[10px] text-slate-500">包含大小写字母、数字和特殊字符可提高强度</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mb-2">
