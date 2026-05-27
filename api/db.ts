@@ -133,7 +133,7 @@ async function seedData(conn: any) {
 
     await conn.execute(
       'INSERT IGNORE INTO users (id, email, password, nickname, role, download_quota, is_premium) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      ['user-001', 'admin@example.com', '$2b$10$Pf7bVvQajvyppQ6BTP7yLOWl1DacVbB2Icovbno4Tns9wG6KhrFxu', '系统管理员', 'admin', 9999, 1]
+      ['1', 'admin@example.com', '$2b$10$Pf7bVvQajvyppQ6BTP7yLOWl1DacVbB2Icovbno4Tns9wG6KhrFxu', '系统管理员', 'admin', 9999, 1]
     );
 
     await conn.execute(
@@ -174,10 +174,10 @@ async function seedData(conn: any) {
     }
 
     const firmware = [
-      ['fw-1', 'SM2258XT 开卡工具 v1.2', '慧荣SM2258XT主控固态硬盘开卡工具，支持多种闪存颗粒，修复SSD无法识别问题。', '1.2', 'cat-1-1', 'user-001', '系统管理员', '/files/sm2258xt-v1.2.zip', 15728640, 2580, 'approved'],
-      ['fw-2', 'PS3111 量产工具 v2.5', '群联PS3111主控SSD开卡工具，支持最新固件版本，提供完整的开卡教程。', '2.5', 'cat-2-1', 'user-001', '系统管理员', '/files/ps3111-v2.5.zip', 23068672, 1845, 'approved'],
-      ['fw-3', 'SM2259XT 高级工具 v3.0', '专业版SM2259XT开卡工具，支持高级设置和调试功能，适合专业维修人员使用。', '3.0', 'cat-1-2', 'user-001', '系统管理员', '/files/sm2259xt-pro-v3.0.zip', 36700160, 890, 'approved'],
-      ['fw-4', 'MAP1202 开卡程序 v1.0', '联芸MAP1202主控专用开卡工具，操作简单，支持自动检测颗粒。', '1.0', 'cat-3-1', 'user-001', '系统管理员', '/files/map1202-v1.0.zip', 12582912, 654, 'approved']
+      ['fw-1', 'SM2258XT 开卡工具 v1.2', '慧荣SM2258XT主控固态硬盘开卡工具，支持多种闪存颗粒，修复SSD无法识别问题。', '1.2', 'cat-1-1', '1', '系统管理员', '/files/sm2258xt-v1.2.zip', 15728640, 2580, 'approved'],
+      ['fw-2', 'PS3111 量产工具 v2.5', '群联PS3111主控SSD开卡工具，支持最新固件版本，提供完整的开卡教程。', '2.5', 'cat-2-1', '1', '系统管理员', '/files/ps3111-v2.5.zip', 23068672, 1845, 'approved'],
+      ['fw-3', 'SM2259XT 高级工具 v3.0', '专业版SM2259XT开卡工具，支持高级设置和调试功能，适合专业维修人员使用。', '3.0', 'cat-1-2', '1', '系统管理员', '/files/sm2259xt-pro-v3.0.zip', 36700160, 890, 'approved'],
+      ['fw-4', 'MAP1202 开卡程序 v1.0', '联芸MAP1202主控专用开卡工具，操作简单，支持自动检测颗粒。', '1.0', 'cat-3-1', '1', '系统管理员', '/files/map1202-v1.0.zip', 12582912, 654, 'approved']
     ];
 
     for (const fw of firmware) {

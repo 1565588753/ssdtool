@@ -97,7 +97,7 @@ router.post('/users', async (req: Request, res: Response): Promise<void> => {
 
     const bcrypt = await import('bcryptjs');
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userId = `user-${Date.now()}`;
+    const userId = String(Date.now());
 
     await pool.execute(
       'INSERT INTO users (id, email, password, nickname, role, download_quota, is_premium) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -166,6 +166,12 @@ router.put('/users/:id', async (req: Request, res: Response): Promise<void> => {
     if (isPremium !== undefined) {
       updates.push('is_premium = ?');
       params.push(isPremium ? 1 : 0);
+      if (downloadQuota === undefined) {
+        const qConfig = await configDB.get('quota_settings');
+        const defaultQuota = isPremium ? (qConfig?.premiumQuota || 100) : (qConfig?.freeQuota || 5);
+        updates.push('download_quota = ?');
+        params.push(defaultQuota);
+      }
     }
 
     if (updates.length === 0) {

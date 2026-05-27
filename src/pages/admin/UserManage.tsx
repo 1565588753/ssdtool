@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { adminAPI } from '../../services/api';
+import { useAppStore } from '../../store';
 import { User, Plus, Edit, Trash2, X } from 'lucide-react';
 
 export default function UserManage() {
@@ -13,6 +14,9 @@ export default function UserManage() {
   const [editForm, setEditForm] = useState({ email: '', password: '', nickname: '', role: 'user', downloadQuota: 5, isPremium: false });
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const config = useAppStore((s) => s.config);
+  const premiumQuota = config?.quotaSettings?.premiumQuota || 100;
+  const freeQuota = config?.quotaSettings?.freeQuota || 5;
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -355,7 +359,10 @@ export default function UserManage() {
                 <label className="text-sm font-medium" style={{ color: 'var(--theme-text-secondary)' }}>Premium 会员</label>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" checked={editForm.isPremium}
-                    onChange={(e) => setEditForm({ ...editForm, isPremium: e.target.checked })} className="sr-only peer" />
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setEditForm({ ...editForm, isPremium: checked, downloadQuota: checked ? premiumQuota : freeQuota });
+                    }} className="sr-only peer" />
                   <div className="w-11 h-6 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"
                     style={{ backgroundColor: 'var(--theme-bg-card)' }}></div>
                 </label>

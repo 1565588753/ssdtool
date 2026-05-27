@@ -15,7 +15,7 @@ export const userDB = {
     nickname: string;
     role?: string;
   }) {
-    const userId = `user-${Date.now()}`;
+    const userId = String(Date.now());
     const [result] = await pool.execute(
       'INSERT INTO users (id, email, password, nickname, role, download_quota, is_premium) VALUES (?, ?, ?, ?, ?, 5, 0)',
       [userId, user.email, user.password, user.nickname, user.role || 'user']
