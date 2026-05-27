@@ -100,6 +100,10 @@ export default function Register() {
       return;
     }
     if (countdown > 0) return;
+    if (!sliderVerified) {
+      setError('请先完成滑块验证');
+      return;
+    }
     setError('');
     try {
       const res = await authAPI.sendCode(formData.email, 'register');
@@ -118,11 +122,6 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    if (!sliderVerified) {
-      setError('请先完成滑块验证');
-      return;
-    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('两次输入的密码不一致');
@@ -232,13 +231,17 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={handleSendCode}
-                  disabled={countdown > 0}
+                  disabled={countdown > 0 || !sliderVerified}
                   className="px-4 py-3 rounded-xl text-white font-semibold text-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ background: 'var(--theme-gradient)' }}
                 >
                   {countdown > 0 ? `${countdown}s` : '获取验证码'}
                 </button>
               </div>
+            </div>
+
+            <div className="mb-2">
+              <SliderCaptcha onVerified={() => setSliderVerified(true)} />
             </div>
 
             <div>
@@ -316,8 +319,6 @@ export default function Register() {
               </div>
             </div>
 
-            <SliderCaptcha onVerified={() => setSliderVerified(true)} />
-
             <button
               type="submit"
               disabled={loading}
@@ -358,30 +359,34 @@ export default function Register() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="glass-card rounded-2xl p-8 max-w-sm w-full relative"
+              style={{ borderColor: 'var(--theme-border)' }}
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 type="button"
                 onClick={() => setShowCodeModal(false)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-300"
+                className="absolute top-4 right-4"
+                style={{ color: 'var(--theme-text-muted)' }}
               >
                 <X className="w-5 h-5" />
               </button>
 
               <div className="text-center">
-                <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-accent-500/20 flex items-center justify-center">
-                  <Mail className="w-7 h-7 text-accent-400" />
+                <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center"
+                  style={{ background: 'var(--theme-gradient)', opacity: 0.2 }}
+                >
+                  <Mail className="w-7 h-7" style={{ color: 'var(--theme-primary-400)' }} />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-2">
+                <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--theme-text)' }}>
                   验证码已发送
                 </h3>
-                <p className="text-slate-300 text-sm mb-1">
+                <p className="text-sm mb-1" style={{ color: 'var(--theme-text-secondary)' }}>
                   验证码已发送至
                 </p>
-                <p className="text-accent-400 font-medium text-sm mb-4">
+                <p className="font-medium text-sm mb-4" style={{ color: 'var(--theme-primary-400)' }}>
                   {sentEmail}
                 </p>
-                <p className="text-slate-400 text-xs leading-relaxed">
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--theme-text-muted)' }}>
                   有效期30分钟，如果没有收到请检查垃圾信箱
                 </p>
               </div>

@@ -23,6 +23,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [sliderVerified, setSliderVerified] = useState(false);
+  const [sliderKey, setSliderKey] = useState(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,9 +41,13 @@ export default function Login() {
         navigate('/');
       } else {
         setError('邮箱或密码错误');
+        setSliderVerified(false);
+        setSliderKey((k) => k + 1);
       }
     } catch (err) {
       setError('登录失败，请稍后重试');
+      setSliderVerified(false);
+      setSliderKey((k) => k + 1);
     } finally {
       setLoading(false);
     }
@@ -129,7 +134,7 @@ export default function Login() {
               </Link>
             </div>
 
-            <SliderCaptcha onVerified={() => setSliderVerified(true)} />
+            <SliderCaptcha key={sliderKey} onVerified={() => setSliderVerified(true)} />
 
             <button
               type="submit"

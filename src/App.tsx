@@ -13,7 +13,7 @@ import { useAppStore } from "@/store";
 import { authAPI } from "@/services/api";
 
 export default function App() {
-  const { loadInitialData, setUser } = useAppStore();
+  const { loadInitialData, setUser, setAuthReady } = useAppStore();
 
   useEffect(() => {
     loadInitialData();
@@ -28,12 +28,18 @@ export default function App() {
           } else {
             localStorage.removeItem('authToken');
           }
+          setAuthReady();
         }).catch(() => {
           localStorage.removeItem('authToken');
+          setAuthReady();
         });
+      } else {
+        setAuthReady();
       }
+    } else {
+      setAuthReady();
     }
-  }, [loadInitialData, setUser]);
+  }, [loadInitialData, setUser, setAuthReady]);
 
   return (
     <Router>

@@ -27,25 +27,32 @@ type TabType = 'dashboard' | 'profile' | 'downloads' | 'firmware' | 'categories'
 
 export default function UserCenter() {
   const navigate = useNavigate();
-  const { user, logout, config, categories, firmware, tags, addCategory, updateCategory, deleteCategory, addTag, updateTag, deleteTag, updateFirmware, deleteFirmware } = useAppStore();
+  const { user, isAuthReady, logout, config, categories, firmware, tags, addCategory, updateCategory, deleteCategory, addTag, updateTag, deleteTag, updateFirmware, deleteFirmware } = useAppStore();
   const { setTheme, currentTheme } = useThemeStore();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
 
   useEffect(() => {
-    if (!user) {
+    if (isAuthReady && !user) {
       navigate('/login');
     }
-  }, [user, navigate]);
+  }, [user, isAuthReady, navigate]);
 
-  if (!user) {
-    return null;
+  if (!isAuthReady || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--theme-bg-base)' }}>
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-accent-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p style={{ color: 'var(--theme-text-secondary)' }}>加载中...</p>
+        </div>
+      </div>
+    );
   }
 
   const isAdmin = user.role === 'admin';
   const isMaintainer = user.role === 'maintainer' || isAdmin;
 
   const menuItems = [
-    { id: 'dashboard', icon: BarChart3, label: '仪表盘', roles: ['all'] },
+    { id: 'dashboard', icon: BarChart3, label: '仪表盘', roles: ['maintainer', 'admin'] },
     { id: 'profile', icon: User, label: '账户信息', roles: ['all'] },
     { id: 'downloads', icon: Download, label: '下载记录', roles: ['all'] },
     { id: 'firmware', icon: FileText, label: '固件管理', roles: ['maintainer', 'admin'] },

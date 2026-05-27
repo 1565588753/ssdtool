@@ -32,8 +32,10 @@ export interface ExtendedConfig extends Config {
 interface AppState {
   user: User | null;
   isAuthenticated: boolean;
+  isAuthReady: boolean;
   token?: string;
   setUser: (user: User | null) => void;
+  setAuthReady: () => void;
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string, nickname: string, code: string) => Promise<boolean>;
   logout: () => void;
@@ -126,7 +128,8 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       user: null,
       isAuthenticated: false,
-      token: localStorage.getItem('authToken') || undefined,
+      isAuthReady: false,
+      token: undefined,
       categories: [],
       firmware: [],
       tags: [],
@@ -141,6 +144,8 @@ export const useAppStore = create<AppState>()(
       error: null,
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
+
+      setAuthReady: () => set({ isAuthReady: true }),
 
       login: async (email, password) => {
         set({ isLoading: true, error: null });
@@ -163,7 +168,7 @@ export const useAppStore = create<AppState>()(
               isPremium: response.user.isPremium,
               createdAt: response.user.createdAt
             };
-            set({ user: userData, isAuthenticated: true, token: response.token, isLoading: false });
+            set({ user: userData, isAuthenticated: true, isAuthReady: true, token: response.token, isLoading: false });
             return true;
           }
           set({ error: '邮箱或密码错误', isLoading: false });
@@ -191,7 +196,25 @@ export const useAppStore = create<AppState>()(
       logout: () => {
         localStorage.removeItem('userId');
         localStorage.removeItem('authToken');
-        set({ user: null, isAuthenticated: false, token: undefined });
+        // Clear persisted storage and reset all state
+        useAppStore.persist.clearStorage();
+        set({
+          user: null,
+          isAuthenticated: false,
+          token: undefined,
+          categories: [],
+          firmware: [],
+          tags: [],
+          donations: [],
+          contributors: [],
+          config: defaultConfig,
+          downloads: [],
+          selectedCategory: null,
+          selectedTags: [],
+          searchQuery: '',
+          isLoading: false,
+          error: null,
+        });
       },
 
       getFirmwareById: (id) => get().firmware.find(fw => fw.id === id),
@@ -510,6 +533,9 @@ export const useAppStore = create<AppState>()(
       name: 'ssd-tool-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+        token: state.token,
         categories: state.categories,
         firmware: state.firmware,
         tags: state.tags,
