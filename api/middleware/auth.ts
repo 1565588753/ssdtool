@@ -55,3 +55,20 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction): v
   }
   next();
 }
+
+// Helper: extract userId from Bearer token or x-user-id header
+export function extractUserId(req: Request): string | null {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const payload = verifyToken(token);
+    if (payload) {
+      return payload.userId;
+    }
+  }
+  const legacyUserId = req.headers['x-user-id'] as string;
+  if (legacyUserId) {
+    return legacyUserId;
+  }
+  return null;
+}

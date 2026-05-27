@@ -8,7 +8,7 @@ import { userDB, firmwareDB, configDB, categoryDB } from '../dboperations.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { verifyToken } from '../middleware/auth.js';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +25,7 @@ async function adminMiddleware(req: Request, res: Response, next: Function) {
     const payload = verifyToken(token);
     if (payload) {
       userId = payload.userId;
+      (req as any).userId = payload.userId;
     }
   }
 
@@ -218,7 +219,7 @@ router.put('/users/:id/role', async (req: Request, res: Response): Promise<void>
 router.delete('/users/:id', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const userId = req.headers['x-user-id'] as string;
+    const userId = extractUserId(req);
 
     if (id === userId) {
       res.status(400).json({ success: false, error: '不能删除自己' });

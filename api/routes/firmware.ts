@@ -8,7 +8,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { verifyToken } from '../middleware/auth.js';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -190,16 +190,7 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const authHeader = req.headers.authorization;
-    let userId = req.headers['x-user-id'] as string;
-
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      const payload = verifyToken(token);
-      if (payload) {
-        userId = payload.userId;
-      }
-    }
+    const userId = extractUserId(req);
 
     if (!userId) {
       res.status(401).json({
@@ -333,7 +324,7 @@ router.get('/category/:categoryId', async (req: Request, res: Response): Promise
  */
 router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.headers['x-user-id'] as string;
+    const userId = extractUserId(req);
     
     if (!userId) {
       res.status(401).json({

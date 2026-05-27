@@ -8,7 +8,7 @@ import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 import pool from '../db.js';
 import { userDB, verificationCodeDB, configDB } from '../dboperations.js';
-import { generateToken, verifyToken } from '../middleware/auth.js';
+import { generateToken, verifyToken, extractUserId } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -178,21 +178,7 @@ router.post('/logout', (_req: Request, res: Response) => {
 // 获取当前用户信息（通过Authorization头）
 router.get('/user', async (req: Request, res: Response): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization;
-    let userId: string | null = null;
-
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      const payload = verifyToken(token);
-      if (payload) {
-        userId = payload.userId;
-      }
-    }
-
-    // Fallback to x-user-id for backward compatibility
-    if (!userId) {
-      userId = req.headers['x-user-id'] as string;
-    }
+    const userId = extractUserId(req);
 
     if (!userId) {
       res.status(401).json({ success: false, error: '未登录' });

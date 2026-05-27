@@ -4,6 +4,7 @@
  */
 import { Router, type Request, type Response } from 'express';
 import { donationDB, userDB, downloadDB, configDB } from '../dboperations.js';
+import { extractUserId } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -65,7 +66,7 @@ router.get('/stats', async (req: Request, res: Response): Promise<void> => {
  */
 router.post('/premium-upgrade', async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.headers['x-user-id'] as string;
+    const userId = extractUserId(req);
 
     if (!userId) {
       res.status(401).json({
@@ -124,7 +125,7 @@ router.post('/premium-upgrade', async (req: Request, res: Response): Promise<voi
  */
 router.get('/user/downloads', async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.headers['x-user-id'] as string;
+    const userId = extractUserId(req);
 
     if (!userId) {
       res.status(401).json({

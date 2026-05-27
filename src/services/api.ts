@@ -247,11 +247,12 @@ export const adminAPI = {
 export const uploadFirmwareAPI = {
   upload: async (formData: FormData) => {
     try {
+      const token = localStorage.getItem('authToken') || '';
       const response = await fetch(`${API_BASE_URL}/api/firmware/upload`, {
         method: 'POST',
         body: formData,
         headers: {
-          'x-user-id': localStorage.getItem('userId') || '',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
 
