@@ -8,6 +8,7 @@ import { userDB, firmwareDB, configDB, categoryDB } from '../dboperations.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { verifyToken } from '../middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,8 +17,17 @@ const router = Router();
 
 // 中间件：检查管理员权限
 async function adminMiddleware(req: Request, res: Response, next: Function) {
-  const userId = req.headers['x-user-id'] as string;
-  
+  const authHeader = req.headers.authorization;
+  let userId = req.headers['x-user-id'] as string;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const payload = verifyToken(token);
+    if (payload) {
+      userId = payload.userId;
+    }
+  }
+
   if (!userId) {
     res.status(401).json({ success: false, error: '请先登录' });
     return;
@@ -26,7 +36,7 @@ async function adminMiddleware(req: Request, res: Response, next: Function) {
   try {
     const [rows] = await pool.execute('SELECT role FROM users WHERE id = ?', [userId]);
     const user = (rows as any[])[0];
-    
+
     if (!user || user.role !== 'admin') {
       res.status(403).json({ success: false, error: '权限不足，需要管理员权限' });
       return;
