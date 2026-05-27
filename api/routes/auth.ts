@@ -12,6 +12,41 @@ import { generateToken, verifyToken, extractUserId } from '../middleware/auth.js
 
 const router = Router();
 
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+
+function createRateLimiter(maxAttempts: number, windowMs: number) {
+  const store = new Map<string, RateLimitEntry>();
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of store) {
+      if (entry.resetAt <= now) store.delete(key);
+    }
+  }, 60000);
+  return (key: string): boolean => {
+    const now = Date.now();
+    const entry = store.get(key);
+    if (!entry || entry.resetAt <= now) {
+      store.set(key, { count: 1, resetAt: now + windowMs });
+      return true;
+    }
+    if (entry.count >= maxAttempts) {
+      return false;
+    }
+    entry.count++;
+    return true;
+  };
+}
+
+const loginLimiter = createRateLimiter(5, 15 * 60 * 1000); // 5次/15分钟
+const codeLimiter = createRateLimiter(3, 15 * 60 * 1000); // 3次/15分钟
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 // 生成6位随机验证码
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -38,8 +73,24 @@ async function createTransporter() {
 router.post('/send-code', async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, type } = req.body;
-    if (!email || !type) {
-      res.status(400).json({ success: false, error: '邮箱和验证码类型不能为空' });
+    if (!email) {
+      res.status(400).json({ success: false, error: '邮箱地址不能为空' });
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      res.status(400).json({ success: false, error: '邮箱地址格式不正确' });
+      return;
+    }
+
+    if (!type || !['register', 'reset_password'].includes(type)) {
+      res.status(400).json({ success: false, error: '无效的验证码类型' });
+      return;
+    }
+
+    const codeKey = `send-code:${email}:${type}`;
+    if (!codeLimiter(codeKey)) {
+      res.status(429).json({ success: false, error: '发送验证码过于频繁，请15分钟后再试' });
       return;
     }
 
@@ -89,8 +140,18 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    if (!isValidEmail(email)) {
+      res.status(400).json({ success: false, error: '邮箱地址格式不正确' });
+      return;
+    }
+
     if (password.length < 6) {
       res.status(400).json({ success: false, error: '密码长度至少6位' });
+      return;
+    }
+
+    if (nickname.length > 50) {
+      res.status(400).json({ success: false, error: '昵称长度不能超过50个字符' });
       return;
     }
 
@@ -130,6 +191,17 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    if (!isValidEmail(email)) {
+      res.status(400).json({ success: false, error: '邮箱地址格式不正确' });
+      return;
+    }
+
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    if (!loginLimiter(ip)) {
+      res.status(429).json({ success: false, error: '登录尝试过于频繁，请15分钟后再试' });
+      return;
+    }
+
     const user = await userDB.findByEmail(email);
     if (!user) {
       res.status(401).json({ success: false, error: '邮箱或密码错误' });
@@ -155,11 +227,9 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
         id: user.id,
         email: user.email,
         nickname: user.nickname,
-        avatar: user.avatar_url,
         role: user.role,
         downloadQuota: user.download_quota,
         downloadsUsed: user.downloads_used,
-        quotaResetDate: user.quota_reset_date,
         isPremium: !!user.is_premium,
         createdAt: user.created_at
       }
@@ -197,11 +267,9 @@ router.get('/user', async (req: Request, res: Response): Promise<void> => {
         id: user.id,
         email: user.email,
         nickname: user.nickname,
-        avatar: user.avatar_url,
         role: user.role,
         downloadQuota: user.download_quota,
         downloadsUsed: user.downloads_used,
-        quotaResetDate: user.quota_reset_date,
         isPremium: !!user.is_premium,
         createdAt: user.created_at
       }
@@ -279,11 +347,9 @@ router.get('/verify', async (req: Request, res: Response): Promise<void> => {
         id: user.id,
         email: user.email,
         nickname: user.nickname,
-        avatar: user.avatar_url,
         role: user.role,
         downloadQuota: user.download_quota,
         downloadsUsed: user.downloads_used,
-        quotaResetDate: user.quota_reset_date,
         isPremium: !!user.is_premium,
         createdAt: user.created_at
       }

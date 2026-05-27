@@ -68,10 +68,8 @@ router.get('/users', async (req: Request, res: Response): Promise<void> => {
         email: user.email,
         nickname: user.nickname,
         role: user.role,
-        avatar: user.avatar_url,
         downloadQuota: user.download_quota,
         downloadsUsed: user.downloads_used,
-        quotaResetDate: user.quota_reset_date,
         isPremium: Boolean(user.is_premium),
         createdAt: user.created_at
       }))

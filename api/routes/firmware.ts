@@ -9,11 +9,16 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
 
 // 配置文件上传
 const storage = multer.diskStorage({
@@ -21,11 +26,24 @@ const storage = multer.diskStorage({
     cb(null, path.join(__dirname, '../../files'));
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
   }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
 
 /**
  * 获取所有固件
@@ -334,6 +352,17 @@ router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: 
       return;
     }
 
+    // 验证上传者角色（仅限管理员和维护者）
+    const [userRows] = await pool.execute('SELECT role, nickname FROM users WHERE id = ?', [userId]);
+    const user = (userRows as any[])[0];
+    if (!user || (user.role !== 'admin' && user.role !== 'maintainer')) {
+      res.status(403).json({
+        success: false,
+        error: '权限不足，仅管理员和维护者可上传固件'
+      });
+      return;
+    }
+
     const { title, description, version, categoryId, isPaid, price } = req.body;
     
     if (!req.file) {
@@ -348,16 +377,6 @@ router.post('/upload', upload.single('firmwareFile'), async (req: Request, res: 
       res.status(400).json({
         success: false,
         error: '请填写完整的固件信息'
-      });
-      return;
-    }
-
-    // 获取上传者信息
-    const user = await userDB.findById(userId);
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        error: '用户不存在'
       });
       return;
     }
