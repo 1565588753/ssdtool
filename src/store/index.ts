@@ -57,7 +57,7 @@ isAuthReady: boolean;
 
   // 分类管理
   addCategory: (category: Omit<Category, 'id' | 'createdAt' | 'children'>) => void;
-  batchAddCategories: (categories: { name: string; parentId: string }[]) => Promise<boolean>;
+  batchAddCategories: (categories: { name: string; parentId: string }[]) => Promise<{ success: boolean; error?: string }>;
   updateCategory: (id: string, category: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
 
@@ -312,6 +312,7 @@ set({ user: userData, isAuthenticated: true, isAuthReady: true, token: response.
         set({ isLoading: true });
         try {
           const parentId = names[0]?.parentId || '';
+          if (!parentId) return { success: false, error: '请选择上级分类' };
           const response = await adminAPI.batchCreateCategories({ parentId, names: names.map(n => n.name) });
           if (response.success) {
             const newCategories: Category[] = response.categories.map(c => ({
@@ -327,12 +328,12 @@ set({ user: userData, isAuthenticated: true, isAuthReady: true, token: response.
             set((state) => ({
               categories: [...state.categories, ...newCategories]
             }));
-            return true;
+            return { success: true };
           }
-          return false;
-        } catch (error) {
+          return { success: false, error: response.message || '创建失败' };
+        } catch (error: any) {
           console.error('批量创建分类失败:', error);
-          return false;
+          return { success: false, error: error.message || '创建失败' };
         } finally {
           set({ isLoading: false });
         }

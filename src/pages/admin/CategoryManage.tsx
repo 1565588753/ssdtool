@@ -11,7 +11,7 @@ import {
   Layers
 } from 'lucide-react';
 
-export default function CategoryManage({ categories, addCategory, batchAddCategories, updateCategory, deleteCategory }: { categories: any[]; addCategory: (data: any) => void; batchAddCategories: (names: { name: string; parentId: string }[]) => Promise<boolean>; updateCategory: (id: string, data: any) => void; deleteCategory: (id: string) => void }) {
+export default function CategoryManage({ categories, addCategory, batchAddCategories, updateCategory, deleteCategory }: { categories: any[]; addCategory: (data: any) => void; batchAddCategories: (names: { name: string; parentId: string }[]) => Promise<{ success: boolean; error?: string }>; updateCategory: (id: string, data: any) => void; deleteCategory: (id: string) => void }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(categories.map(c => c.id));
@@ -40,13 +40,13 @@ export default function CategoryManage({ categories, addCategory, batchAddCatego
 
     setBatchLoading(true);
     setBatchResult('');
-    const ok = await batchAddCategories(names.map(n => ({ name: n, parentId: batchParentId })));
+    const result = await batchAddCategories(names.map(n => ({ name: n, parentId: batchParentId })));
     setBatchLoading(false);
-    if (ok) {
+    if (result.success) {
       setBatchResult(`成功创建 ${names.length} 个二级分类`);
       setBatchNames('');
     } else {
-      setBatchResult('创建失败，请重试');
+      setBatchResult(result.error || '创建失败，请重试');
     }
   };
 

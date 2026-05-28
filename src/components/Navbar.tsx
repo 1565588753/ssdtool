@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useAppStore } from '../store';
 import { useThemeStore } from '../hooks/useTheme';
 import ThemeSwitcher from './ThemeSwitcher';
-import { Search, Menu, X, LogIn, UserPlus, User, LogOut, Settings, Sun, Moon, Home, FolderOpen, HardDrive, Zap } from 'lucide-react';
+import { Menu, X, LogOut, User, HardDrive, Zap } from 'lucide-react';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,17 +41,7 @@ export default function Navbar() {
               </span>
             </Link>
 
-            {/* 导航按钮 */}
-            <div className="flex-1 flex items-center justify-center gap-6">
-              <Link to="/" className="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-theme-hover transition-colors text-theme-secondary hover:text-theme-main text-sm font-medium">
-                <Home className="w-4 h-4" />
-                首页
-              </Link>
-              <Link to="/categories" className="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-theme-hover transition-colors text-theme-secondary hover:text-theme-main text-sm font-medium">
-                <FolderOpen className="w-4 h-4" />
-                分类浏览
-              </Link>
-            </div>
+
 
             {/* 用户区域 */}
             <div className="flex items-center gap-4">
@@ -180,14 +170,7 @@ export default function Navbar() {
                 <ThemeSwitcher />
               </div>
               
-              <Link to="/" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main">
-                <Home className="w-5 h-5" />
-                首页
-              </Link>
-              <Link to="/categories" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-theme-hover transition-colors text-theme-main">
-                <FolderOpen className="w-5 h-5" />
-                分类浏览
-              </Link>
+
               
               <div className="h-px my-2" style={{ backgroundColor: 'var(--theme-border)' }}></div>
               
