@@ -84,4 +84,196 @@ export default function BackgroundEffect() {
       style={{ width: '100vw', height: '100vh' }}
     />
   );
+}import { useRef, useEffect } from 'react';
+
+interface GradientPoint {
+  x:import { useRef, useEffect } from 'react';
+
+interface GradientPoint {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
 }
+
+export default function BackgroundEffect() {
+  const canvasRef =import { useRef, useEffect } from 'react';
+
+interface GradientPoint {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+}
+
+export default function BackgroundEffect() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx)import { useRef, useEffect } from 'react';
+
+interface GradientPoint {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+}
+
+export default function BackgroundEffect() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const points: GradientPoint[] = [
+      { x: 0import { useRef, useEffect } from 'react';
+
+interface GradientPoint {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+}
+
+export default function BackgroundEffect() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const points: GradientPoint[] = [
+      { x: 0, y: 0, vx: 0.15, vy: 0.08, color: 'rgba(37, 99, 235, 0.12)' },
+      { x: 0, y: 0, vx: -0.import { useRef, useEffect } from 'react';
+
+interface GradientPoint {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+}
+
+export default function BackgroundEffect() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const points: GradientPoint[] = [
+      { x: 0, y: 0, vx: 0.15, vy: 0.08, color: 'rgba(37, 99, 235, 0.12)' },
+      { x: 0, y: 0, vx: -0.1, vy: 0.12, color: 'rgba(6, 182, 212, 0.10)' },
+      { x: 0, yimport { useRef, useEffect } from 'react';
+
+interface GradientPoint {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+}
+
+export default function BackgroundEffect() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const points: GradientPoint[] = [
+      { x: 0, y: 0, vx: 0.15, vy: 0.08, color: 'rgba(37, 99, 235, 0.12)' },
+      { x: 0, y: 0, vx: -0.1, vy: 0.12, color: 'rgba(6, 182, 212, 0.10)' },
+      { x: 0, y: 0, vx: 0.08, vy: -0.1, color: 'rgba(139, 92, 246, 0.08)' },
+      { x: 0, y: 0, vx: -0import { useRef, useEffect } from 'react';
+
+interface GradientPoint {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+}
+
+export default function BackgroundEffect() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const points: GradientPoint[] = [
+      { x: 0, y: 0, vx: 0.15, vy: 0.08, color: 'rgba(37, 99, 235, 0.12)' },
+      { x: 0, y: 0, vx: -0.1, vy: 0.12, color: 'rgba(6, 182, 212, 0.10)' },
+      { x: 0, y: 0, vx: 0.08, vy: -0.1, color: 'rgba(139, 92, 246, 0.08)' },
+      { x: 0, y: 0, vx: -0.12, vy: -0.06, color: 'rgba(59, 130, 246, 0.07)' },
+    ];
+
+    const initPositions = () => {
+      const w = canvas.width;
+      const h = canvas.height;
