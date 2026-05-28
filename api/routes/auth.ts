@@ -88,6 +88,14 @@ router.post('/send-code', async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+    if (type === 'register') {
+      const existingUser = await userDB.findByEmail(email);
+      if (existingUser) {
+        res.status(400).json({ success: false, error: '该邮箱已被注册，请直接登录' });
+        return;
+      }
+    }
+
     const codeKey = `send-code:${email}:${type}`;
     if (!codeLimiter(codeKey)) {
       res.status(429).json({ success: false, error: '发送验证码过于频繁，请15分钟后再试' });

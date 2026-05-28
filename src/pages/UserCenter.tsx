@@ -27,7 +27,7 @@ type TabType = 'dashboard' | 'profile' | 'downloads' | 'firmware' | 'categories'
 
 export default function UserCenter() {
   const navigate = useNavigate();
-const { user, isAuthReady, logout, config, categories, firmware, tags, addCategory, updateCategory, deleteCategory, addTag, updateTag, deleteTag, updateFirmware, deleteFirmware } = useAppStore();
+const { user, isAuthReady, logout, config, categories, firmware, tags, addCategory, batchAddCategories, updateCategory, deleteCategory, addTag, updateTag, deleteTag, updateFirmware, deleteFirmware } = useAppStore();
   const { setTheme, currentTheme } = useThemeStore();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
 
@@ -159,7 +159,7 @@ const { user, isAuthReady, logout, config, categories, firmware, tags, addCatego
           {activeTab === 'profile' && <Profile user={user} />}
           {activeTab === 'downloads' && <Downloads user={user} config={config} />}
           {activeTab === 'firmware' && isMaintainer && <FirmwareManage isAdmin={isAdmin} isMaintainer={isMaintainer} firmware={firmware} categories={categories} updateFirmware={updateFirmware} deleteFirmware={deleteFirmware} />}
-          {activeTab === 'categories' && isAdmin && <CategoryManage categories={categories} addCategory={addCategory} updateCategory={updateCategory} deleteCategory={deleteCategory} />}
+          {activeTab === 'categories' && isAdmin && <CategoryManage categories={categories} addCategory={addCategory} batchAddCategories={batchAddCategories} updateCategory={updateCategory} deleteCategory={deleteCategory} />}
           {activeTab === 'tags' && isAdmin && <TagManage tags={tags} addTag={addTag} updateTag={updateTag} deleteTag={deleteTag} />}
           {activeTab === 'users' && isAdmin && <UserManage />}
           {activeTab === 'settings' && isAdmin && <SiteSettings setTheme={setTheme} currentTheme={currentTheme} />}

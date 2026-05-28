@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { User, Category, Firmware, Donation, Contributor, Config, Download, Tag } from '../../shared/types';
-import { authAPI, firmwareAPI, categoryAPI, donationAPI } from '../services/api';
+import { authAPI, firmwareAPI, categoryAPI, donationAPI, adminAPI } from '../services/api';
 
 // 广告类型定义
 export interface AdSlot {
@@ -57,6 +57,7 @@ isAuthReady: boolean;
 
   // 分类管理
   addCategory: (category: Omit<Category, 'id' | 'createdAt' | 'children'>) => void;
+  batchAddCategories: (categories: { name: string; parentId: string }[]) => Promise<boolean>;
   updateCategory: (id: string, category: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
 
@@ -305,6 +306,36 @@ set({ user: userData, isAuthenticated: true, isAuthReady: true, token: response.
         set((state) => ({
           categories: [...state.categories, newCategory]
         }));
+      },
+
+      batchAddCategories: async (names) => {
+        set({ isLoading: true });
+        try {
+          const parentId = names[0]?.parentId || '';
+          const response = await adminAPI.batchCreateCategories({ parentId, names: names.map(n => n.name) });
+          if (response.success) {
+            const newCategories: Category[] = response.categories.map(c => ({
+              id: c.id,
+              name: c.name,
+              parentId,
+              orderIndex: 0,
+              icon: '',
+              description: '',
+              children: [],
+              createdAt: new Date().toISOString()
+            }));
+            set((state) => ({
+              categories: [...state.categories, ...newCategories]
+            }));
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error('批量创建分类失败:', error);
+          return false;
+        } finally {
+          set({ isLoading: false });
+        }
       },
 
       updateCategory: (id, category) => {

@@ -356,6 +356,48 @@ router.delete('/firmware/:id', async (req: Request, res: Response): Promise<void
 });
 
 /**
+ * 批量创建二级分类
+ * POST /api/admin/categories/batch
+ */
+router.post('/categories/batch', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { parentId, names } = req.body;
+
+    if (!parentId) {
+      res.status(400).json({ success: false, error: '请选择上级分类' });
+      return;
+    }
+
+    if (!names || !Array.isArray(names) || names.length === 0) {
+      res.status(400).json({ success: false, error: '请至少提供一个分类名称' });
+      return;
+    }
+
+    const [parentRows] = await pool.execute('SELECT id FROM categories WHERE id = ?', [parentId]);
+    if (!(parentRows as any[])[0]) {
+      res.status(400).json({ success: false, error: '上级分类不存在' });
+      return;
+    }
+
+    const inserted: { name: string; id: string }[] = [];
+    for (const name of names) {
+      if (!name || !name.trim()) continue;
+      const id = `cat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      await pool.execute(
+        'INSERT INTO categories (id, name, parent_id, order_index) VALUES (?, ?, ?, ?)',
+        [id, name.trim(), parentId, 0]
+      );
+      inserted.push({ name: name.trim(), id });
+    }
+
+    res.json({ success: true, message: `成功创建 ${inserted.length} 个分类`, categories: inserted });
+  } catch (error) {
+    console.error('批量创建分类错误:', error);
+    res.status(500).json({ success: false, error: '批量创建分类失败' });
+  }
+});
+
+/**
  * 创建分类
  * POST /api/admin/categories
  */

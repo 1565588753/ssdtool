@@ -7,13 +7,19 @@ import {
   X,
   FolderTree,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Layers
 } from 'lucide-react';
 
-export default function CategoryManage({ categories, addCategory, updateCategory, deleteCategory }: { categories: any[]; addCategory: (data: any) => void; updateCategory: (id: string, data: any) => void; deleteCategory: (id: string) => void }) {
+export default function CategoryManage({ categories, addCategory, batchAddCategories, updateCategory, deleteCategory }: { categories: any[]; addCategory: (data: any) => void; batchAddCategories: (names: { name: string; parentId: string }[]) => Promise<boolean>; updateCategory: (id: string, data: any) => void; deleteCategory: (id: string) => void }) {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showBatchModal, setShowBatchModal] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(categories.map(c => c.id));
   const [newCategory, setNewCategory] = useState({ name: '', parentId: null as string | null, orderIndex: 0, icon: '', description: '' });
+  const [batchParentId, setBatchParentId] = useState('');
+  const [batchNames, setBatchNames] = useState('');
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [batchResult, setBatchResult] = useState('');
 
   const toggleCategory = (id: string) => {
     setExpandedCategories(prev =>
@@ -25,6 +31,23 @@ export default function CategoryManage({ categories, addCategory, updateCategory
     addCategory(newCategory);
     setShowAddModal(false);
     setNewCategory({ name: '', parentId: null, orderIndex: 0, icon: '', description: '' });
+  };
+
+  const handleBatchCreate = async () => {
+    const names = batchNames.split('\n').map(s => s.trim()).filter(Boolean);
+    if (names.length === 0) return;
+    if (!batchParentId) return;
+
+    setBatchLoading(true);
+    setBatchResult('');
+    const ok = await batchAddCategories(names.map(n => ({ name: n, parentId: batchParentId })));
+    setBatchLoading(false);
+    if (ok) {
+      setBatchResult(`成功创建 ${names.length} 个二级分类`);
+      setBatchNames('');
+    } else {
+      setBatchResult('创建失败，请重试');
+    }
   };
 
   const buildTree = (flatCategories: any[]) => {
@@ -88,13 +111,23 @@ export default function CategoryManage({ categories, addCategory, updateCategory
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>分类管理</h2>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="btn-primary px-4 py-3 rounded-xl text-white font-semibold flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          添加分类
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowBatchModal(true)}
+            className="px-4 py-3 rounded-xl font-semibold flex items-center gap-2 border"
+            style={{ borderColor: 'var(--theme-border)', color: 'var(--theme-text)' }}
+          >
+            <Layers className="w-4 h-4" />
+            批量添加
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn-primary px-4 py-3 rounded-xl text-white font-semibold flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            添加分类
+          </button>
+        </div>
       </div>
 
       <div className="glass-card rounded-xl p-6" style={{ borderColor: 'var(--theme-border)' }}>
@@ -199,6 +232,81 @@ export default function CategoryManage({ categories, addCategory, updateCategory
               </button>
               <button onClick={handleAddCategory} className="btn-primary flex-1 px-4 py-3 rounded-xl text-white font-semibold">
                 添加
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {showBatchModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card rounded-xl p-6 w-full max-w-lg"
+            style={{ borderColor: 'var(--theme-border)' }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>批量添加二级分类</h3>
+              <button onClick={() => { setShowBatchModal(false); setBatchResult(''); }} className="hover:text-white" style={{ color: 'var(--theme-text-secondary)' }}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>选择一级分类</label>
+                <select
+                  value={batchParentId}
+                  onChange={(e) => setBatchParentId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none"
+                  style={{
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                >
+                  <option value="">请选择上级分类</option>
+                  {categories.filter(c => !c.parentId).map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>分类名称（每行一个）</label>
+                <textarea
+                  value={batchNames}
+                  onChange={(e) => setBatchNames(e.target.value)}
+                  placeholder={`例如：\nSM2258XT\nSM2259XT2\nSM2263XT`}
+                  rows={8}
+                  className="w-full px-4 py-3 rounded-xl focus:outline-none resize-none"
+                  style={{
+                    backgroundColor: 'var(--theme-bg-card)',
+                    border: '1px solid var(--theme-border)',
+                    color: 'var(--theme-text)'
+                  }}
+                />
+              </div>
+              {batchResult && (
+                <p className={batchResult.includes('成功') ? 'text-green-400 text-sm' : 'text-red-400 text-sm'}>{batchResult}</p>
+              )}
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => { setShowBatchModal(false); setBatchResult(''); }}
+                className="flex-1 px-4 py-3 border rounded-xl hover:bg-white/10 transition-colors"
+                style={{
+                  borderColor: 'var(--theme-border)',
+                  color: 'var(--theme-text-secondary)'
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleBatchCreate}
+                disabled={batchLoading || !batchParentId || batchNames.trim().split('\n').filter(Boolean).length === 0}
+                className="btn-primary flex-1 px-4 py-3 rounded-xl text-white font-semibold disabled:opacity-50"
+              >
+                {batchLoading ? '创建中...' : '批量创建'}
               </button>
             </div>
           </motion.div>

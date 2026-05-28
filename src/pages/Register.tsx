@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAppStore } from '../store';
 import { authAPI } from '../services/api';
 import SliderCaptcha from '../components/SliderCaptcha';
@@ -13,7 +13,6 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
-  X,
   Shield
 } from 'lucide-react';
 
@@ -53,7 +52,6 @@ function getRemainingSeconds(): number {
 }
 
 export default function Register() {
-  const navigate = useNavigate();
   const { register } = useAppStore();
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState<'form' | 'success'>('form');
@@ -68,8 +66,8 @@ export default function Register() {
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(getRemainingSeconds);
   const [sliderVerified, setSliderVerified] = useState(false);
-  const [showCodeModal, setShowCodeModal] = useState(false);
-  const [sentEmail, setSentEmail] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
+  const [codeError, setCodeError] = useState('');
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
@@ -114,26 +112,30 @@ export default function Register() {
 
   const handleSendCode = async () => {
     if (!formData.email) {
-      setError('请先输入邮箱地址');
+      setCodeError('请先输入邮箱地址');
+      setTimeout(() => setCodeError(''), 3000);
       return;
     }
     if (countdown > 0) return;
     if (!sliderVerified) {
-      setError('请先完成滑块验证');
+      setCodeError('请先完成滑块验证');
+      setTimeout(() => setCodeError(''), 3000);
       return;
     }
-    setError('');
+    setCodeError('');
     try {
       const res = await authAPI.sendCode(formData.email, 'register');
       if (res.success) {
         startCountdown();
-        setSentEmail(formData.email);
-        setShowCodeModal(true);
+        setCodeSent(true);
+        setTimeout(() => setCodeSent(false), 8000);
       } else {
-        setError((res as any).error || '发送验证码失败');
+        setCodeError((res as any).error || '发送验证码失败');
+        setTimeout(() => setCodeError(''), 3000);
       }
     } catch (err: any) {
-      setError(err.message || '发送验证码失败');
+      setCodeError(err.message || '发送验证码失败');
+      setTimeout(() => setCodeError(''), 3000);
     }
   };
 
@@ -256,33 +258,13 @@ export default function Register() {
                   {countdown > 0 ? `${countdown}s` : '获取验证码'}
                 </button>
               </div>
-              {formData.password && (
-                <div className="mt-3">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Shield className="w-4 h-4 text-slate-400" />
-                    <span className="text-xs text-slate-400">密码强度</span>
-                    <span className={`text-xs font-medium ml-auto ${
-                      getPasswordStrength(formData.password).score <= 1 ? 'text-red-400' :
-                      getPasswordStrength(formData.password).score === 2 ? 'text-orange-400' :
-                      getPasswordStrength(formData.password).score === 3 ? 'text-yellow-400' :
-                      getPasswordStrength(formData.password).score === 4 ? 'text-lime-400' :
-                      'text-green-400'
-                    }`}>
-                      {getPasswordStrength(formData.password).label}
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: getPasswordStrength(formData.password).width }}
-                      transition={{ duration: 0.3, ease: 'easeOut' }}
-                      className={`h-full rounded-full ${getPasswordStrength(formData.password).color}`}
-                    />
-                  </div>
-                  <div className="flex justify-between mt-1">
-                    <span className="text-[10px] text-slate-500">包含大小写字母、数字和特殊字符可提高强度</span>
-                  </div>
-                </div>
+              {codeSent && (
+                <p className="text-xs text-green-400 mt-2">
+                  验证码已发送至 {formData.email}，有效期30分钟
+                </p>
+              )}
+              {codeError && (
+                <p className="text-xs text-red-400 mt-2">{codeError}</p>
               )}
             </div>
 
@@ -346,6 +328,34 @@ export default function Register() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {formData.password && (
+                <div className="mt-3">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Shield className="w-4 h-4 text-slate-400" />
+                    <span className="text-xs text-slate-400">密码强度</span>
+                    <span className={`text-xs font-medium ml-auto ${
+                      getPasswordStrength(formData.password).score <= 1 ? 'text-red-400' :
+                      getPasswordStrength(formData.password).score === 2 ? 'text-orange-400' :
+                      getPasswordStrength(formData.password).score === 3 ? 'text-yellow-400' :
+                      getPasswordStrength(formData.password).score === 4 ? 'text-lime-400' :
+                      'text-green-400'
+                    }`}>
+                      {getPasswordStrength(formData.password).label}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: getPasswordStrength(formData.password).width }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                      className={`h-full rounded-full ${getPasswordStrength(formData.password).color}`}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-[10px] text-slate-500">包含大小写字母、数字和特殊字符可提高强度</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -392,56 +402,6 @@ export default function Register() {
           </Link>
         </div>
       </motion.div>
-
-      <AnimatePresence>
-        {showCodeModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm"
-            onClick={() => setShowCodeModal(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass-card rounded-2xl p-8 max-w-sm w-full relative"
-              style={{ borderColor: 'var(--theme-border)' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={() => setShowCodeModal(false)}
-                className="absolute top-4 right-4"
-                style={{ color: 'var(--theme-text-muted)' }}
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <div className="text-center">
-                <div className="w-14 h-14 mx-auto mb-4 rounded-full flex items-center justify-center"
-                  style={{ background: 'var(--theme-gradient)', opacity: 0.2 }}
-                >
-                  <Mail className="w-7 h-7" style={{ color: 'var(--theme-primary-400)' }} />
-                </div>
-                <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--theme-text)' }}>
-                  验证码已发送
-                </h3>
-                <p className="text-sm mb-1" style={{ color: 'var(--theme-text-secondary)' }}>
-                  验证码已发送至
-                </p>
-                <p className="font-medium text-sm mb-4" style={{ color: 'var(--theme-primary-400)' }}>
-                  {sentEmail}
-                </p>
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--theme-text-muted)' }}>
-                  有效期30分钟，如果没有收到请检查垃圾信箱
-                </p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

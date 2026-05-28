@@ -199,6 +199,12 @@ export const adminAPI = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  batchCreateCategories: (data: { parentId: string; names: string[] }) =>
+    fetchAPI<{ success: boolean; message: string; categories: { name: string; id: string }[] }>('/api/admin/categories/batch', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
   
   updateCategory: (id: string, data: { name?: string; parentId?: string; orderIndex?: number }) =>
     fetchAPI<{ success: boolean }>(`/api/admin/categories/${id}`, {
