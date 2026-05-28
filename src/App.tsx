@@ -1,17 +1,26 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import BackgroundEffect from "@/components/BackgroundEffect";
-import Home from "@/pages/Home";
-import Login from "@/pages/Login";
-import Register from "@/pages/Register";
-import Categories from "@/pages/Categories";
-import FirmwareDetail from "@/pages/FirmwareDetail";
-import UserCenter from "@/pages/UserCenter";
-import Donate from "@/pages/Donate";
-import ForgotPassword from "@/pages/ForgotPassword";
 import { useAppStore } from "@/store";
 import { authAPI } from "@/services/api";
+
+const Home = lazy(() => import("@/pages/Home"));
+const Login = lazy(() => import("@/pages/Login"));
+const Register = lazy(() => import("@/pages/Register"));
+const Categories = lazy(() => import("@/pages/Categories"));
+const FirmwareDetail = lazy(() => import("@/pages/FirmwareDetail"));
+const UserCenter = lazy(() => import("@/pages/UserCenter"));
+const Donate = lazy(() => import("@/pages/Donate"));
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
+
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--theme-bg-base)' }}>
+      <div className="w-8 h-8 border-2 border-accent-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 export default function App() {
   const { loadInitialData, setUser, setAuthReady } = useAppStore();
@@ -46,16 +55,18 @@ export default function App() {
     <Router>
       <BackgroundEffect />
       <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/categories" element={<Categories />} />
-        <Route path="/firmware/:id" element={<FirmwareDetail />} />
-        <Route path="/user" element={<UserCenter />} />
-        <Route path="/donate" element={<Donate />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/categories" element={<Categories />} />
+          <Route path="/firmware/:id" element={<FirmwareDetail />} />
+          <Route path="/user" element={<UserCenter />} />
+          <Route path="/donate" element={<Donate />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }

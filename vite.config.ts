@@ -8,9 +8,7 @@ export default defineConfig({
   plugins: [
     react({
       babel: {
-        plugins: [
-          'react-dev-locator',
-        ],
+        plugins: process.env.NODE_ENV === 'production' ? [] : ['react-dev-locator'],
       },
     }),
     traeBadgePlugin({
@@ -24,6 +22,18 @@ export default defineConfig({
     }), 
     tsconfigPaths(),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-motion': ['framer-motion'],
+          'vendor-icons': ['lucide-react'],
+          'vendor-state': ['zustand'],
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       '/api': {

@@ -67,6 +67,12 @@ export default function BackgroundEffect() {
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseleave', onMouseLeave);
 
+    let isVisible = true;
+    const onVisibilityChange = () => {
+      isVisible = !document.hidden;
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
     const MAX_DIST = 200;
     const MOUSE_RADIUS = 250;
     const MOUSE_GLOW_RADIUS = 180;
@@ -78,6 +84,15 @@ export default function BackgroundEffect() {
       const mouse = mouseRef.current;
 
       for (const p of particles) {
+        if (!isVisible) {
+          p.alpha = p.baseAlpha * 0.3;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${217 + Math.sin(p.pulsePhase + p.x * 0.01) * 30}, 80%, 75%, ${p.alpha})`;
+          ctx.fill();
+          continue;
+        }
+
         p.x += p.vx;
         p.y += p.vy;
 
@@ -105,25 +120,27 @@ export default function BackgroundEffect() {
         ctx.fill();
       }
 
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+      if (isVisible) {
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < MAX_DIST) {
-            const alpha = (1 - dist / MAX_DIST) * 0.25;
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `hsla(217, 60%, 70%, ${alpha})`;
-            ctx.lineWidth = 1;
-            ctx.stroke();
+            if (dist < MAX_DIST) {
+              const alpha = (1 - dist / MAX_DIST) * 0.25;
+              ctx.beginPath();
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.strokeStyle = `hsla(217, 60%, 70%, ${alpha})`;
+              ctx.lineWidth = 1;
+              ctx.stroke();
+            }
           }
         }
       }
 
-      if (mouse.x > 0 && mouse.x < canvas.width && mouse.y > 0 && mouse.y < canvas.height) {
+      if (isVisible && mouse.x > 0 && mouse.x < canvas.width && mouse.y > 0 && mouse.y < canvas.height) {
         const glow = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, MOUSE_GLOW_RADIUS);
         glow.addColorStop(0, 'hsla(217, 80%, 70%, 0.08)');
         glow.addColorStop(0.5, 'hsla(217, 60%, 60%, 0.04)');
@@ -147,6 +164,7 @@ export default function BackgroundEffect() {
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseleave', onMouseLeave);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, []);
 
