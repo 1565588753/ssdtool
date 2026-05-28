@@ -32,19 +32,19 @@ export default function BackgroundEffect() {
     };
 
     const createParticles = () => {
-      const count = Math.min(Math.floor((canvas.width * canvas.height) / 12000), 100);
+      const count = Math.min(Math.floor((canvas.width * canvas.height) / 8000), 120);
       const particles: Particle[] = [];
       for (let i = 0; i < count; i++) {
-        const baseAlpha = 0.15 + Math.random() * 0.35;
+        const baseAlpha = 0.3 + Math.random() * 0.4;
         particles.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.15,
-          vy: (Math.random() - 0.5) * 0.15,
-          radius: 0.8 + Math.random() * 1.8,
+          vx: (Math.random() - 0.5) * 0.2,
+          vy: (Math.random() - 0.5) * 0.2,
+          radius: 1.5 + Math.random() * 2.5,
           alpha: baseAlpha,
           baseAlpha,
-          pulseSpeed: 0.005 + Math.random() * 0.015,
+          pulseSpeed: 0.008 + Math.random() * 0.02,
           pulsePhase: Math.random() * Math.PI * 2,
         });
       }
@@ -67,9 +67,9 @@ export default function BackgroundEffect() {
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseleave', onMouseLeave);
 
-    const MAX_DIST = 150;
-    const MOUSE_RADIUS = 200;
-    const MOUSE_GLOW_RADIUS = 120;
+    const MAX_DIST = 200;
+    const MOUSE_RADIUS = 250;
+    const MOUSE_GLOW_RADIUS = 180;
 
     const animate = (time: number) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -91,17 +91,17 @@ export default function BackgroundEffect() {
         const distToMouse = Math.sqrt(dx * dx + dy * dy);
 
         if (distToMouse < MOUSE_RADIUS) {
-          const force = (1 - distToMouse / MOUSE_RADIUS) * 1.2;
+          const force = (1 - distToMouse / MOUSE_RADIUS) * 2;
           p.x += (dx / distToMouse || 0) * force;
           p.y += (dy / distToMouse || 0) * force;
         }
 
-        p.alpha = p.baseAlpha + Math.sin(time * p.pulseSpeed + p.pulsePhase) * 0.12;
-        p.alpha = Math.max(0.05, Math.min(0.6, p.alpha));
+        p.alpha = p.baseAlpha + Math.sin(time * p.pulseSpeed + p.pulsePhase) * 0.15;
+        p.alpha = Math.max(0.1, Math.min(0.85, p.alpha));
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(217, 80%, 75%, ${p.alpha})`;
+        ctx.fillStyle = `hsla(${217 + Math.sin(p.pulsePhase + p.x * 0.01) * 30}, 80%, 75%, ${p.alpha})`;
         ctx.fill();
       }
 
@@ -112,12 +112,12 @@ export default function BackgroundEffect() {
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < MAX_DIST) {
-            const alpha = (1 - dist / MAX_DIST) * 0.12;
+            const alpha = (1 - dist / MAX_DIST) * 0.25;
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
             ctx.strokeStyle = `hsla(217, 60%, 70%, ${alpha})`;
-            ctx.lineWidth = 0.6;
+            ctx.lineWidth = 1;
             ctx.stroke();
           }
         }
@@ -125,15 +125,15 @@ export default function BackgroundEffect() {
 
       if (mouse.x > 0 && mouse.x < canvas.width && mouse.y > 0 && mouse.y < canvas.height) {
         const glow = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, MOUSE_GLOW_RADIUS);
-        glow.addColorStop(0, 'hsla(217, 80%, 70%, 0.04)');
-        glow.addColorStop(0.5, 'hsla(217, 60%, 60%, 0.02)');
+        glow.addColorStop(0, 'hsla(217, 80%, 70%, 0.08)');
+        glow.addColorStop(0.5, 'hsla(217, 60%, 60%, 0.04)');
         glow.addColorStop(1, 'hsla(217, 50%, 50%, 0)');
         ctx.fillStyle = glow;
         ctx.fillRect(mouse.x - MOUSE_GLOW_RADIUS, mouse.y - MOUSE_GLOW_RADIUS, MOUSE_GLOW_RADIUS * 2, MOUSE_GLOW_RADIUS * 2);
 
         ctx.beginPath();
-        ctx.arc(mouse.x, mouse.y, 2, 0, Math.PI * 2);
-        ctx.fillStyle = 'hsla(217, 80%, 80%, 0.15)';
+        ctx.arc(mouse.x, mouse.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'hsla(217, 80%, 80%, 0.3)';
         ctx.fill();
       }
 
