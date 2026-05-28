@@ -9,6 +9,7 @@ import jwt from 'jsonwebtoken';
 import pool from '../db.js';
 import { userDB, verificationCodeDB, configDB } from '../dboperations.js';
 import { generateToken, verifyToken, extractUserId } from '../middleware/auth.js';
+import { verificationCodeEmail } from '../emailTemplates.js';
 
 const router = Router();
 
@@ -113,14 +114,13 @@ if (now - lastTime < cooldown) {
     const transporter = await createTransporter();
     const smtpConfig = await configDB.get('smtp_settings');
 
-    const subject = type === 'register' ? '注册验证码' : '重置密码验证码';
-    const text = `您的${subject}是：${code}，有效期30分钟。`;
+    const { subject, html } = verificationCodeEmail(code, type);
 
     await transporter.sendMail({
       from: `"${smtpConfig.fromName}" <${smtpConfig.fromEmail}>`,
       to: email,
-      subject: `SSD开卡工具站 - ${subject}`,
-      text,
+      subject,
+      html,
     });
 
     res.json({ success: true, message: '验证码已发送' });

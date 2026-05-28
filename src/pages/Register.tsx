@@ -365,13 +365,15 @@ export default function Register() {
               </div>
             </div>
 
-            <button
+            <motion.button
               type="submit"
               disabled={loading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
               className="btn-primary w-full py-3 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? '注册中...' : '注册'}
-            </button>
+            </motion.button>
           </form>
 
           <div className="mt-6 text-center">

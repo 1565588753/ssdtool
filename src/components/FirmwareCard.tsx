@@ -28,7 +28,8 @@ export default function FirmwareCard({ firmware, index }: FirmwareCardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -6, boxShadow: '0 16px 48px rgba(99,102,241,0.12)', transition: { duration: 0.2 } }}
+      whileTap={{ scale: 0.98 }}
       className="glass-card rounded-2xl overflow-hidden group"
       style={{ borderColor: 'var(--theme-border)' }}
     >

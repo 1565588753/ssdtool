@@ -12,7 +12,7 @@ import {
   Settings
 } from 'lucide-react';
 
-export default function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: boolean; isMaintainer: boolean; user: any }) {
+export default function Dashboard({ isAdmin, isMaintainer }: { isAdmin: boolean; isMaintainer: boolean; }) {
   const [dashboardData, setDashboardData] = useState({
     totalUsers: 0,
     totalFirmware: 0,
@@ -20,14 +20,10 @@ export default function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: bo
     totalDonations: 0
   });
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     const fetchDashboardData = async () => {
       try {
         const response = await adminAPI.getDashboard();
@@ -43,7 +39,16 @@ export default function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: bo
 
     if (isAdmin || isMaintainer) {
       fetchDashboardData();
+    } else {
+      setLoading(false);
     }
+
+    const safetyTimeout = setTimeout(() => setLoading(false), 8000);
+
+    return () => {
+      clearTimeout(safetyTimeout);
+      abortController.abort();
+    };
   }, [isAdmin, isMaintainer]);
 
   const stats = [
@@ -55,14 +60,6 @@ export default function Dashboard({ isAdmin, isMaintainer, user }: { isAdmin: bo
 
   return (
     <div className="space-y-6">
-      {toast && (
-        <div className={`fixed top-4 right-4 z-[100] px-5 py-3 rounded-xl shadow-lg ${
-          toast.type === 'success' ? 'bg-green-500/90 text-white' : 'bg-red-500/90 text-white'
-        }`}>
-          {toast.message}
-        </div>
-      )}
-
       <h2 className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>仪表盘</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

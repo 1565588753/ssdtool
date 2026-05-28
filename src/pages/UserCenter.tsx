@@ -51,15 +51,15 @@ const { user, isAuthReady, logout, config, categories, firmware, tags, addCatego
   const isAdmin = user.role === 'admin';
   const isMaintainer = user.role === 'maintainer' || isAdmin;
 
-  const tabs = [
-    { key: 'dashboard' as TabType, icon: BarChart3, label: '仪表盘', roles: ['maintainer', 'admin'] as const },
-    { key: 'profile' as TabType, icon: User, label: '账户信息', roles: ['all'] as const },
-    { key: 'downloads' as TabType, icon: Download, label: '下载记录', roles: ['all'] as const },
-    { key: 'firmware' as TabType, icon: FileText, label: '固件管理', roles: ['maintainer', 'admin'] as const },
-    { key: 'categories' as TabType, icon: FolderTree, label: '分类管理', roles: ['admin'] as const },
-    { key: 'tags' as TabType, icon: Tag, label: '标签管理', roles: ['admin'] as const },
-    { key: 'users' as TabType, icon: Users, label: '用户管理', roles: ['admin'] as const },
-    { key: 'settings' as TabType, icon: Settings, label: '网站设置', roles: ['admin'] as const }
+  const tabs: { key: TabType; icon: any; label: string; roles: string[] }[] = [
+    { key: 'dashboard' as TabType, icon: BarChart3, label: '仪表盘', roles: ['maintainer', 'admin'] },
+    { key: 'profile' as TabType, icon: User, label: '账户信息', roles: ['all'] },
+    { key: 'downloads' as TabType, icon: Download, label: '下载记录', roles: ['all'] },
+    { key: 'firmware' as TabType, icon: FileText, label: '固件管理', roles: ['maintainer', 'admin'] },
+    { key: 'categories' as TabType, icon: FolderTree, label: '分类管理', roles: ['admin'] },
+    { key: 'tags' as TabType, icon: Tag, label: '标签管理', roles: ['admin'] },
+    { key: 'users' as TabType, icon: Users, label: '用户管理', roles: ['admin'] },
+    { key: 'settings' as TabType, icon: Settings, label: '网站设置', roles: ['admin'] }
   ].filter(item => {
     if (item.roles.includes('all')) return true;
     if (isAdmin) return true;
@@ -154,7 +154,7 @@ const { user, isAuthReady, logout, config, categories, firmware, tags, addCatego
       <main className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
           {activeTab === 'dashboard' && (
-            <Dashboard isAdmin={isAdmin} isMaintainer={isMaintainer} user={user} />
+            <Dashboard isAdmin={isAdmin} isMaintainer={isMaintainer} />
           )}
           {activeTab === 'profile' && <Profile user={user} />}
           {activeTab === 'downloads' && <Downloads user={user} config={config} />}

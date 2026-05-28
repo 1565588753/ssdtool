@@ -136,9 +136,11 @@ export default function Login() {
 
 <SliderCaptcha key={sliderKey} onVerified={() => setSliderVerified(true)} />
 
-            <button
+            <motion.button
               type="submit"
               disabled={loading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
               className="btn-primary w-full py-3 rounded-xl text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
@@ -149,7 +151,7 @@ export default function Login() {
                   登录
                 </>
               )}
-            </button>
+            </motion.button>
           </form>
 
           <div className="mt-6 text-center">

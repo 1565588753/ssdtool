@@ -106,20 +106,24 @@ export default function Home() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <Link
-                    to="/categories"
-                    className="btn-primary px-6 py-3 rounded-xl text-white font-semibold text-base flex items-center gap-2"
-                  >
-                    浏览固件
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="px-6 py-3 rounded-xl glass-card font-semibold text-base hover:bg-white/10 transition-colors"
-                    style={{ borderColor: 'var(--theme-border)', color: 'var(--theme-text)' }}
-                  >
-                    免费注册
-                  </Link>
+                  <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                    <Link
+                      to="/categories"
+                      className="btn-primary px-6 py-3 rounded-xl text-white font-semibold text-base flex items-center gap-2"
+                    >
+                      浏览固件
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                    <Link
+                      to="/register"
+                      className="px-6 py-3 rounded-xl glass-card font-semibold text-base hover:bg-white/10 transition-colors inline-flex"
+                      style={{ borderColor: 'var(--theme-border)', color: 'var(--theme-text)' }}
+                    >
+                      免费注册
+                    </Link>
+                  </motion.div>
                 </div>
               </motion.div>
             </div>
@@ -339,12 +343,14 @@ export default function Home() {
                     注册账号，每月可免费下载 {config.quotaSettings.freeQuota} 个固件，支持捐赠以获取更多下载！
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                    <Link
-                      to="/register"
-                      className="btn-primary px-6 py-3 rounded-xl text-white font-semibold text-base"
-                    >
-                      立即注册
-                    </Link>
+                    <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                      <Link
+                        to="/register"
+                        className="btn-primary px-6 py-3 rounded-xl text-white font-semibold text-base"
+                      >
+                        立即注册
+                      </Link>
+                    </motion.div>
                     <div className="flex items-center gap-2" style={{ color: 'var(--theme-text-secondary)' }}>
                       <Zap className="w-4 h-4 text-amber-400" />
                       <span className="text-sm">捐赠更优</span>
