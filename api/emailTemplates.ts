@@ -28,9 +28,7 @@ export function verificationCodeEmail(code: string, type: 'register' | 'reset_pa
           <tr>
             <td style="background:#ffffff;border-radius:0 0 20px 20px;padding:40px 32px 32px;text-align:center;">
 
-              <div style="width:64px;height:64px;margin:0 auto 24px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:inline-block;text-align:center;line-height:64px;">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='11' width='18' height='11' rx='2' ry='2'/><path d='M7 11V7a5 5 0 0 1 10 0v4'/></svg>" alt="lock" width="32" height="32" style="vertical-align:middle;" />
-              </div>
+              <div style="width:64px;height:64px;margin:0 auto 24px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:inline-block;text-align:center;line-height:64px;font-size:28px;color:#ffffff;">&#128274;</div>
 
               <h1 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#1e1b4b;">${title}</h1>
               <p style="margin:0 0 28px;font-size:13px;color:#94a3b8;line-height:1.6;">${desc}</p>
