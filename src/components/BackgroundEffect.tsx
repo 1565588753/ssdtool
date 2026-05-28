@@ -1,20 +1,21 @@
 import { useRef, useEffect } from 'react';
 
-interface Orb {
+interface Particle {
   x: number;
   y: number;
-  radius: number;
   vx: number;
   vy: number;
-  hue: number;
-  saturation: number;
-  lightness: number;
+  radius: number;
   alpha: number;
+  baseAlpha: number;
+  pulseSpeed: number;
+  pulsePhase: number;
 }
 
 export default function BackgroundEffect() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const orbsRef = useRef<Orb[]>([]);
+  const mouseRef = useRef({ x: -1000, y: -1000 });
+  const particlesRef = useRef<Particle[]>([]);
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
@@ -27,53 +28,125 @@ export default function BackgroundEffect() {
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      createParticles();
     };
+
+    const createParticles = () => {
+      const count = Math.min(Math.floor((canvas.width * canvas.height) / 12000), 100);
+      const particles: Particle[] = [];
+      for (let i = 0; i < count; i++) {
+        const baseAlpha = 0.15 + Math.random() * 0.35;
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: (Math.random() - 0.5) * 0.15,
+          vy: (Math.random() - 0.5) * 0.15,
+          radius: 0.8 + Math.random() * 1.8,
+          alpha: baseAlpha,
+          baseAlpha,
+          pulseSpeed: 0.005 + Math.random() * 0.015,
+          pulsePhase: Math.random() * Math.PI * 2,
+        });
+      }
+      particlesRef.current = particles;
+    };
+
     resize();
     window.addEventListener('resize', resize);
 
-    const orbCount = 6;
-    const orbs: Orb[] = Array.from({ length: orbCount }, (_, i) => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      radius: 120 + Math.random() * 180,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      hue: 240 + Math.random() * 60,
-      saturation: 60 + Math.random() * 30,
-      lightness: 50 + Math.random() * 20,
-      alpha: 0.08 + Math.random() * 0.06
-    }));
-    orbsRef.current = orbs;
+    const onMouseMove = (e: MouseEvent) => {
+      mouseRef.current.x = e.clientX;
+      mouseRef.current.y = e.clientY;
+    };
 
-    const animate = () => {
+    const onMouseLeave = () => {
+      mouseRef.current.x = -1000;
+      mouseRef.current.y = -1000;
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseleave', onMouseLeave);
+
+    const MAX_DIST = 150;
+    const MOUSE_RADIUS = 200;
+    const MOUSE_GLOW_RADIUS = 120;
+
+    const animate = (time: number) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      orbs.forEach(orb => {
-        orb.x += orb.vx;
-        orb.y += orb.vy;
+      const particles = particlesRef.current;
+      const mouse = mouseRef.current;
 
-        if (orb.x < -orb.radius) orb.x = canvas.width + orb.radius;
-        if (orb.x > canvas.width + orb.radius) orb.x = -orb.radius;
-        if (orb.y < -orb.radius) orb.y = canvas.height + orb.radius;
-        if (orb.y > canvas.height + orb.radius) orb.y = -orb.radius;
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
 
-        const gradient = ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, orb.radius);
-        gradient.addColorStop(0, `hsla(${orb.hue}, ${orb.saturation}%, ${orb.lightness}%, ${orb.alpha + 0.04})`);
-        gradient.addColorStop(0.5, `hsla(${orb.hue + 10}, ${orb.saturation}%, ${orb.lightness + 5}%, ${orb.alpha})`);
-        gradient.addColorStop(1, `hsla(${orb.hue + 20}, ${orb.saturation}%, ${orb.lightness + 10}%, 0)`);
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
 
-        ctx.fillStyle = gradient;
-        ctx.fillRect(orb.x - orb.radius, orb.y - orb.radius, orb.radius * 2, orb.radius * 2);
-      });
+        const dx = p.x - mouse.x;
+        const dy = p.y - mouse.y;
+        const distToMouse = Math.sqrt(dx * dx + dy * dy);
+
+        if (distToMouse < MOUSE_RADIUS) {
+          const force = (1 - distToMouse / MOUSE_RADIUS) * 1.2;
+          p.x += (dx / distToMouse || 0) * force;
+          p.y += (dy / distToMouse || 0) * force;
+        }
+
+        p.alpha = p.baseAlpha + Math.sin(time * p.pulseSpeed + p.pulsePhase) * 0.12;
+        p.alpha = Math.max(0.05, Math.min(0.6, p.alpha));
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(217, 80%, 75%, ${p.alpha})`;
+        ctx.fill();
+      }
+
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < MAX_DIST) {
+            const alpha = (1 - dist / MAX_DIST) * 0.12;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `hsla(217, 60%, 70%, ${alpha})`;
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+          }
+        }
+      }
+
+      if (mouse.x > 0 && mouse.x < canvas.width && mouse.y > 0 && mouse.y < canvas.height) {
+        const glow = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, MOUSE_GLOW_RADIUS);
+        glow.addColorStop(0, 'hsla(217, 80%, 70%, 0.04)');
+        glow.addColorStop(0.5, 'hsla(217, 60%, 60%, 0.02)');
+        glow.addColorStop(1, 'hsla(217, 50%, 50%, 0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(mouse.x - MOUSE_GLOW_RADIUS, mouse.y - MOUSE_GLOW_RADIUS, MOUSE_GLOW_RADIUS * 2, MOUSE_GLOW_RADIUS * 2);
+
+        ctx.beginPath();
+        ctx.arc(mouse.x, mouse.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'hsla(217, 80%, 80%, 0.15)';
+        ctx.fill();
+      }
 
       rafRef.current = requestAnimationFrame(animate);
     };
 
-    animate();
+    rafRef.current = requestAnimationFrame(animate);
 
     return () => {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', resize);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseleave', onMouseLeave);
     };
   }, []);
 
@@ -84,196 +157,4 @@ export default function BackgroundEffect() {
       style={{ width: '100vw', height: '100vh' }}
     />
   );
-}import { useRef, useEffect } from 'react';
-
-interface GradientPoint {
-  x:import { useRef, useEffect } from 'react';
-
-interface GradientPoint {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  color: string;
 }
-
-export default function BackgroundEffect() {
-  const canvasRef =import { useRef, useEffect } from 'react';
-
-interface GradientPoint {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  color: string;
-}
-
-export default function BackgroundEffect() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx)import { useRef, useEffect } from 'react';
-
-interface GradientPoint {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  color: string;
-}
-
-export default function BackgroundEffect() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    const points: GradientPoint[] = [
-      { x: 0import { useRef, useEffect } from 'react';
-
-interface GradientPoint {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  color: string;
-}
-
-export default function BackgroundEffect() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    const points: GradientPoint[] = [
-      { x: 0, y: 0, vx: 0.15, vy: 0.08, color: 'rgba(37, 99, 235, 0.12)' },
-      { x: 0, y: 0, vx: -0.import { useRef, useEffect } from 'react';
-
-interface GradientPoint {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  color: string;
-}
-
-export default function BackgroundEffect() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    const points: GradientPoint[] = [
-      { x: 0, y: 0, vx: 0.15, vy: 0.08, color: 'rgba(37, 99, 235, 0.12)' },
-      { x: 0, y: 0, vx: -0.1, vy: 0.12, color: 'rgba(6, 182, 212, 0.10)' },
-      { x: 0, yimport { useRef, useEffect } from 'react';
-
-interface GradientPoint {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  color: string;
-}
-
-export default function BackgroundEffect() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    const points: GradientPoint[] = [
-      { x: 0, y: 0, vx: 0.15, vy: 0.08, color: 'rgba(37, 99, 235, 0.12)' },
-      { x: 0, y: 0, vx: -0.1, vy: 0.12, color: 'rgba(6, 182, 212, 0.10)' },
-      { x: 0, y: 0, vx: 0.08, vy: -0.1, color: 'rgba(139, 92, 246, 0.08)' },
-      { x: 0, y: 0, vx: -0import { useRef, useEffect } from 'react';
-
-interface GradientPoint {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  color: string;
-}
-
-export default function BackgroundEffect() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    const points: GradientPoint[] = [
-      { x: 0, y: 0, vx: 0.15, vy: 0.08, color: 'rgba(37, 99, 235, 0.12)' },
-      { x: 0, y: 0, vx: -0.1, vy: 0.12, color: 'rgba(6, 182, 212, 0.10)' },
-      { x: 0, y: 0, vx: 0.08, vy: -0.1, color: 'rgba(139, 92, 246, 0.08)' },
-      { x: 0, y: 0, vx: -0.12, vy: -0.06, color: 'rgba(59, 130, 246, 0.07)' },
-    ];
-
-    const initPositions = () => {
-      const w = canvas.width;
-      const h = canvas.height;
