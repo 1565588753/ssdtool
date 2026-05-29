@@ -27,7 +27,7 @@ export default function Navbar() {
       {/* 桌面端布局 */}
       <nav className="hidden md:block fixed top-0 left-0 right-0 z-50 glass border-b border-theme">
         <div className="container mx-auto px-4">
-          <div className="flex items-center h-16">
+          <div className="flex items-center justify-between h-16">
             {/* Logo区域 */}
             <Link to="/" className="flex items-center gap-2">
               <div 
