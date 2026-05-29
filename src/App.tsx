@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from "react-route
 import Navbar from "@/components/Navbar";
 import BackgroundEffect from "@/components/BackgroundEffect";
 import { useAppStore } from "@/store";
-import { authAPI, configAPI } from "@/services/api";
+import { authAPI } from "@/services/api";
 
 const Home = lazy(() => import("@/pages/Home"));
 const Login = lazy(() => import("@/pages/Login"));
@@ -45,19 +45,23 @@ function MaintenancePage({ message }: { message: string }) {
 function AppContent() {
   const { user, isAuthenticated } = useAppStore();
   const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string } | null>(null);
+  const [checkDone, setCheckDone] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
     const checkMaintenance = async () => {
       try {
-        const res = await configAPI.get();
-        if (res.success && res.config.maintenanceSettings?.enabled) {
-          setMaintenance(res.config.maintenanceSettings);
+        const res = await fetch('/api/maintenance-status');
+        const data = await res.json();
+        if (data.enabled) {
+          setMaintenance(data);
         } else {
           setMaintenance(null);
         }
       } catch {
         setMaintenance(null);
+      } finally {
+        setCheckDone(true);
       }
     };
     checkMaintenance();
@@ -66,14 +70,22 @@ function AppContent() {
   const isAdmin = isAuthenticated && user?.role === 'admin';
   const isAdminRoute = location.pathname === '/admin';
 
+  if (!checkDone) {
+    return <PageLoader />;
+  }
+
   if (maintenance?.enabled && !isAdmin && !isAdminRoute) {
     return <MaintenancePage message={maintenance.message} />;
   }
 
   return (
     <>
-      {!maintenance?.enabled && <BackgroundEffect />}
-      {(!maintenance?.enabled || isAdmin) && <Navbar />}
+      {(!maintenance?.enabled || isAdmin) && (
+        <>
+          <BackgroundEffect />
+          <Navbar />
+        </>
+      )}
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Home />} />
