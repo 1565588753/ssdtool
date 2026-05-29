@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
 import { useAppStore } from '../store';
 import { authAPI } from '../services/api';
 import SliderCaptcha from '../components/SliderCaptcha';
@@ -182,6 +183,10 @@ export default function Register() {
   if (step === 'success') {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center px-4 py-20">
+        <Helmet>
+          <title>注册成功 - SSD开卡工具站</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -207,6 +212,11 @@ export default function Register() {
 
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center px-4 py-20">
+      <Helmet>
+        <title>注册 - SSD开卡工具站</title>
+        <meta name="description" content="注册SSD开卡工具站账号，免费下载固态硬盘开卡工具" />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}

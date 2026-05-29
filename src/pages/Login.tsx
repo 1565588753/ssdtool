@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
 import { useAppStore } from '../store';
 import SliderCaptcha from '../components/SliderCaptcha';
 import {
@@ -55,6 +56,11 @@ export default function Login() {
 
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center px-4 py-20">
+      <Helmet>
+        <title>登录 - SSD开卡工具站</title>
+        <meta name="description" content="登录SSD开卡工具站，下载固态硬盘开卡工具" />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}

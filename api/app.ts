@@ -18,7 +18,7 @@ import donationRoutes from './routes/donations.js'
 import adminRoutes from './routes/admin.js'
 import statsRoutes from './routes/stats.js'
 import { maintenanceMiddleware } from './middleware/maintenance.js'
-import { configDB } from './dboperations.js'
+import { configDB, firmwareDB, categoryDB } from './dboperations.js'
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url)
@@ -74,6 +74,42 @@ app.use(
     })
   },
 )
+
+/**
+ * 动态 Sitemap - 公开访问，放在维护模式中间件之前
+ */
+app.get('/sitemap.xml', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmwareList = await firmwareDB.findAll();
+    const categoryList = await categoryDB.findAll();
+    const baseUrl = 'https://ssdtool.cc';
+    const today = new Date().toISOString().split('T')[0];
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+    xml += `  <url><loc>${baseUrl}/</loc><priority>1.0</priority><changefreq>daily</changefreq></url>\n`;
+    xml += `  <url><loc>${baseUrl}/categories</loc><priority>0.8</priority><changefreq>daily</changefreq></url>\n`;
+    xml += `  <url><loc>${baseUrl}/donate</loc><priority>0.5</priority><changefreq>monthly</changefreq></url>\n`;
+
+    const parentCategories = categoryList.filter((c: any) => !c.parent_id);
+    for (const cat of parentCategories) {
+      xml += `  <url><loc>${baseUrl}/categories?category=${cat.id}</loc><priority>0.7</priority><changefreq>weekly</changefreq></url>\n`;
+    }
+
+    for (const fw of firmwareList) {
+      if (fw.status !== 'approved') continue;
+      xml += `  <url><loc>${baseUrl}/firmware/${fw.id}</loc><priority>0.9</priority><changefreq>weekly</changefreq><lastmod>${fw.updated_at ? fw.updated_at.split(' ')[0] : today}</lastmod></url>\n`;
+    }
+
+    xml += `</urlset>`;
+    res.header('Content-Type', 'application/xml');
+    res.send(xml);
+  } catch (error) {
+    console.error('生成sitemap错误:', error);
+    res.status(500).header('Content-Type', 'text/plain').send('Sitemap generation failed');
+  }
+});
 
 /**
  * error handler middleware

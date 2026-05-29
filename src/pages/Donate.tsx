@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
 import { useAppStore } from '../store';
 import { Heart, Shield, Download, Zap, Gift, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -9,6 +10,12 @@ export default function Donate() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--theme-bg-base)' }}>
+      <Helmet>
+        <title>捐赠支持 - SSD开卡工具站</title>
+        <meta name="description" content="捐赠支持SSD开卡工具站，获取Premium会员资格，享受更多下载次数" />
+        <meta property="og:title" content="捐赠支持 - SSD开卡工具站" />
+        <meta property="og:description" content="捐赠支持SSD开卡工具站运营" />
+      </Helmet>
       <div className="container mx-auto px-4 py-12">
         <Link
           to="/"

@@ -24,7 +24,7 @@ export default function FirmwareCard({ firmware, index }: FirmwareCardProps) {
     .filter(Boolean) as Tag[];
 
   return (
-    <motion.div
+    <motion.article
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
@@ -42,7 +42,7 @@ export default function FirmwareCard({ firmware, index }: FirmwareCardProps) {
             <HardDrive className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg mb-1 truncate" style={{ color: 'var(--theme-text)' }}>{firmware.title}</h3>
+            <h2 className="font-semibold text-lg mb-1 truncate" style={{ color: 'var(--theme-text)' }}>{firmware.title}</h2>
             <p className="text-sm line-clamp-2" style={{ color: 'var(--theme-text-secondary)' }}>{firmware.description}</p>
           </div>
         </div>
@@ -82,6 +82,6 @@ export default function FirmwareCard({ firmware, index }: FirmwareCardProps) {
           </div>
         </div>
       </Link>
-    </motion.div>
+    </motion.article>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
 import { Key, Download, AlertCircle, CheckCircle, FileText } from 'lucide-react';
 import { useAppStore } from '@/store';
 
@@ -122,6 +123,11 @@ export default function LicenseQuery() {
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4">
+      <Helmet>
+        <title>卡密查询 - SSD开卡工具站</title>
+        <meta name="description" content="查询SSD开卡工具卡密有效性及下载链接" />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="max-w-2xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

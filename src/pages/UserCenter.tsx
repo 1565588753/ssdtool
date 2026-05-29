@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useAppStore } from '../store';
 import { useThemeStore } from '../hooks/useTheme';
 import { firmwareAPI, donationAPI } from '../services/api';
@@ -73,6 +74,10 @@ const { user, isAuthReady, logout, config, categories, firmware, tags, addCatego
 
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--theme-bg-base)' }}>
+      <Helmet>
+        <title>用户中心 - SSD开卡工具站</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <aside className="w-64 glass border-r flex flex-col" style={{ borderColor: 'var(--theme-border)' }}>
         <div className="p-6 border-b" style={{ borderColor: 'var(--theme-border)' }}>
           <div className="flex items-center gap-3">

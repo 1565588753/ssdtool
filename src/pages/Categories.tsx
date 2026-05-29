@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
 import { useAppStore } from '../store';
 import FirmwareCard from '../components/FirmwareCard';
 import { Search, Folder, ChevronRight, ChevronDown, X } from 'lucide-react';
@@ -143,6 +144,13 @@ export default function Categories() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--theme-bg-base)' }}>
+      <Helmet>
+        <title>{selectedCategory ? categories.find(c => c.id === selectedCategory)?.name || '全部固件' : '全部固件'} - SSD开卡工具站</title>
+        <meta name="description" content={`浏览${selectedCategory ? categories.find(c => c.id === selectedCategory)?.name || '' : '全部'}SSD开卡固件，共 ${filteredFirmware.length} 个固件可供下载`} />
+        <meta property="og:title" content={`${selectedCategory ? categories.find(c => c.id === selectedCategory)?.name || '全部固件' : '全部固件'} - SSD开卡工具站`} />
+        <meta property="og:description" content={`浏览${selectedCategory ? categories.find(c => c.id === selectedCategory)?.name || '' : '全部'}SSD开卡固件`} />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <div className="container mx-auto px-4 py-20">
         <div className="grid lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1 space-y-6">

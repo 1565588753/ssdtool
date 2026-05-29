@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
 import { useAppStore } from '../store';
 import {
   ArrowLeft,
@@ -37,6 +38,10 @@ export default function FirmwareDetail() {
   if (!firmware) {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">
+        <Helmet>
+          <title>固件不存在 - SSD开卡工具站</title>
+          <meta name="robots" content="noindex" />
+        </Helmet>
         <div className="text-center">
           <h1 className="font-display text-2xl font-bold mb-4">固件不存在</h1>
           <Link to="/" className="text-accent-400 hover:text-accent-300">
@@ -146,6 +151,31 @@ export default function FirmwareDetail() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--theme-bg-base)' }}>
+      <Helmet>
+        <title>{firmware.title} - SSD开卡工具站</title>
+        <meta name="description" content={`${firmware.title} - ${firmware.description?.slice(0, 150) || ''}，版本 ${firmware.version}，${firmware.downloadCount} 次下载`} />
+        <meta property="og:title" content={`${firmware.title} - SSD开卡工具站`} />
+        <meta property="og:description" content={firmware.description?.slice(0, 200) || `${firmware.title} 固件下载`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`https://ssdtool.cc/firmware/${firmware.id}`} />
+        <link rel="canonical" href={`https://ssdtool.cc/firmware/${firmware.id}`} />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": firmware.title,
+          "description": firmware.description,
+          "version": firmware.version,
+          "applicationCategory": "Utility",
+          "operatingSystem": "Windows",
+          "fileSize": firmware.fileSize,
+          "downloadUrl": `https://ssdtool.cc/firmware/${firmware.id}`,
+          "dateModified": firmware.updatedAt,
+          "author": {
+            "@type": "Person",
+            "name": firmware.uploaderName || "管理员"
+          }
+        })}</script>
+      </Helmet>
       <div className="container mx-auto px-4 py-20">
         <button
           onClick={() => navigate(-1)}

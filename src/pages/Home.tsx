@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useAppStore } from '../store';
 import FirmwareCard from '../components/FirmwareCard';
 import { statsAPI } from '../services/api';
@@ -383,6 +384,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--theme-bg-base)' }}>
+      <Helmet>
+        <title>{config.siteSettings.name} - 专业固态硬盘开卡工具分享平台</title>
+        <meta name="description" content={config.siteSettings.description || '专业的SSD开卡工具分享平台，汇集慧荣、群联、联芸等主流主控开卡工具'} />
+        <meta property="og:title" content={`${config.siteSettings.name} - 专业固态硬盘开卡工具分享平台`} />
+        <meta property="og:description" content={config.siteSettings.description || '专业的SSD开卡工具分享平台'} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://ssdtool.cc" />
+        <meta name="keywords" content="SSD开卡,固态硬盘维修,慧荣开卡,群联开卡,联芸开卡,SM2258XT,SM2259XT,PS3111" />
+      </Helmet>
       {renderAdSlot('top')}
       
       {sortedModules.map(module => renderModule(module))}
