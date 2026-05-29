@@ -37,6 +37,7 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
     categoryId: '',
   });
   const [saving, setSaving] = useState(false);
+  const [selectedEditFile, setSelectedEditFile] = useState<File | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -149,6 +150,7 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
 
   const handleEditOpen = (fw: any) => {
     setEditingFirmware(fw);
+    setSelectedEditFile(null);
     setEditForm({
       title: fw.title || '',
       description: fw.description || '',
@@ -167,12 +169,22 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
 
     setSaving(true);
     try {
-      await adminAPI.updateFirmware(editingFirmware.id, {
-        title: editForm.title,
-        categoryId: editForm.categoryId,
-        version: editForm.version,
-        description: editForm.description,
-      });
+      if (selectedEditFile) {
+        const formData = new FormData();
+        formData.append('firmwareFile', selectedEditFile);
+        formData.append('title', editForm.title);
+        formData.append('categoryId', editForm.categoryId);
+        formData.append('version', editForm.version);
+        formData.append('description', editForm.description);
+        await uploadFirmwareAPI.updateWithFile(editingFirmware.id, formData);
+      } else {
+        await adminAPI.updateFirmware(editingFirmware.id, {
+          title: editForm.title,
+          categoryId: editForm.categoryId,
+          version: editForm.version,
+          description: editForm.description,
+        });
+      }
       showToast('固件更新成功', 'success');
       setEditingFirmware(null);
       setRefreshKey(prev => prev + 1);
@@ -181,6 +193,12 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
       showToast('更新失败，请重试', 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedEditFile(e.target.files[0]);
     }
   };
 
@@ -527,6 +545,39 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
                     color: 'var(--theme-text)'
                   }}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
+                  替换固件文件（可选）
+                </label>
+                <div
+                  className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all hover:border-opacity-70"
+                  style={{ borderColor: 'var(--theme-border)' }}
+                  onClick={() => document.getElementById('editFirmwareFile')?.click()}
+                >
+                  <input
+                    id="editFirmwareFile"
+                    type="file"
+                    onChange={handleEditFileChange}
+                    className="hidden"
+                    accept=".zip,.rar,.7z,.exe,.iso,.bin"
+                  />
+                  {selectedEditFile ? (
+                    <div>
+                      <FileText className="w-12 h-12 mx-auto mb-2" style={{ color: 'var(--theme-primary-400)' }} />
+                      <p style={{ color: 'var(--theme-text)' }}>{selectedEditFile.name}</p>
+                      <p style={{ color: 'var(--theme-text-secondary)' }} className="text-sm">
+                        {(selectedEditFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <UploadCloud className="w-12 h-12 mx-auto mb-2" style={{ color: 'var(--theme-text-secondary)' }} />
+                      <p style={{ color: 'var(--theme-text-secondary)' }}>点击选择新文件替换（不选则保留原文件）</p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4">

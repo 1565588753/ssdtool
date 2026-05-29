@@ -12,7 +12,7 @@ import {
   Settings
 } from 'lucide-react';
 
-export default function Dashboard({ isAdmin, isMaintainer }: { isAdmin: boolean; isMaintainer: boolean; }) {
+export default function Dashboard({ isAdmin, isMaintainer, onNavigate }: { isAdmin: boolean; isMaintainer: boolean; onNavigate?: (tab: string) => void }) {
   const [dashboardData, setDashboardData] = useState({
     totalUsers: 0,
     totalFirmware: 0,
@@ -94,6 +94,7 @@ export default function Dashboard({ isAdmin, isMaintainer }: { isAdmin: boolean;
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {isMaintainer && (
             <button
+              onClick={() => onNavigate?.('firmware')}
               className="p-4 border-2 border-dashed rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2"
               style={{ borderColor: 'var(--theme-border)' }}
             >
@@ -103,15 +104,15 @@ export default function Dashboard({ isAdmin, isMaintainer }: { isAdmin: boolean;
           )}
           {isAdmin && (
             <>
-              <button className="p-4 border-2 border-dashed rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2" style={{ borderColor: 'var(--theme-border)' }}>
+              <button onClick={() => onNavigate?.('categories')} className="p-4 border-2 border-dashed rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2" style={{ borderColor: 'var(--theme-border)' }}>
                 <FolderTree className="w-8 h-8" style={{ color: 'var(--theme-text-secondary)' }} />
                 <span className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>管理分类</span>
               </button>
-              <button className="p-4 border-2 border-dashed rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2" style={{ borderColor: 'var(--theme-border)' }}>
+              <button onClick={() => onNavigate?.('tags')} className="p-4 border-2 border-dashed rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2" style={{ borderColor: 'var(--theme-border)' }}>
                 <Tag className="w-8 h-8" style={{ color: 'var(--theme-text-secondary)' }} />
                 <span className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>管理标签</span>
               </button>
-              <button className="p-4 border-2 border-dashed rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2" style={{ borderColor: 'var(--theme-border)' }}>
+              <button onClick={() => onNavigate?.('settings')} className="p-4 border-2 border-dashed rounded-xl hover:border-white/40 hover:bg-white/5 transition-all flex flex-col items-center gap-2" style={{ borderColor: 'var(--theme-border)' }}>
                 <Settings className="w-8 h-8" style={{ color: 'var(--theme-text-secondary)' }} />
                 <span className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>网站设置</span>
               </button>

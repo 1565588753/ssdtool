@@ -92,12 +92,15 @@ export const firmwareAPI = {
     ),
 
   download: (id: string) =>
-    fetchAPI<{ success: boolean; downloadUrl: string }>(
+    fetchAPI<{ success: boolean; token: string; isFreeRedownload: boolean; remainingDays: number }>(
       `/api/firmware/${id}/download`,
       {
         method: 'POST',
       }
     ),
+
+  getDownloadRedirect: (id: string, token: string) =>
+    `${API_BASE_URL}/api/firmware/${id}/dl/${token}`,
 };
 
 // 分类 API
@@ -270,6 +273,29 @@ export const uploadFirmwareAPI = {
       return response.json();
     } catch (error) {
       console.error('固件上传错误:', error);
+      throw error;
+    }
+  },
+
+  updateWithFile: async (id: string, formData: FormData) => {
+    try {
+      const token = localStorage.getItem('authToken') || '';
+      const response = await fetch(`${API_BASE_URL}/api/admin/firmware/${id}`, {
+        method: 'PUT',
+        body: formData,
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `更新失败: HTTP ${response.status}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      console.error('固件更新错误:', error);
       throw error;
     }
   },

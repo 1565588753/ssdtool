@@ -9,11 +9,27 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { verifyToken, extractUserId } from '../middleware/auth.js';
+import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = Router();
+
+const adminUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, path.join(__dirname, '../../files'));
+    },
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      const safeName = uuidv4() + ext;
+      cb(null, safeName);
+    }
+  }),
+  limits: { fileSize: 500 * 1024 * 1024 }
+});
 
 // 中间件：检查管理员权限
 async function adminMiddleware(req: Request, res: Response, next: Function) {
@@ -278,7 +294,7 @@ router.get('/firmware', async (req: Request, res: Response): Promise<void> => {
  * 更新固件
  * PUT /api/admin/firmware/:id
  */
-router.put('/firmware/:id', async (req: Request, res: Response): Promise<void> => {
+router.put('/firmware/:id', adminUpload.single('firmwareFile'), async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { title, description, version, categoryId, isPaid, price } = req.body;
@@ -310,6 +326,22 @@ router.put('/firmware/:id', async (req: Request, res: Response): Promise<void> =
       updates.push('price = ?');
       params.push(price);
     }
+
+    // 如果上传了新文件，删除旧文件并更新记录
+    if (req.file) {
+      const [oldRows] = await pool.execute('SELECT file_path FROM firmware WHERE id = ?', [id]);
+      const oldFirmware = (oldRows as any[])[0];
+      if (oldFirmware && oldFirmware.file_path) {
+        const oldFileName = oldFirmware.file_path.replace('/uploads/', '');
+        const oldFullPath = path.join(__dirname, '../../files', oldFileName);
+        if (fs.existsSync(oldFullPath)) {
+          fs.unlinkSync(oldFullPath);
+        }
+      }
+      updates.push('file_path = ?', 'file_size = ?', 'cloud_path = ?');
+      params.push(`/uploads/${req.file.filename}`, req.file.size, req.file.filename);
+    }
+
     if (updates.length === 0) {
       res.status(400).json({ success: false, error: '没有需要更新的字段' });
       return;

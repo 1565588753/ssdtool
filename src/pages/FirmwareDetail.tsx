@@ -61,13 +61,12 @@ export default function FirmwareDetail() {
     if (user.role === 'admin') {
       setDownloading(true);
       try {
-        const success = await downloadFirmware(firmware.id);
-        if (success) {
+        const result = await downloadFirmware(firmware.id);
+        if (result.success) {
           setDownloadSuccess(true);
           setTimeout(() => setDownloadSuccess(false), 3000);
-          window.open(`/api/firmware/${firmware.id}/file`, '_blank');
         } else {
-          setDownloadError('下载失败，请稍后重试');
+          setDownloadError(result.error || '下载失败，请稍后重试');
         }
       } catch (err) {
         console.error('Download failed:', err);
@@ -85,13 +84,12 @@ export default function FirmwareDetail() {
 
     setDownloading(true);
     try {
-      const success = await downloadFirmware(firmware.id);
-      if (success) {
+      const result = await downloadFirmware(firmware.id);
+      if (result.success) {
         setDownloadSuccess(true);
         setTimeout(() => setDownloadSuccess(false), 3000);
-        window.open(`/api/firmware/${firmware.id}/file`, '_blank');
       } else {
-        setDownloadError('下载失败，请稍后重试');
+        setDownloadError(result.error || '下载失败，请稍后重试');
       }
     } catch (err) {
       console.error('Download failed:', err);

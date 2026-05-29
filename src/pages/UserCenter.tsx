@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../store';
 import { useThemeStore } from '../hooks/useTheme';
+import { firmwareAPI, donationAPI } from '../services/api';
 import Dashboard from './admin/Dashboard';
 import FirmwareManage from './admin/FirmwareManage';
 import CategoryManage from './admin/CategoryManage';
@@ -20,7 +21,9 @@ import {
   Crown,
   Save,
   Tag,
-  X
+  X,
+  Clock,
+  CheckCircle
 } from 'lucide-react';
 
 type TabType = 'dashboard' | 'profile' | 'downloads' | 'firmware' | 'categories' | 'tags' | 'users' | 'settings';
@@ -154,7 +157,7 @@ const { user, isAuthReady, logout, config, categories, firmware, tags, addCatego
       <main className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
           {activeTab === 'dashboard' && (
-            <Dashboard isAdmin={isAdmin} isMaintainer={isMaintainer} />
+            <Dashboard isAdmin={isAdmin} isMaintainer={isMaintainer} onNavigate={(tab: string) => setActiveTab(tab as TabType)} />
           )}
           {activeTab === 'profile' && <Profile user={user} />}
           {activeTab === 'downloads' && <Downloads user={user} config={config} />}
@@ -251,13 +254,20 @@ function Profile({ user }: { user: any }) {
 }
 
 function Downloads({ user, config }: { user: any; config: any }) {
+  const downloadFirmware = useAppStore(s => s.downloadFirmware);
   const [downloadRecords, setDownloadRecords] = useState<any[]>([]);
   const [loadingDownloads, setLoadingDownloads] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
     const fetchDownloads = async () => {
       try {
-        const { donationAPI } = await import('../services/api');
         const res = await donationAPI.getUserDownloads();
         if (res.success) {
           setDownloadRecords(res.downloads);
@@ -271,12 +281,63 @@ function Downloads({ user, config }: { user: any; config: any }) {
     fetchDownloads();
   }, []);
 
+  const formatTime = (dateStr: string) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const pad2 = (n: number) => String(n).padStart(2, '0');
+    const ms = String(d.getMilliseconds()).padStart(3, '0');
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}.${ms}`;
+  };
+
+  const getRemainingDaysText = (firstDownloadAt: string) => {
+    if (!firstDownloadAt) return '';
+    const first = new Date(firstDownloadAt).getTime();
+    const elapsed = Date.now() - first;
+    const daysElapsed = Math.floor(elapsed / (1000 * 60 * 60 * 24));
+    const remaining = Math.max(0, 30 - daysElapsed);
+    if (remaining === 0) return '免费下载已过期';
+    return `还剩 ${remaining} 天免费下载`;
+  };
+
+  const getRemainingDaysColor = (firstDownloadAt: string) => {
+    if (!firstDownloadAt) return 'var(--theme-text-secondary)';
+    const first = new Date(firstDownloadAt).getTime();
+    const elapsed = Date.now() - first;
+    const daysElapsed = Math.floor(elapsed / (1000 * 60 * 60 * 24));
+    const remaining = 30 - daysElapsed;
+    if (remaining <= 0) return 'var(--theme-text-secondary)';
+    if (remaining <= 7) return '#f59e0b';
+    return '#22c55e';
+  };
+
+  const handleRedownload = async (firmwareId: string) => {
+    setDownloadingId(firmwareId);
+    try {
+      const result = await downloadFirmware(firmwareId);
+      if (!result.success) {
+        showToast(result.error || '下载失败', 'error');
+      }
+    } catch {
+      showToast('下载失败', 'error');
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   const usedCount = user.downloadsUsed || 0;
   const totalQuota = user.isPremium ? config.quotaSettings.premiumQuota : config.quotaSettings.freeQuota;
   const remainingQuota = Math.max(0, totalQuota - usedCount);
 
   return (
     <div className="space-y-6">
+      {toast && (
+        <div className={`fixed top-4 right-4 z-[100] px-5 py-3 rounded-xl shadow-lg ${
+          toast.type === 'success' ? 'bg-green-500/90 text-white' : 'bg-red-500/90 text-white'
+        }`}>
+          {toast.message}
+        </div>
+      )}
+
       <h2 className="text-2xl font-bold" style={{ color: 'var(--theme-text)' }}>下载记录</h2>
 
       <div className="glass-card rounded-xl p-6" style={{ borderColor: 'var(--theme-border)' }}>
@@ -318,22 +379,45 @@ function Downloads({ user, config }: { user: any; config: any }) {
           </div>
         ) : downloadRecords.length > 0 ? (
           <div className="divide-y" style={{ borderColor: 'var(--theme-border)' }}>
-            {downloadRecords.map(dl => (
-              <div key={dl.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
-                <div className="flex items-center gap-4">
-                  <div
-                    className="p-2 rounded-lg"
-                    style={{ backgroundColor: 'var(--theme-primary-900)' }}
+            {downloadRecords.map(dl => {
+              const remainingText = dl.firstDownloadAt ? getRemainingDaysText(dl.firstDownloadAt) : '';
+              const remainingColor = dl.firstDownloadAt ? getRemainingDaysColor(dl.firstDownloadAt) : undefined;
+              return (
+                <div key={dl.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div
+                      className="p-2 rounded-lg flex-shrink-0"
+                      style={{ backgroundColor: 'var(--theme-primary-900)' }}
+                    >
+                      <FileText className="w-5 h-5" style={{ color: 'var(--theme-primary-400)' }} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate" style={{ color: 'var(--theme-text)' }}>{dl.firmwareTitle || '未知固件'}</p>
+                      <div className="flex items-center gap-3 text-sm mt-0.5">
+                        <span style={{ color: 'var(--theme-text-secondary)' }}>
+                          <Clock className="w-3.5 h-3.5 inline mr-1" />
+                          {formatTime(dl.lastDownloadAt)}
+                        </span>
+                        {remainingText && (
+                          <span style={{ color: remainingColor }}>
+                            {remainingText}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleRedownload(dl.firmwareId)}
+                    disabled={downloadingId === dl.firmwareId}
+                    className="ml-4 flex-shrink-0 px-4 py-2 rounded-xl text-white font-medium text-sm disabled:opacity-50 flex items-center gap-1.5"
+                    style={{ background: 'var(--theme-gradient)' }}
                   >
-                    <FileText className="w-5 h-5" style={{ color: 'var(--theme-primary-400)' }} />
-                  </div>
-                  <div>
-                    <p className="font-medium" style={{ color: 'var(--theme-text)' }}>{dl.firmwareTitle || '未知固件'}</p>
-                    <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>{new Date(dl.createdAt).toLocaleDateString('zh-CN')}</p>
-                  </div>
+                    <Download className="w-4 h-4" />
+                    {downloadingId === dl.firmwareId ? '下载中...' : '再次下载'}
+                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="p-12 text-center" style={{ color: 'var(--theme-text-secondary)' }}>

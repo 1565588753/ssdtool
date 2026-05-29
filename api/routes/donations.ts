@@ -5,6 +5,7 @@
 import { Router, type Request, type Response } from 'express';
 import { donationDB, userDB, downloadDB, configDB } from '../dboperations.js';
 import { extractUserId } from '../middleware/auth.js';
+import pool from '../db.js';
 
 const router = Router();
 
@@ -135,16 +136,25 @@ router.get('/user/downloads', async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const downloads = await downloadDB.findByUser(userId);
+    const [rows] = await pool.execute(
+      `SELECT ufd.*, f.title as firmware_title
+       FROM user_firmware_downloads ufd
+       LEFT JOIN firmware f ON ufd.firmware_id = f.id
+       WHERE ufd.user_id = ?
+       ORDER BY ufd.last_download_at DESC`,
+      [userId]
+    );
 
     res.json({
       success: true,
-      downloads: (downloads as any[]).map(d => ({
+      downloads: (rows as any[]).map(d => ({
         id: d.id,
         userId: d.user_id,
         firmwareId: d.firmware_id,
         firmwareTitle: d.firmware_title,
-        createdAt: d.created_at
+        downloadCount: d.download_count,
+        firstDownloadAt: d.first_download_at,
+        lastDownloadAt: d.last_download_at
       }))
     });
   } catch (error) {

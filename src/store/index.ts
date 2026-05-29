@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { User, Category, Firmware, Donation, Contributor, Config, Download, Tag } from '../../shared/types';
+import { User, Category, Firmware, Donation, Contributor, Config, Tag } from '../../shared/types';
 import { authAPI, firmwareAPI, categoryAPI, donationAPI, adminAPI } from '../services/api';
 
 // 广告类型定义
@@ -46,14 +46,14 @@ isAuthReady: boolean;
   donations: Donation[];
   contributors: Contributor[];
   config: ExtendedConfig;
-  downloads: Download[];
+  downloadRecords: any[];
 
   getFirmwareById: (id: string) => Firmware | undefined;
   getFirmwareByCategory: (categoryId: string) => Firmware[];
   getFirmwareByTags: (tagIds: string[]) => Firmware[];
   getHotFirmware: () => Firmware[];
   getLatestFirmware: () => Firmware[];
-  downloadFirmware: (firmwareId: string) => Promise<boolean>;
+  downloadFirmware: (firmwareId: string) => Promise<{ success: boolean; isFreeRedownload?: boolean; error?: string }>;
 
   // 分类管理
   addCategory: (category: Omit<Category, 'id' | 'createdAt' | 'children'>) => void;
@@ -137,7 +137,7 @@ isAuthReady: false,
       donations: [],
       contributors: [],
       config: defaultConfig,
-      downloads: [],
+      downloadRecords: [],
       selectedCategory: null,
       selectedTags: [],
       searchQuery: '',
@@ -209,7 +209,7 @@ set({ user: userData, isAuthenticated: true, isAuthReady: true, token: response.
           donations: [],
           contributors: [],
           config: defaultConfig,
-          downloads: [],
+          downloadRecords: [],
           selectedCategory: null,
           selectedTags: [],
           searchQuery: '',
@@ -254,45 +254,30 @@ set({ user: userData, isAuthenticated: true, isAuthReady: true, token: response.
 
       downloadFirmware: async (firmwareId) => {
         const state = get();
-        if (!state.user) return false;
+        if (!state.user) return { success: false, error: '请先登录' };
 
         try {
           const response = await firmwareAPI.download(firmwareId);
           if (response.success) {
             const fw = state.getFirmwareById(firmwareId);
             set({
-              user: {
-                ...state.user,
-                downloadsUsed: state.user.downloadsUsed + 1
-              },
-              downloads: [
-                ...state.downloads,
-                {
-                  id: `dl-${Date.now()}`,
-                  userId: state.user.id,
-                  firmwareId,
-                  firmwareTitle: fw?.title,
-                  createdAt: new Date().toISOString()
-                }
-              ],
               firmware: state.firmware.map(fw =>
                 fw.id === firmwareId ? { ...fw, downloadCount: fw.downloadCount + 1 } : fw
               )
             });
 
-            const link = document.createElement('a');
-            link.href = `/api/firmware/${firmwareId}/file`;
-            link.download = '';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const downloadUrl = firmwareAPI.getDownloadRedirect(firmwareId, response.token);
+            window.location.href = downloadUrl;
 
-            return true;
+            return { success: true, isFreeRedownload: response.isFreeRedownload };
           }
-          return false;
+          return { success: false, error: '下载失败' };
         } catch (error: any) {
           console.error('下载失败:', error);
-          return false;
+          if (error.message.includes('429') || error.message.includes('操作太频繁')) {
+            return { success: false, error: error.message };
+          }
+          return { success: false, error: error.message || '下载失败' };
         }
       },
 
