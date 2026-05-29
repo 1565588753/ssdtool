@@ -507,7 +507,7 @@ set({ user: userData, isAuthenticated: true, isAuthReady: true, token: response.
             donationAPI.getAll().catch(() => ({ success: false, donations: [] }))
           ]);
 
-          if (categoriesRes.success && categoriesRes.categories.length > 0) {
+          if (categoriesRes.success) {
             const categories = categoriesRes.categories.map((c: any) => ({
               id: c.id,
               name: c.name,
@@ -521,7 +521,7 @@ set({ user: userData, isAuthenticated: true, isAuthReady: true, token: response.
             set({ categories });
           }
 
-          if (firmwareRes.success && firmwareRes.firmware.length > 0) {
+          if (firmwareRes.success) {
             const firmware = firmwareRes.firmware.map((f: any) => ({
               id: f.id,
               title: f.title,
@@ -542,7 +542,7 @@ set({ user: userData, isAuthenticated: true, isAuthReady: true, token: response.
             set({ firmware });
           }
 
-          if (donationsRes.success && donationsRes.donations.length > 0) {
+          if (donationsRes.success) {
             const donations = donationsRes.donations.map((d: any) => ({
               id: d.id,
               userId: d.userId,
