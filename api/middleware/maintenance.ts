@@ -12,7 +12,7 @@ export async function maintenanceMiddleware(req: Request, res: Response, next: N
 
     // Allow auth routes (login, register, etc.) to work
     const path = req.path;
-    if (path.startsWith('/api/auth/')) {
+    if (path.startsWith('/auth/')) {
       next();
       return;
     }
