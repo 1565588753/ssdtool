@@ -107,6 +107,18 @@ async function initDatabase() {
     `);
 
     await conn.execute(`
+      CREATE TABLE IF NOT EXISTS download_tokens (
+        id VARCHAR(100) PRIMARY KEY,
+        firmware_id VARCHAR(50) NOT NULL,
+        user_id VARCHAR(50) NOT NULL,
+        token VARCHAR(100) NOT NULL UNIQUE,
+        expires_at DATETIME NOT NULL,
+        used TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await conn.execute(`
       CREATE TABLE IF NOT EXISTS verification_codes (
         id INT AUTO_INCREMENT PRIMARY KEY,
         email VARCHAR(255) NOT NULL,
@@ -121,6 +133,12 @@ async function initDatabase() {
     console.log('✅ MySQL database tables created');
 
     await seedData(conn);
+
+    try {
+      await conn.execute('ALTER TABLE user_firmware_downloads MODIFY COLUMN last_download_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3)');
+    } catch (e: any) {
+      console.warn('修改 last_download_at 精度跳过:', e.message);
+    }
   } finally {
     conn.release();
   }

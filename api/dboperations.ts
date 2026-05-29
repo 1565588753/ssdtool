@@ -35,6 +35,9 @@ export const userDB = {
   async delete(id: string) {
     const [result] = await pool.execute('DELETE FROM users WHERE id = ?', [id]);
     return result;
+  },
+  async updateLastDownloadAt(id: string) {
+    await pool.execute('UPDATE users SET last_download_at = NOW() WHERE id = ?', [id]);
   }
 };
 
@@ -195,7 +198,7 @@ export const userFirmwareDownloadDB = {
   },
   async incrementDownloadCount(userId: string, firmwareId: string) {
     await pool.execute(
-      'UPDATE user_firmware_downloads SET download_count = download_count + 1, last_download_at = CURRENT_TIMESTAMP WHERE user_id = ? AND firmware_id = ?',
+      'UPDATE user_firmware_downloads SET download_count = download_count + 1, last_download_at = NOW(3) WHERE user_id = ? AND firmware_id = ?',
       [userId, firmwareId]
     );
   },
@@ -210,6 +213,27 @@ export const userFirmwareDownloadDB = {
       [userId, cutoffIso]
     );
     return rows as any[];
+  }
+};
+
+export const downloadTokenDB = {
+  async create(data: { firmwareId: string; userId: string; token: string; expiresAt: string }) {
+    const id = `tok-${Date.now()}`;
+    await pool.execute(
+      'INSERT INTO download_tokens (id, firmware_id, user_id, token, expires_at, used) VALUES (?, ?, ?, ?, ?, 0)',
+      [id, data.firmwareId, data.userId, data.token, data.expiresAt]
+    );
+    return id;
+  },
+  async findByToken(token: string) {
+    const [rows] = await pool.execute('SELECT * FROM download_tokens WHERE token = ?', [token]);
+    return (rows as any[])[0];
+  },
+  async markAsUsed(token: string) {
+    await pool.execute('UPDATE download_tokens SET used = 1 WHERE token = ?', [token]);
+  },
+  async cleanupExpired() {
+    await pool.execute('DELETE FROM download_tokens WHERE expires_at < NOW()');
   }
 };
 
@@ -250,6 +274,7 @@ export default {
   downloadDB,
   donationDB,
   configDB,
+  downloadTokenDB,
   verificationCodeDB,
   userFirmwareDownloadDB
 };

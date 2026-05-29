@@ -457,3 +457,9526 @@ router.get('/:id/file', async (req: Request, res: Response): Promise<void> => {
 });
 
 export default router;
+/**
+ * 固件管理 API 路由
+ * 处理固件的查询/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import mul/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } fro/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(impo/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCas/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWE/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ */**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware =/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: f/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.upload/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        pric/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmw/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCoun/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: f/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.find/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        pric/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!f/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success:/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCoun/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(us/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    l/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast =/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('qu/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuo/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastDownload) / 1000);
+        if (diffSeconds < 60)/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastDownload) / 1000);
+        if (diffSeconds < 60) {
+          const remaining = 60 - diffSeconds;
+          res.status(429).json({
+            success: false,
+            error: `操作太频繁，请 ${remaining}/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastDownload) / 1000);
+        if (diffSeconds < 60) {
+          const remaining = 60 - diffSeconds;
+          res.status(429).json({
+            success: false,
+            error: `操作太频繁，请 ${remaining} 秒后再试`,
+            remainingSeconds: remaining
+          });
+          return;
+        }
+      }
+    }
+
+    // 生成一次性token（10分钟内有效）
+    const tokenId = `/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastDownload) / 1000);
+        if (diffSeconds < 60) {
+          const remaining = 60 - diffSeconds;
+          res.status(429).json({
+            success: false,
+            error: `操作太频繁，请 ${remaining} 秒后再试`,
+            remainingSeconds: remaining
+          });
+          return;
+        }
+      }
+    }
+
+    // 生成一次性token（10分钟内有效）
+    const tokenId = `tok-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const rawToken = Buffer.from(tokenId).toString('base64').replace(/=/g, '');
+    const expiresAt = new Date(Date.now()/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastDownload) / 1000);
+        if (diffSeconds < 60) {
+          const remaining = 60 - diffSeconds;
+          res.status(429).json({
+            success: false,
+            error: `操作太频繁，请 ${remaining} 秒后再试`,
+            remainingSeconds: remaining
+          });
+          return;
+        }
+      }
+    }
+
+    // 生成一次性token（10分钟内有效）
+    const tokenId = `tok-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const rawToken = Buffer.from(tokenId).toString('base64').replace(/=/g, '');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+    await downloadTokenDB.create({
+      firmw/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastDownload) / 1000);
+        if (diffSeconds < 60) {
+          const remaining = 60 - diffSeconds;
+          res.status(429).json({
+            success: false,
+            error: `操作太频繁，请 ${remaining} 秒后再试`,
+            remainingSeconds: remaining
+          });
+          return;
+        }
+      }
+    }
+
+    // 生成一次性token（10分钟内有效）
+    const tokenId = `tok-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const rawToken = Buffer.from(tokenId).toString('base64').replace(/=/g, '');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+    await downloadTokenDB.create({
+      firmwareId: id,
+      userId,
+      token: rawToken,
+      expiresAt
+    });
+
+    // 更新 user_firmware_downloads
+    if (existingDownload) {
+      await userFirmwareDownload/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastDownload) / 1000);
+        if (diffSeconds < 60) {
+          const remaining = 60 - diffSeconds;
+          res.status(429).json({
+            success: false,
+            error: `操作太频繁，请 ${remaining} 秒后再试`,
+            remainingSeconds: remaining
+          });
+          return;
+        }
+      }
+    }
+
+    // 生成一次性token（10分钟内有效）
+    const tokenId = `tok-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const rawToken = Buffer.from(tokenId).toString('base64').replace(/=/g, '');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+    await downloadTokenDB.create({
+      firmwareId: id,
+      userId,
+      token: rawToken,
+      expiresAt
+    });
+
+    // 更新 user_firmware_downloads
+    if (existingDownload) {
+      await userFirmwareDownloadDB.incrementDownloadCount(userId, id);
+    } else {
+      await userFirmwareDownloadDB.create({ userId, firmwareId: id });
+    }
+
+    // 创建下载记录/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastDownload) / 1000);
+        if (diffSeconds < 60) {
+          const remaining = 60 - diffSeconds;
+          res.status(429).json({
+            success: false,
+            error: `操作太频繁，请 ${remaining} 秒后再试`,
+            remainingSeconds: remaining
+          });
+          return;
+        }
+      }
+    }
+
+    // 生成一次性token（10分钟内有效）
+    const tokenId = `tok-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const rawToken = Buffer.from(tokenId).toString('base64').replace(/=/g, '');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+    await downloadTokenDB.create({
+      firmwareId: id,
+      userId,
+      token: rawToken,
+      expiresAt
+    });
+
+    // 更新 user_firmware_downloads
+    if (existingDownload) {
+      await userFirmwareDownloadDB.incrementDownloadCount(userId, id);
+    } else {
+      await userFirmwareDownloadDB.create({ userId, firmwareId: id });
+    }
+
+    // 创建下载记录
+    await downloadDB.create({
+      userId,
+      firmwareId: id,
+      firmwareTitle: firmware.title
+    });
+
+    // 更新固件下载次数
+    await firmwareDB.incrementDownloadCount(id);
+
+    // 只有首次下载或超过30天才扣减配额
+    if (!/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastDownload) / 1000);
+        if (diffSeconds < 60) {
+          const remaining = 60 - diffSeconds;
+          res.status(429).json({
+            success: false,
+            error: `操作太频繁，请 ${remaining} 秒后再试`,
+            remainingSeconds: remaining
+          });
+          return;
+        }
+      }
+    }
+
+    // 生成一次性token（10分钟内有效）
+    const tokenId = `tok-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const rawToken = Buffer.from(tokenId).toString('base64').replace(/=/g, '');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+    await downloadTokenDB.create({
+      firmwareId: id,
+      userId,
+      token: rawToken,
+      expiresAt
+    });
+
+    // 更新 user_firmware_downloads
+    if (existingDownload) {
+      await userFirmwareDownloadDB.incrementDownloadCount(userId, id);
+    } else {
+      await userFirmwareDownloadDB.create({ userId, firmwareId: id });
+    }
+
+    // 创建下载记录
+    await downloadDB.create({
+      userId,
+      firmwareId: id,
+      firmwareTitle: firmware.title
+    });
+
+    // 更新固件下载次数
+    await firmwareDB.incrementDownloadCount(id);
+
+    // 只有首次下载或超过30天才扣减配额
+    if (!isFreeRedownload) {
+      await userDB.updateDownloadsUsed(userId, user.downloads_used + 1);
+      await userDB.updateLastDownloadAt(userId);
+    }
+
+    res.json({
+      success: true,
+      message: '下载成功',
+      token/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastDownload) / 1000);
+        if (diffSeconds < 60) {
+          const remaining = 60 - diffSeconds;
+          res.status(429).json({
+            success: false,
+            error: `操作太频繁，请 ${remaining} 秒后再试`,
+            remainingSeconds: remaining
+          });
+          return;
+        }
+      }
+    }
+
+    // 生成一次性token（10分钟内有效）
+    const tokenId = `tok-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const rawToken = Buffer.from(tokenId).toString('base64').replace(/=/g, '');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+    await downloadTokenDB.create({
+      firmwareId: id,
+      userId,
+      token: rawToken,
+      expiresAt
+    });
+
+    // 更新 user_firmware_downloads
+    if (existingDownload) {
+      await userFirmwareDownloadDB.incrementDownloadCount(userId, id);
+    } else {
+      await userFirmwareDownloadDB.create({ userId, firmwareId: id });
+    }
+
+    // 创建下载记录
+    await downloadDB.create({
+      userId,
+      firmwareId: id,
+      firmwareTitle: firmware.title
+    });
+
+    // 更新固件下载次数
+    await firmwareDB.incrementDownloadCount(id);
+
+    // 只有首次下载或超过30天才扣减配额
+    if (!isFreeRedownload) {
+      await userDB.updateDownloadsUsed(userId, user.downloads_used + 1);
+      await userDB.updateLastDownloadAt(userId);
+    }
+
+    res.json({
+      success: true,
+      message: '下载成功',
+      token: rawToken,
+      expiresAt,
+      isFreeRedownload
+    });
+  } catch (error) {
+    console.error('下载固件错误:', error);
+    res.status(500/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastDownload) / 1000);
+        if (diffSeconds < 60) {
+          const remaining = 60 - diffSeconds;
+          res.status(429).json({
+            success: false,
+            error: `操作太频繁，请 ${remaining} 秒后再试`,
+            remainingSeconds: remaining
+          });
+          return;
+        }
+      }
+    }
+
+    // 生成一次性token（10分钟内有效）
+    const tokenId = `tok-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const rawToken = Buffer.from(tokenId).toString('base64').replace(/=/g, '');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+    await downloadTokenDB.create({
+      firmwareId: id,
+      userId,
+      token: rawToken,
+      expiresAt
+    });
+
+    // 更新 user_firmware_downloads
+    if (existingDownload) {
+      await userFirmwareDownloadDB.incrementDownloadCount(userId, id);
+    } else {
+      await userFirmwareDownloadDB.create({ userId, firmwareId: id });
+    }
+
+    // 创建下载记录
+    await downloadDB.create({
+      userId,
+      firmwareId: id,
+      firmwareTitle: firmware.title
+    });
+
+    // 更新固件下载次数
+    await firmwareDB.incrementDownloadCount(id);
+
+    // 只有首次下载或超过30天才扣减配额
+    if (!isFreeRedownload) {
+      await userDB.updateDownloadsUsed(userId, user.downloads_used + 1);
+      await userDB.updateLastDownloadAt(userId);
+    }
+
+    res.json({
+      success: true,
+      message: '下载成功',
+      token: rawToken,
+      expiresAt,
+      isFreeRedownload
+    });
+  } catch (error) {
+    console.error('下载固件错误:', error);
+    res.status(500).json({ success: false, error: '下载失败' });
+  }
+});
+
+/**
+ * 通过一次性token验证后从本地/files下载文件
+ * GET /api/firmw/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastDownload) / 1000);
+        if (diffSeconds < 60) {
+          const remaining = 60 - diffSeconds;
+          res.status(429).json({
+            success: false,
+            error: `操作太频繁，请 ${remaining} 秒后再试`,
+            remainingSeconds: remaining
+          });
+          return;
+        }
+      }
+    }
+
+    // 生成一次性token（10分钟内有效）
+    const tokenId = `tok-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const rawToken = Buffer.from(tokenId).toString('base64').replace(/=/g, '');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+    await downloadTokenDB.create({
+      firmwareId: id,
+      userId,
+      token: rawToken,
+      expiresAt
+    });
+
+    // 更新 user_firmware_downloads
+    if (existingDownload) {
+      await userFirmwareDownloadDB.incrementDownloadCount(userId, id);
+    } else {
+      await userFirmwareDownloadDB.create({ userId, firmwareId: id });
+    }
+
+    // 创建下载记录
+    await downloadDB.create({
+      userId,
+      firmwareId: id,
+      firmwareTitle: firmware.title
+    });
+
+    // 更新固件下载次数
+    await firmwareDB.incrementDownloadCount(id);
+
+    // 只有首次下载或超过30天才扣减配额
+    if (!isFreeRedownload) {
+      await userDB.updateDownloadsUsed(userId, user.downloads_used + 1);
+      await userDB.updateLastDownloadAt(userId);
+    }
+
+    res.json({
+      success: true,
+      message: '下载成功',
+      token: rawToken,
+      expiresAt,
+      isFreeRedownload
+    });
+  } catch (error) {
+    console.error('下载固件错误:', error);
+    res.status(500).json({ success: false, error: '下载失败' });
+  }
+});
+
+/**
+ * 通过一次性token验证后从本地/files下载文件
+ * GET /api/firmware/:id/dl/:token
+ */
+router.get('/:id/dl/:token', async (req:/**
+ * 固件管理 API 路由
+ * 处理固件的查询、下载、上传等
+ */
+import { Router, type Request, type Response } from 'express';
+import { firmwareDB, categoryDB, downloadDB, userDB, configDB, downloadTokenDB, userFirmwareDownloadDB } from '../dboperations.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { verifyToken, extractUserId } from '../middleware/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import pool from '../db.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const router = Router();
+
+const ALLOWED_EXTENSIONS = ['.zip', '.rar', '.7z', '.bin', '.img', '.gz', '.tar', '.bz2'];
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, '../../files'));
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = uuidv4() + ext;
+    cb(null, safeName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      cb(new Error(`不支持的文件类型: ${ext}，仅支持 ${ALLOWED_EXTENSIONS.join(', ')}`));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+/**
+ * 获取所有固件
+ * GET /api/firmware
+ */
+router.get('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const firmware = await firmwareDB.findAll();
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取固件列表错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件列表失败'
+    });
+  }
+});
+
+/**
+ * 获取热门固件
+ * GET /api/firmware/hot
+ */
+router.get('/hot', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findHot(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取热门固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取热门固件失败'
+    });
+  }
+});
+
+/**
+ * 获取最新固件
+ * GET /api/firmware/latest
+ */
+router.get('/latest', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 6;
+    const firmware = await firmwareDB.findLatest(limit);
+    res.json({
+      success: true,
+      firmware: firmware.map((fw: any) => ({
+        id: fw.id,
+        title: fw.title,
+        description: fw.description,
+        version: fw.version,
+        categoryId: fw.category_id,
+        uploaderId: fw.uploader_id,
+        uploaderName: fw.uploader_name,
+        filePath: fw.file_path,
+        fileSize: fw.file_size,
+        downloadCount: fw.download_count,
+        isPaid: Boolean(fw.is_paid),
+        price: fw.price,
+        status: fw.status,
+        createdAt: fw.created_at,
+        updatedAt: fw.updated_at
+      }))
+    });
+  } catch (error) {
+    console.error('获取最新固件错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取最新固件失败'
+    });
+  }
+});
+
+/**
+ * 获取单个固件详情
+ * GET /api/firmware/:id
+ */
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const firmware = await firmwareDB.findById(id);
+
+    if (!firmware) {
+      res.status(404).json({
+        success: false,
+        error: '固件不存在'
+      });
+      return;
+    }
+
+    res.json({
+      success: true,
+      firmware: {
+        id: firmware.id,
+        title: firmware.title,
+        description: firmware.description,
+        version: firmware.version,
+        categoryId: firmware.category_id,
+        uploaderId: firmware.uploader_id,
+        uploaderName: firmware.uploader_name,
+        filePath: firmware.file_path,
+        fileSize: firmware.file_size,
+        downloadCount: firmware.download_count,
+        isPaid: Boolean(firmware.is_paid),
+        price: firmware.price,
+        status: firmware.status,
+        createdAt: firmware.created_at,
+        updatedAt: firmware.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('获取固件详情错误:', error);
+    res.status(500).json({
+      success: false,
+      error: '获取固件详情失败'
+    });
+  }
+});
+
+/**
+ * 下载固件 - 生成一次性token
+ * POST /api/firmware/:id/download
+ */
+router.post('/:id/download', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const userId = extractUserId(req);
+    
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const user = await userDB.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: '用户不存在' });
+      return;
+    }
+
+    const firmware = await firmwareDB.findById(id);
+    if (!firmware) {
+      res.status(404).json({ success: false, error: '固件不存在' });
+      return;
+    }
+
+    // 检查是否在30天内免费重下载该固件
+    const existingDownload = await userFirmwareDownloadDB.findByUserAndFirmware(userId, id);
+    let isFreeRedownload = false;
+    if (existingDownload) {
+      const lastDownload = new Date(existingDownload.last_download_at).getTime();
+      const daysSinceLast = (Date.now() - lastDownload) / (1000 * 60 * 60 * 24);
+      isFreeRedownload = daysSinceLast <= 30;
+    }
+
+    if (!isFreeRedownload) {
+      const quotaConfig = await configDB.get('quota_settings') || {};
+      const maxQuota = user.is_premium ? (quotaConfig.premiumQuota || 50) : (quotaConfig.freeQuota || 5);
+
+      if (user.downloads_used >= maxQuota) {
+        res.status(400).json({
+          success: false,
+          error: '下载额度已用完，请升级 Premium 或等待下月重置'
+        });
+        return;
+      }
+
+      // 普通用户60秒下载冷却
+      if (!user.is_premium && user.last_download_at) {
+        const lastDownload = new Date(user.last_download_at).getTime();
+        const now = Date.now();
+        const diffSeconds = Math.floor((now - lastDownload) / 1000);
+        if (diffSeconds < 60) {
+          const remaining = 60 - diffSeconds;
+          res.status(429).json({
+            success: false,
+            error: `操作太频繁，请 ${remaining} 秒后再试`,
+            remainingSeconds: remaining
+          });
+          return;
+        }
+      }
+    }
+
+    // 生成一次性token（10分钟内有效）
+    const tokenId = `tok-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const rawToken = Buffer.from(tokenId).toString('base64').replace(/=/g, '');
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+
+    await downloadTokenDB.create({
+      firmwareId: id,
+      userId,
+      token: rawToken,
+      expiresAt
+    });
+
+    // 更新 user_firmware_downloads
+    if (existingDownload) {
+      await userFirmwareDownloadDB.incrementDownloadCount(userId, id);
+    } else {
+      await userFirmwareDownloadDB.create({ userId, firmwareId: id });
+    }
+
+    // 创建下载记录
+    await downloadDB.create({
+      userId,
+      firmwareId: id,
+      firmwareTitle: firmware.title
+    });
+
+    // 更新固件下载次数
+    await firmwareDB.incrementDownloadCount(id);
+
+    // 只有首次下载或超过30天才扣减配额
+    if (!isFreeRedownload) {
+      await userDB.updateDownloadsUsed(userId, user.downloads_used + 1);
+      await userDB.updateLastDownloadAt(userId);
+    }
+
+    res.json({
+      success: true,
+      message: '下载成功',
+      token: rawToken,
+      expiresAt,
+      isFreeRedownload
+    });
+  } catch (error) {
+    console.error('下载固件错误:', error);
+    res.status(500).json({ success: false, error: '下载失败' });
+  }
+});
+
+/**
+ * 通过一次性token验证后从本地/files下载文件
+ * GET /api/firmware/:id/dl/:token
+ */
+router.get('/:id/dl/:token', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id, token } = req.params;
+
+    // 防止直接使用裸链接，验证 Referer
+    const referer = req.headers.referer || '';
+    if (!referer || (!
