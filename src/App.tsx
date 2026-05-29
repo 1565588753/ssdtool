@@ -7,6 +7,7 @@ import { authAPI, configAPI } from "@/services/api";
 
 const Home = lazy(() => import("@/pages/Home"));
 const Login = lazy(() => import("@/pages/Login"));
+const AdminLogin = lazy(() => import("@/pages/AdminLogin"));
 const Register = lazy(() => import("@/pages/Register"));
 const Categories = lazy(() => import("@/pages/Categories"));
 const FirmwareDetail = lazy(() => import("@/pages/FirmwareDetail"));
@@ -42,7 +43,7 @@ function MaintenancePage({ message }: { message: string }) {
 }
 
 function AppContent() {
-  const { user, isAuthReady, isAuthenticated } = useAppStore();
+  const { user, isAuthenticated } = useAppStore();
   const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string } | null>(null);
   const location = useLocation();
 
@@ -63,21 +64,21 @@ function AppContent() {
   }, []);
 
   const isAdmin = isAuthenticated && user?.role === 'admin';
-  const isLoginPage = location.pathname === '/login';
-  const isAdminPage = location.pathname === '/user';
+  const isAdminRoute = location.pathname === '/admin';
 
-  if (maintenance?.enabled && !isAdmin && !isLoginPage) {
+  if (maintenance?.enabled && !isAdmin && !isAdminRoute) {
     return <MaintenancePage message={maintenance.message} />;
   }
 
   return (
     <>
-      <BackgroundEffect />
-      <Navbar />
+      {!maintenance?.enabled && <BackgroundEffect />}
+      {(!maintenance?.enabled || isAdmin) && <Navbar />}
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/admin" element={<AdminLogin />} />
           <Route path="/register" element={<Register />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/firmware/:id" element={<FirmwareDetail />} />
