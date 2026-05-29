@@ -17,6 +17,8 @@ import categoryRoutes from './routes/categories.js'
 import donationRoutes from './routes/donations.js'
 import adminRoutes from './routes/admin.js'
 import statsRoutes from './routes/stats.js'
+import { maintenanceMiddleware } from './middleware/maintenance.js'
+import { configDB } from './dboperations.js'
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url)
@@ -33,6 +35,26 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
 // 静态文件服务 - 提供上传文件的访问
 app.use('/uploads', express.static(path.join(__dirname, '../files')))
+
+/**
+ * 公开维护状态 - 无需任何鉴权，在维护模式中间件之前注册
+ */
+app.get('/api/maintenance-status', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const maintenance = await configDB.get('maintenance_settings');
+    res.json({
+      enabled: maintenance?.enabled || false,
+      message: maintenance?.message || '网站维护中，敬请期待...'
+    });
+  } catch {
+    res.json({ enabled: false, message: '' });
+  }
+});
+
+/**
+ * 维护模式中间件 - 拦截所有非管理员API请求
+ */
+app.use('/api', maintenanceMiddleware)
 
 /**
  * API Routes
