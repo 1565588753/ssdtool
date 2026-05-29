@@ -49,7 +49,8 @@ export default function FirmwareManage({ isAdmin, isMaintainer, firmware: storeF
     try {
       await adminAPI.deleteFirmware(deleteConfirm);
       deleteFirmware(deleteConfirm);
-      setFirmwareList(prev => prev.filter(f => f.id !== deleteConfirm));
+      setRefreshKey(prev => prev + 1);
+      loadInitialData();
       showToast('固件已删除', 'success');
     } catch {
       showToast('删除失败，请重试', 'error');
