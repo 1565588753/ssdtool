@@ -118,6 +118,4 @@ export interface SmtpConfig {
   fromName: string;
 }
 
-export interface StorageConfig {
-  mountDomain: string;
-}
+

@@ -254,14 +254,7 @@ export const adminAPI = {
       body: JSON.stringify(config),
     }),
 
-  getStorageConfig: () =>
-    fetchAPI<{ success: boolean; config: { mountDomain: string } }>('/api/admin/storage-config'),
-  updateStorageConfig: (config: { mountDomain: string }) =>
-    fetchAPI<{ success: boolean; message: string }>('/api/admin/storage-config', {
-      method: 'PUT',
-      body: JSON.stringify(config),
-    }),
-};
+  };
 
 // 固件上传 API
 export const uploadFirmwareAPI = {

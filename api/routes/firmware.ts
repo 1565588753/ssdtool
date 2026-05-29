@@ -460,7 +460,7 @@ router.get('/:id/dl/:token', async (req: Request, res: Response): Promise<void> 
     // 标记token已使用
     await downloadTokenDB.markAsUsed(token);
 
-    const fileName = firmware.cloud_path || path.basename(firmware.file_path);
+    const fileName = path.basename(firmware.file_path);
     const filesDir = path.join(__dirname, '../../files');
     const filePath = path.join(filesDir, fileName);
 

@@ -28,7 +28,6 @@ const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' |
     { id: 'homeText', icon: FileText, label: '首页文本' },
     { id: 'quota', icon: Users, label: '下载配额' },
     { id: 'smtp', icon: Mail, label: 'SMTP设置' },
-    { id: 'storage', icon: Globe, label: '文件存储' },
     { id: 'theme', icon: Palette, label: '主题配色' },
     { id: 'maintenance', icon: ShieldAlert, label: '维护模式' }
   ];
@@ -45,11 +44,6 @@ const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' |
   const [smtpSaving, setSmtpSaving] = useState(false);
   const [smtpMessage, setSmtpMessage] = useState('');
   const [smtpLoaded, setSmtpLoaded] = useState(false);
-
-  const [storageConfig, setStorageConfig] = useState({ mountDomain: '' });
-  const [storageSaving, setStorageSaving] = useState(false);
-  const [storageMessage, setStorageMessage] = useState('');
-  const [storageLoaded, setStorageLoaded] = useState(false);
 
   const loadSmtpConfig = async () => {
     try {
@@ -74,21 +68,6 @@ const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' |
     loadSmtpConfig();
   }
 
-  const loadStorageConfig = async () => {
-    try {
-      const res = await adminAPI.getStorageConfig();
-      if (res.success && res.config) {
-        setStorageConfig({ mountDomain: res.config.mountDomain || '' });
-      }
-    } catch (err) {
-      console.error('加载文件存储配置失败:', err);
-    }
-  };
-
-  if (activeSection === 'storage' && !storageLoaded) {
-    setStorageLoaded(true);
-    loadStorageConfig();
-  }
   const sortedModules = [...config.homeModules].sort((a, b) => a.order - b.order);
 
   const handleDragStart = (id: string) => {
@@ -586,72 +565,7 @@ const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' |
               </div>
             )}
 
-{activeSection === 'storage' && (
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--theme-gradient)' }}>
-                    <Globe className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-lg font-bold" style={{ color: 'var(--theme-text)' }}>文件存储设置</h3>
-                    <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>配置挂载站域名，文件下载将重定向到此地址</p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>挂载站域名</label>
-                  <input
-                    type="text"
-                    value={storageConfig.mountDomain}
-                    onChange={(e) => setStorageConfig({ ...storageConfig, mountDomain: e.target.value })}
-                    placeholder="https://your-domain.example.com/files"
-                    className="w-full px-4 py-3 rounded-xl focus:outline-none"
-                    style={{
-                      backgroundColor: 'var(--theme-bg-card)',
-                      border: '1px solid var(--theme-border)',
-                      color: 'var(--theme-text)',
-                    }}
-                  />
-                  <p className="text-xs mt-1.5" style={{ color: 'var(--theme-text-muted)' }}>
-                    将阿里云盘通过 WebDAV 挂载到服务器的 /files 目录后，在此填写对应的公网访问域名。例如 https://your-domain.example.com/files。配置后固件下载将自动重定向到此地址。
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={async () => {
-                      setStorageSaving(true);
-                      setStorageMessage('');
-                      try {
-                        const res = await adminAPI.updateStorageConfig(storageConfig);
-                        if (res.success) {
-                          setStorageMessage('配置保存成功');
-                        } else {
-                          setStorageMessage('保存失败');
-                        }
-                      } catch (err: any) {
-                        setStorageMessage(err.message || '保存失败');
-                      } finally {
-                        setStorageSaving(false);
-                        setTimeout(() => setStorageMessage(''), 3000);
-                      }
-                    }}
-                    disabled={storageSaving}
-                    className="px-6 py-3 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ background: 'var(--theme-gradient)' }}
-                  >
-                    {storageSaving ? '保存中...' : '保存配置'}
-                  </button>
-                  {storageMessage && (
-                    <span className="text-sm font-medium" style={{ color: storageMessage.includes('成功') ? '#22c55e' : '#ef4444' }}>
-                      {storageMessage}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeSection === 'theme' && (
+{activeSection === 'theme' && (
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium mb-4" style={{ color: 'var(--theme-text-secondary)' }}>选择主题</label>

@@ -338,8 +338,8 @@ router.put('/firmware/:id', adminUpload.single('firmwareFile'), async (req: Requ
           fs.unlinkSync(oldFullPath);
         }
       }
-      updates.push('file_path = ?', 'file_size = ?', 'cloud_path = ?');
-      params.push(`/uploads/${req.file.filename}`, req.file.size, req.file.filename);
+      updates.push('file_path = ?', 'file_size = ?');
+      params.push(`/uploads/${req.file.filename}`, req.file.size);
     }
 
     if (updates.length === 0) {
@@ -655,27 +655,6 @@ router.put('/smtp-config', async (req: Request, res: Response): Promise<void> =>
     const { host, port, user, pass, fromEmail, fromName } = req.body;
     await configDB.set('smtp_settings', { host, port, user, pass, fromEmail, fromName });
     res.json({ success: true, message: 'SMTP配置已更新' });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// 获取文件存储配置
-router.get('/storage-config', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const config = await configDB.get('storage_settings');
-    res.json({ success: true, config: config || { mountDomain: '' } });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// 更新文件存储配置
-router.put('/storage-config', async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { mountDomain } = req.body;
-    await configDB.set('storage_settings', { mountDomain });
-    res.json({ success: true, message: '文件存储配置已更新' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
