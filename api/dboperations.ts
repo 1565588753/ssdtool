@@ -213,6 +213,12 @@ export const userFirmwareDownloadDB = {
       [userId, cutoffIso]
     );
     return rows as any[];
+  },
+  async delete(id: string) {
+    await pool.execute('DELETE FROM user_firmware_downloads WHERE id = ?', [id]);
+  },
+  async deleteByUser(userId: string) {
+    await pool.execute('DELETE FROM user_firmware_downloads WHERE user_id = ?', [userId]);
   }
 };
 

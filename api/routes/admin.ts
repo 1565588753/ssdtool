@@ -617,27 +617,19 @@ router.get('/config', async (req: Request, res: Response): Promise<void> => {
  */
 router.put('/config', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { siteSettings, moduleSettings, quotaSettings } = req.body;
+    const { siteSettings, moduleSettings, quotaSettings, maintenanceSettings } = req.body;
 
     if (siteSettings) {
-      await pool.execute(
-        "INSERT INTO config (`key`, value) VALUES ('site_settings', ?) ON DUPLICATE KEY UPDATE value = ?",
-        [JSON.stringify(siteSettings), JSON.stringify(siteSettings)]
-      );
+      await configDB.set('site_settings', siteSettings);
     }
-
     if (moduleSettings) {
-      await pool.execute(
-        "INSERT INTO config (`key`, value) VALUES ('module_settings', ?) ON DUPLICATE KEY UPDATE value = ?",
-        [JSON.stringify(moduleSettings), JSON.stringify(moduleSettings)]
-      );
+      await configDB.set('module_settings', moduleSettings);
     }
-
     if (quotaSettings) {
-      await pool.execute(
-        "INSERT INTO config (`key`, value) VALUES ('quota_settings', ?) ON DUPLICATE KEY UPDATE value = ?",
-        [JSON.stringify(quotaSettings), JSON.stringify(quotaSettings)]
-      );
+      await configDB.set('quota_settings', quotaSettings);
+    }
+    if (maintenanceSettings) {
+      await configDB.set('maintenance_settings', maintenanceSettings);
     }
 
     res.json({ success: true, message: '配置更新成功' });

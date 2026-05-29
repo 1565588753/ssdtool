@@ -12,12 +12,14 @@ import {
   Plus,
   Trash2,
   CheckCircle,
-  Mail
+  Mail,
+  ShieldAlert,
+  TriangleAlert
 } from 'lucide-react';
 
 export default function SiteSettings({ setTheme, currentTheme }: { setTheme: (themeId: string) => void; currentTheme: string }) {
   const { config, updateSiteSettings, updateHomeModule, updateModuleOrder, updateAdSlot, addAdSlot, deleteAdSlot, updateQuotaSettings } = useAppStore();
-const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' | 'homeText' | 'quota' | 'theme' | 'smtp' | 'storage'>('basic');
+const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' | 'homeText' | 'quota' | 'theme' | 'smtp' | 'storage' | 'maintenance'>('basic');
 
   const sections = [
     { id: 'basic', icon: Globe, label: '基本设置' },
@@ -27,7 +29,8 @@ const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' |
     { id: 'quota', icon: Users, label: '下载配额' },
     { id: 'smtp', icon: Mail, label: 'SMTP设置' },
     { id: 'storage', icon: Globe, label: '文件存储' },
-    { id: 'theme', icon: Palette, label: '主题配色' }
+    { id: 'theme', icon: Palette, label: '主题配色' },
+    { id: 'maintenance', icon: ShieldAlert, label: '维护模式' }
   ];
 
   const [draggedModuleId, setDraggedModuleId] = useState<string | null>(null);
@@ -674,7 +677,106 @@ const [activeSection, setActiveSection] = useState<'basic' | 'modules' | 'ads' |
                 </div>
               </div>
             )}
+
+            {activeSection === 'maintenance' && (
+              <MaintenanceSettings />
+            )}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MaintenanceSettings() {
+  const { config, updateMaintenanceSettings } = useAppStore();
+  const [enabled, setEnabled] = useState(config.maintenanceSettings?.enabled || false);
+  const [message, setMessage] = useState(config.maintenanceSettings?.message || '网站维护中，敬请期待...');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaved(false);
+    try {
+      const res = await adminAPI.updateConfig({
+        maintenanceSettings: { enabled, message }
+      });
+      if (res.success) {
+        updateMaintenanceSettings({ enabled, message });
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      }
+    } catch (err: any) {
+      console.error('保存维护模式设置失败:', err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--theme-gradient)' }}>
+          <TriangleAlert className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="font-display text-lg font-bold" style={{ color: 'var(--theme-text)' }}>维护模式</h3>
+          <p className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>
+            开启后，只有管理员可以访问网站，其他用户将看到维护提示
+          </p>
+        </div>
+      </div>
+
+      <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--theme-bg-card)', border: '1px solid var(--theme-border)' }}>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p className="font-medium" style={{ color: 'var(--theme-text)' }}>维护模式</p>
+            <p className="text-sm mt-1" style={{ color: 'var(--theme-text-secondary)' }}>
+              {enabled ? '网站当前处于维护状态，仅管理员可访问' : '网站正常运行中'}
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={(e) => setEnabled(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-14 h-7 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-amber-500" style={{ backgroundColor: enabled ? '#f59e0b' : 'var(--theme-bg-hover)' }}></div>
+          </label>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
+            维护提示信息
+          </label>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={3}
+            className="w-full px-4 py-3 rounded-xl focus:outline-none resize-none"
+            style={{
+              backgroundColor: 'var(--theme-bg-base)',
+              border: '1px solid var(--theme-border)',
+              color: 'var(--theme-text)'
+            }}
+            placeholder="网站维护中，敬请期待..."
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-6 py-3 rounded-xl text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: 'var(--theme-gradient)' }}
+          >
+            {saving ? '保存中...' : '保存设置'}
+          </button>
+          {saved && (
+            <span className="text-sm font-medium text-green-400">设置已保存</span>
+          )}
         </div>
       </div>
     </div>

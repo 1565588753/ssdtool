@@ -17,6 +17,7 @@ import categoryRoutes from './routes/categories.js'
 import donationRoutes from './routes/donations.js'
 import adminRoutes from './routes/admin.js'
 import statsRoutes from './routes/stats.js'
+import { maintenanceMiddleware } from './middleware/maintenance.js'
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url)
@@ -37,6 +38,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../files')))
 /**
  * API Routes
  */
+app.use('/api', maintenanceMiddleware)
 app.use('/api/auth', authRoutes)
 app.use('/api/firmware', firmwareRoutes)
 app.use('/api/categories', categoryRoutes)

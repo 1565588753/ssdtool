@@ -134,6 +134,16 @@ export const donationAPI = {
 
   getUserDownloads: () =>
     fetchAPI<{ success: boolean; downloads: any[] }>('/api/donations/user/downloads'),
+
+  deleteDownload: (id: string) =>
+    fetchAPI<{ success: boolean }>(`/api/donations/user/downloads/${id}`, {
+      method: 'DELETE',
+    }),
+
+  clearDownloads: () =>
+    fetchAPI<{ success: boolean }>('/api/donations/user/downloads', {
+      method: 'DELETE',
+    }),
 };
 
 // 系统配置 API
@@ -145,6 +155,7 @@ export const configAPI = {
         siteSettings: any;
         moduleSettings: any;
         quotaSettings: any;
+        maintenanceSettings?: { enabled: boolean; message: string };
       };
     }>('/api/donations/config'),
 };
@@ -228,7 +239,7 @@ export const adminAPI = {
   getConfig: () =>
     fetchAPI<{ success: boolean; config: any }>('/api/admin/config'),
   
-  updateConfig: (data: { siteSettings?: any; moduleSettings?: any; quotaSettings?: any }) =>
+  updateConfig: (data: { siteSettings?: any; moduleSettings?: any; quotaSettings?: any; maintenanceSettings?: any }) =>
     fetchAPI<{ success: boolean }>('/api/admin/config', {
       method: 'PUT',
       body: JSON.stringify(data),

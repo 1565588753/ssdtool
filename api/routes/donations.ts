@@ -3,7 +3,7 @@
  * 处理捐赠、用户中心等
  */
 import { Router, type Request, type Response } from 'express';
-import { donationDB, userDB, downloadDB, configDB } from '../dboperations.js';
+import { donationDB, userDB, downloadDB, configDB, userFirmwareDownloadDB } from '../dboperations.js';
 import { extractUserId } from '../middleware/auth.js';
 import pool from '../db.js';
 
@@ -167,6 +167,58 @@ router.get('/user/downloads', async (req: Request, res: Response): Promise<void>
 });
 
 /**
+ * 删除单条下载记录
+ * DELETE /api/donations/user/downloads/:id
+ */
+router.delete('/user/downloads/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = extractUserId(req);
+
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    const { id } = req.params;
+
+    const [rows] = await pool.execute('SELECT id FROM user_firmware_downloads WHERE id = ? AND user_id = ?', [id, userId]);
+    if (!(rows as any[])[0]) {
+      res.status(404).json({ success: false, error: '下载记录不存在' });
+      return;
+    }
+
+    await userFirmwareDownloadDB.delete(id);
+
+    res.json({ success: true, message: '下载记录已删除' });
+  } catch (error) {
+    console.error('删除下载记录错误:', error);
+    res.status(500).json({ success: false, error: '删除下载记录失败' });
+  }
+});
+
+/**
+ * 清空所有下载记录
+ * DELETE /api/donations/user/downloads
+ */
+router.delete('/user/downloads', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = extractUserId(req);
+
+    if (!userId) {
+      res.status(401).json({ success: false, error: '请先登录' });
+      return;
+    }
+
+    await userFirmwareDownloadDB.deleteByUser(userId);
+
+    res.json({ success: true, message: '下载记录已清空' });
+  } catch (error) {
+    console.error('清空下载记录错误:', error);
+    res.status(500).json({ success: false, error: '清空下载记录失败' });
+  }
+});
+
+/**
  * 获取系统配置
  * GET /api/config
  */
@@ -175,13 +227,15 @@ router.get('/config', async (req: Request, res: Response): Promise<void> => {
     const siteSettings = await configDB.get('site_settings');
     const moduleSettings = await configDB.get('module_settings');
     const quotaSettings = await configDB.get('quota_settings');
+    const maintenanceSettings = await configDB.get('maintenance_settings');
 
     res.json({
       success: true,
       config: {
         siteSettings,
         moduleSettings,
-        quotaSettings
+        quotaSettings,
+        maintenanceSettings
       }
     });
   } catch (error) {

@@ -25,8 +25,12 @@ export interface HomeModule {
 // 扩展配置类型
 export interface ExtendedConfig extends Config {
   moduleOrder: string[];
-  adSlots: AdSlot[];
+  adSlots: any[];
   homeModules: HomeModule[];
+  maintenanceSettings: {
+    enabled: boolean;
+    message: string;
+  };
 }
 
 interface AppState {
@@ -74,6 +78,7 @@ isAuthReady: boolean;
   updateSiteSettings: (settings: Partial<ExtendedConfig['siteSettings']>) => void;
   updateModuleSettings: (settings: Partial<ExtendedConfig['moduleSettings']>) => void;
   updateQuotaSettings: (settings: Partial<ExtendedConfig['quotaSettings']>) => void;
+  updateMaintenanceSettings: (settings: { enabled: boolean; message: string }) => void;
   updateModuleOrder: (order: string[]) => void;
   updateHomeModule: (id: string, module: Partial<HomeModule>) => void;
   updateAdSlot: (id: string, slot: Partial<AdSlot>) => void;
@@ -110,6 +115,10 @@ description: '专业的固态硬盘开卡工具分享平台',
     freeQuota: 5,
     premiumQuota: 100,
     premiumPrice: 8
+  },
+  maintenanceSettings: {
+    enabled: false,
+    message: '网站维护中，敬请期待...'
   },
   moduleOrder: ['hero', 'stats', 'hot', 'latest', 'donations', 'contributors', 'cta'],
   adSlots: [],
@@ -420,6 +429,15 @@ set({ user: userData, isAuthenticated: true, isAuthReady: true, token: response.
           config: {
             ...state.config,
             quotaSettings: { ...state.config.quotaSettings, ...settings }
+          }
+        }));
+      },
+
+      updateMaintenanceSettings: (settings) => {
+        set((state) => ({
+          config: {
+            ...state.config,
+            maintenanceSettings: { ...state.config.maintenanceSettings, ...settings }
           }
         }));
       },

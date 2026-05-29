@@ -23,7 +23,8 @@ import {
   Tag,
   X,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Trash2
 } from 'lucide-react';
 
 type TabType = 'dashboard' | 'profile' | 'downloads' | 'firmware' | 'categories' | 'tags' | 'users' | 'settings';
@@ -259,25 +260,29 @@ function Downloads({ user, config }: { user: any; config: any }) {
   const [loadingDownloads, setLoadingDownloads] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  useEffect(() => {
-    const fetchDownloads = async () => {
-      try {
-        const res = await donationAPI.getUserDownloads();
-        if (res.success) {
-          setDownloadRecords(res.downloads);
-        }
-      } catch (err) {
-        console.error('获取下载记录失败:', err);
-      } finally {
-        setLoadingDownloads(false);
+  const fetchDownloads = async () => {
+    try {
+      const res = await donationAPI.getUserDownloads();
+      if (res.success) {
+        setDownloadRecords(res.downloads);
       }
-    };
+    } catch (err) {
+      console.error('获取下载记录失败:', err);
+    } finally {
+      setLoadingDownloads(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDownloads();
   }, []);
 
@@ -321,6 +326,41 @@ function Downloads({ user, config }: { user: any; config: any }) {
       showToast('下载失败', 'error');
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const handleDeleteDownload = async (id: string) => {
+    setDeletingId(id);
+    try {
+      const res = await donationAPI.deleteDownload(id);
+      if (res.success) {
+        setDownloadRecords(prev => prev.filter(d => d.id !== id));
+        showToast('下载记录已删除', 'success');
+      } else {
+        showToast('删除失败', 'error');
+      }
+    } catch {
+      showToast('删除失败', 'error');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleClearDownloads = async () => {
+    setClearing(true);
+    try {
+      const res = await donationAPI.clearDownloads();
+      if (res.success) {
+        setDownloadRecords([]);
+        setConfirmClear(false);
+        showToast('下载记录已清空', 'success');
+      } else {
+        showToast('清空失败', 'error');
+      }
+    } catch {
+      showToast('清空失败', 'error');
+    } finally {
+      setClearing(false);
     }
   };
 
@@ -370,8 +410,17 @@ function Downloads({ user, config }: { user: any; config: any }) {
       </div>
 
       <div className="glass-card rounded-xl" style={{ borderColor: 'var(--theme-border)' }}>
-        <div className="p-6 border-b" style={{ borderColor: 'var(--theme-border)' }}>
+        <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: 'var(--theme-border)' }}>
           <h3 className="text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>下载历史</h3>
+          {downloadRecords.length > 0 && (
+            <button
+              onClick={() => setConfirmClear(true)}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-1.5"
+            >
+              <Trash2 className="w-4 h-4" />
+              清空全部
+            </button>
+          )}
         </div>
         {loadingDownloads ? (
           <div className="p-12 text-center" style={{ color: 'var(--theme-text-secondary)' }}>
@@ -384,38 +433,48 @@ function Downloads({ user, config }: { user: any; config: any }) {
               const remainingColor = dl.firstDownloadAt ? getRemainingDaysColor(dl.firstDownloadAt) : undefined;
               return (
                 <div key={dl.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors" style={{ backgroundColor: 'var(--theme-bg-hover)' }}>
-                  <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div
-                      className="p-2 rounded-lg flex-shrink-0"
-                      style={{ backgroundColor: 'var(--theme-primary-900)' }}
-                    >
-                      <FileText className="w-5 h-5" style={{ color: 'var(--theme-primary-400)' }} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-medium truncate" style={{ color: 'var(--theme-text)' }}>{dl.firmwareTitle || '未知固件'}</p>
-                      <div className="flex items-center gap-3 text-sm mt-0.5">
-                        <span style={{ color: 'var(--theme-text-secondary)' }}>
-                          <Clock className="w-3.5 h-3.5 inline mr-1" />
-                          {formatTime(dl.lastDownloadAt)}
-                        </span>
-                        {remainingText && (
-                          <span style={{ color: remainingColor }}>
-                            {remainingText}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleRedownload(dl.firmwareId)}
-                    disabled={downloadingId === dl.firmwareId}
-                    className="ml-4 flex-shrink-0 px-4 py-2 rounded-xl text-white font-medium text-sm disabled:opacity-50 flex items-center gap-1.5"
-                    style={{ background: 'var(--theme-gradient)' }}
-                  >
-                    <Download className="w-4 h-4" />
-                    {downloadingId === dl.firmwareId ? '下载中...' : '再次下载'}
-                  </button>
-                </div>
+                   <div className="flex items-center gap-4 flex-1 min-w-0">
+                     <div
+                       className="p-2 rounded-lg flex-shrink-0"
+                       style={{ backgroundColor: 'var(--theme-primary-900)' }}
+                     >
+                       <FileText className="w-5 h-5" style={{ color: 'var(--theme-primary-400)' }} />
+                     </div>
+                     <div className="min-w-0">
+                       <p className="font-medium truncate" style={{ color: 'var(--theme-text)' }}>{dl.firmwareTitle || '未知固件'}</p>
+                       <div className="flex items-center gap-3 text-sm mt-0.5">
+                         <span style={{ color: 'var(--theme-text-secondary)' }}>
+                           <Clock className="w-3.5 h-3.5 inline mr-1" />
+                           {formatTime(dl.lastDownloadAt)}
+                         </span>
+                         {remainingText && (
+                           <span style={{ color: remainingColor }}>
+                             {remainingText}
+                           </span>
+                         )}
+                       </div>
+                     </div>
+                   </div>
+                   <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+                     <button
+                       onClick={() => handleRedownload(dl.firmwareId)}
+                       disabled={downloadingId === dl.firmwareId}
+                       className="px-4 py-2 rounded-xl text-white font-medium text-sm disabled:opacity-50 flex items-center gap-1.5"
+                       style={{ background: 'var(--theme-gradient)' }}
+                     >
+                       <Download className="w-4 h-4" />
+                       {downloadingId === dl.firmwareId ? '下载中...' : '再次下载'}
+                     </button>
+                     <button
+                       onClick={() => handleDeleteDownload(dl.id)}
+                       disabled={deletingId === dl.id}
+                       className="p-2 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                       title="删除记录"
+                     >
+                       <Trash2 className="w-4 h-4" />
+                     </button>
+                   </div>
+                 </div>
               );
             })}
           </div>
@@ -426,6 +485,44 @@ function Downloads({ user, config }: { user: any; config: any }) {
           </div>
         )}
       </div>
+
+      {confirmClear && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="glass-card rounded-xl p-6 w-full max-w-md"
+            style={{ borderColor: 'var(--theme-border)' }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-400" />
+              </div>
+              <h3 className="text-lg font-bold" style={{ color: 'var(--theme-text)' }}>确认清空</h3>
+            </div>
+            <p className="mb-6" style={{ color: 'var(--theme-text-secondary)' }}>
+              确定要清空所有下载记录吗？此操作不可撤销。
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmClear(false)}
+                disabled={clearing}
+                className="flex-1 px-4 py-3 border rounded-xl hover:bg-white/10 transition-colors disabled:opacity-50"
+                style={{
+                  borderColor: 'var(--theme-border)',
+                  color: 'var(--theme-text-secondary)'
+                }}
+              >
+                取消
+              </button>
+              <button
+                onClick={handleClearDownloads}
+                disabled={clearing}
+                className="flex-1 px-4 py-3 rounded-xl text-white font-semibold disabled:opacity-50 bg-red-500 hover:bg-red-600 transition-colors"
+              >
+                {clearing ? '清空中...' : '确认清空'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
